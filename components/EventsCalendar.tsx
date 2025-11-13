@@ -268,89 +268,85 @@ export default function EventsCalendar({ events }: Props) {
   return (
     <>
       <div className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)]">
-        {/* Calendar */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              type="button"
-              onClick={goPrevMonth}
-              className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50"
-            >
-              ‹
-            </button>
-            <div className="font-semibold text-brand-800">{monthLabel}</div>
-            <button
-              type="button"
-              onClick={goNextMonth}
-              className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50"
-            >
-              ›
-            </button>
-          </div>
+        {/* LEFT: Calendar + selected-day events */}
+        <div className="space-y-4">
+          {/* Calendar */}
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <button
+                type="button"
+                onClick={goPrevMonth}
+                className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50"
+              >
+                ‹
+              </button>
+              <div className="font-semibold text-brand-800">{monthLabel}</div>
+              <button
+                type="button"
+                onClick={goNextMonth}
+                className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50"
+              >
+                ›
+              </button>
+            </div>
 
-          <div className="grid grid-cols-7 text-xs font-medium text-brand-600 mb-1">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-              <div key={d} className="text-center py-1">
-                {d}
-              </div>
-            ))}
-          </div>
+            <div className="grid grid-cols-7 text-xs font-medium text-brand-600 mb-1">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                <div key={d} className="text-center py-1">
+                  {d}
+                </div>
+              ))}
+            </div>
 
-          <div className="grid grid-cols-7 gap-1 text-sm">
-            {weeks.map((week, i) =>
-              week.map((date, j) => {
-                if (!date) {
+            <div className="grid grid-cols-7 gap-1 text-sm">
+              {weeks.map((week, i) =>
+                week.map((date, j) => {
+                  if (!date) {
+                    return (
+                      <div
+                        key={`${i}-${j}`}
+                        className="h-9 rounded-lg border border-transparent"
+                      />
+                    );
+                  }
+
+                  const key = normalizeDate(date).toISOString().slice(0, 10);
+                  const hasEvents = eventsByDay.has(key);
+                  const isSelected = selectedKey && key === selectedKey;
+
                   return (
-                    <div
+                    <button
                       key={`${i}-${j}`}
-                      className="h-9 rounded-lg border border-transparent"
-                    />
+                      type="button"
+                      onClick={() => setSelectedDate(date)}
+                      className={[
+                        'h-9 rounded-lg w-full flex flex-col items-center justify-center border text-xs',
+                        isSelected
+                          ? 'bg-brand-600 text-white border-brand-600'
+                          : hasEvents
+                          ? 'border-accent-300 bg-accent-50 text-brand-800'
+                          : 'border-brand-100 text-brand-700 hover:bg-brand-50',
+                      ].join(' ')}
+                    >
+                      <span>{date.getDate()}</span>
+                      {hasEvents && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent-500 mt-0.5" />
+                      )}
+                    </button>
                   );
-                }
+                }),
+              )}
+            </div>
 
-                const key = normalizeDate(date).toISOString().slice(0, 10);
-                const hasEvents = eventsByDay.has(key);
-                const isSelected = selectedKey && key === selectedKey;
-
-                return (
-                  <button
-                    key={`${i}-${j}`}
-                    type="button"
-                    onClick={() => setSelectedDate(date)}
-                    className={[
-                      'h-9 rounded-lg w-full flex flex-col items-center justify-center border text-xs',
-                      isSelected
-                        ? 'bg-brand-600 text-white border-brand-600'
-                        : hasEvents
-                        ? 'border-accent-300 bg-accent-50 text-brand-800'
-                        : 'border-brand-100 text-brand-700 hover:bg-brand-50',
-                    ].join(' ')}
-                  >
-                    <span>{date.getDate()}</span>
-                    {hasEvents && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent-500 mt-0.5" />
-                    )}
-                  </button>
-                );
-              }),
-            )}
+            <p className="text-xs text-gray-500 mt-3">
+              Click a highlighted day to see events.
+            </p>
           </div>
 
-          <p className="text-xs text-gray-500 mt-3">
-            Click a highlighted day to see events.
-          </p>
-        </div>
-
-        {/* Events list */}
-        <div className="space-y-3">
-          <h2 className="h2">Upcoming Events</h2>
-          {events.length === 0 && (
-            <p className="muted">No events have been posted yet.</p>
-          )}
-
+          {/* Selected-day events UNDER the calendar */}
           {selectedEvents && selectedEvents.length > 0 && (
-            <div>
-              <p className="text-sm font-semibold mb-1">
+            <div className="card">
+              <p className="text-sm font-semibold mb-3">
                 Events on{' '}
                 {selectedDate?.toLocaleDateString(undefined, {
                   weekday: 'long',
@@ -367,26 +363,95 @@ export default function EventsCalendar({ events }: Props) {
                     minute: '2-digit',
                   });
 
+                  const counts =
+                    rsvpState[e._id] || {
+                      yes: e.rsvpYes ?? 0,
+                      maybe: e.rsvpMaybe ?? 0,
+                    };
+                  const disabled = pendingEventId === e._id;
+
                   return (
                     <div key={e._id} className="card">
-                      <div className="text-sm font-semibold text-brand-800">
-                        {e.title}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {timeLabel}
-                        {e.location ? ` • ${e.location}` : ''}
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <div className="text-sm font-semibold text-brand-800">
+                            {e.title}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {timeLabel}
+                            {e.location ? ` • ${e.location}` : ''}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {counts.yes} going · {counts.maybe} maybe
+                          </div>
+                        </div>
                       </div>
                       {e.description && (
                         <p className="text-sm mt-1">{e.description}</p>
                       )}
+
+                      {/* RSVP buttons */}
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => openRsvpModal(e, 'yes')}
+                          className="px-3 py-1 rounded-full text-xs font-medium border border-accent-500 text-accent-700 hover:bg-accent-50 disabled:opacity-60"
+                        >
+                          I&apos;m going
+                        </button>
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => openRsvpModal(e, 'maybe')}
+                          className="px-3 py-1 rounded-full text-xs font-medium border border-brand-200 text-brand-700 hover:bg-brand-50 disabled:opacity-60"
+                        >
+                          Maybe
+                        </button>
+                      </div>
+
+                      {/* Icon-only calendar export buttons */}
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        <a
+                          href={buildGoogleCalendarUrl(e)}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Add to Google Calendar"
+                          className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-accent-500 text-accent-700 hover:bg-accent-50"
+                        >
+                          <CalendarPlus className="w-4 h-4" />
+                          <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                            Add to Google Calendar
+                          </span>
+                        </a>
+
+                        <button
+                          type="button"
+                          aria-label="Download .ics file"
+                          onClick={() => downloadIcs(e)}
+                          className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-brand-300 text-brand-700 hover:bg-brand-50"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                            Download .ics
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
           )}
+        </div>
 
-          {/* All upcoming events list */}
+        {/* RIGHT: All upcoming events list */}
+        <div className="space-y-3">
+          <h2 className="h2">Upcoming Events</h2>
+          {events.length === 0 && (
+            <p className="muted">No events have been posted yet.</p>
+          )}
+
           <div className="space-y-2 mt-3">
             {events.map((e) => {
               const start = new Date(e.startDate);
@@ -425,6 +490,7 @@ export default function EventsCalendar({ events }: Props) {
                     <p className="text-sm mt-1">{e.description}</p>
                   )}
 
+                  {/* RSVP buttons */}
                   <div className="flex gap-2 mt-2">
                     <button
                       type="button"
@@ -443,35 +509,34 @@ export default function EventsCalendar({ events }: Props) {
                       Maybe
                     </button>
                   </div>
-                  {/* ⬇️ Add this block right under the RSVP buttons */}
-                <div className="flex flex-wrap gap-2 mt-3">
-                {/* Google Calendar icon button */}
-                <a
-                    href={buildGoogleCalendarUrl(e)}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Add to Google Calendar"
-                    className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-accent-500 text-accent-700 hover:bg-accent-50"
-                >
-                    <CalendarPlus className="w-4 h-4" />
-                    <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    Add to Google Calendar
-                    </span>
-                </a>
 
-                {/* .ics download icon button */}
-                <button
-                    type="button"
-                    aria-label="Download .ics file"
-                    onClick={() => downloadIcs(e)}
-                    className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-brand-300 text-brand-700 hover:bg-brand-50"
-                >
-                    <Download className="w-4 h-4" />
-                    <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    Download .ics
-                    </span>
-                </button>
-                </div>
+                  {/* Icon-only calendar export buttons */}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <a
+                      href={buildGoogleCalendarUrl(e)}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="Add to Google Calendar"
+                      className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-accent-500 text-accent-700 hover:bg-accent-50"
+                    >
+                      <CalendarPlus className="w-4 h-4" />
+                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        Add to Google Calendar
+                      </span>
+                    </a>
+
+                    <button
+                      type="button"
+                      aria-label="Download .ics file"
+                      onClick={() => downloadIcs(e)}
+                      className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-brand-300 text-brand-700 hover:bg-brand-50"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        Download .ics
+                      </span>
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -479,7 +544,7 @@ export default function EventsCalendar({ events }: Props) {
         </div>
       </div>
 
-      {/* RSVP Modal */}
+      {/* RSVP Modal (unchanged) */}
       {modalOpen && modalEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
@@ -487,7 +552,8 @@ export default function EventsCalendar({ events }: Props) {
               RSVP – {modalEvent.title}
             </h3>
             <p className="text-xs text-gray-500 mb-4">
-              You&apos;re responding: {modalKind === 'yes' ? 'I&apos;m going' : 'Maybe'}
+              You&apos;re responding:{' '}
+              {modalKind === 'yes' ? 'I&apos;m going' : 'Maybe'}
             </p>
 
             <div className="space-y-3">
