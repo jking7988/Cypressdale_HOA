@@ -14,6 +14,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@portabletext/react": "^5.0.0",
     "@sanity/cli": "^4.15.0",
     "@sanity/vision": "^4.15.0",
     "react": "^18.3.1",
