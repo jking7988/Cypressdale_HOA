@@ -13,6 +13,13 @@ export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc) {
   _createdAt
 }`;
 
-export const eventsQuery = groq`*[_type == "event"] | order(start desc){ _id, title, start, end, location, description }`;
+export const eventsQuery = groq`*[_type == "event" && defined(startDate)] | order(startDate asc) {
+  _id,
+  title,
+  description,
+  location,
+  startDate,
+  endDate
+}`;
 
 export const documentsQuery = groq`*[_type == "documentFile"] | order(_createdAt desc){ _id, title, description, category, "fileUrl": file.asset->url }`;
