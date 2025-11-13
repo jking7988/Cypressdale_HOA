@@ -9,9 +9,16 @@ export default function Nav() {
           <Link className="hover:text-brand-700 text-brand-600" href="/about">About</Link>
           <Link className="hover:text-brand-700 text-brand-600" href="/news">News</Link>
           <Link className="hover:text-brand-700 text-brand-600" href="/events">Events</Link>
-          <Link className="hover:text-brand-700 text-brand-600" href="/documents">Documents</Link>
-          <Link href="/studio" className="text-accent-600 hover:text-accent-500 font-medium">Admin</Link>
-        </nav>
+          <Link className="hover:text-brand-700 text-brand-600" href="/documents">Documents</Link>   
+          <a
+            href="https://YOUR-STUDIO-NAME.sanity.studio"
+            target="_blank"
+            rel="noreferrer"
+            className="text-accent-600 hover:text-accent-500 font-medium"
+          >
+            Admin
+          </a>
+        </nav>        
       </div>
     </header>
   );

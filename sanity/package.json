@@ -1,0 +1,21 @@
+{
+  "name": "sanity",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@sanity/cli": "^4.15.0",
+    "@sanity/vision": "^4.15.0",
+    "sanity": "^4.15.0"
+  }
+}
