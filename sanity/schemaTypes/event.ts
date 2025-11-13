@@ -1,14 +1,36 @@
-import { defineType, defineField } from 'sanity';
+mport {defineField, defineType} from 'sanity';
 
 export default defineType({
   name: 'event',
   title: 'Event',
   type: 'document',
   fields: [
-    defineField({ name: 'title', type: 'string', validation: (r) => r.required() }),
-    defineField({ name: 'start', title: 'Start', type: 'datetime', validation: (r) => r.required() }),
-    defineField({ name: 'end', title: 'End', type: 'datetime' }),
-    defineField({ name: 'location', type: 'string' }),
-    defineField({ name: 'description', type: 'text' }),
+    defineField({
+      name: 'title',
+      title: 'Title',
+      type: 'string',
+      validation: rule => rule.required(),
+    }),
+    defineField({
+      name: 'description',
+      title: 'Description',
+      type: 'text',
+    }),
+    defineField({
+      name: 'location',
+      title: 'Location',
+      type: 'string',
+    }),
+    defineField({
+      name: 'startDate',
+      title: 'Start Date & Time',
+      type: 'datetime',
+      validation: rule => rule.required(),
+    }),
+    defineField({
+      name: 'endDate',
+      title: 'End Date & Time',
+      type: 'datetime',
+    }),
   ],
 });
