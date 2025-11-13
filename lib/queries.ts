@@ -5,13 +5,12 @@ export const homeQuery = groq`{
   "events": *[_type == "event" && dateTime(start) >= now()] | order(start asc)[0..4]{ _id, title, start, end, location, description }
 }`;
 
-
-export const postsQuery = groq`*[_type == "post"] | order(publishedAt desc) {
+export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc) {
   _id,
   title,
   excerpt,
   body,
-  publishedAt,
+  _createdAt
 }`;
 
 export const eventsQuery = groq`*[_type == "event"] | order(start desc){ _id, title, start, end, location, description }`;
