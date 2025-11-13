@@ -14,7 +14,9 @@ export const homeQuery = groq`{
       "startDate": coalesce(startDate, start),
       "endDate": coalesce(endDate, end),
       location,
-      description
+      description,
+      rsvpYes,
+      rsvpMaybe
     }
 }`;
 
@@ -33,7 +35,9 @@ export const eventsQuery = groq`*[_type == "event" && defined(coalesce(startDate
     description,
     location,
     "startDate": coalesce(startDate, start),
-    "endDate": coalesce(endDate, end)
+    "endDate": coalesce(endDate, end),
+    rsvpYes,
+    rsvpMaybe
   }`;
 
 export const documentsQuery = groq`*[_type == "documentFile"] | order(_createdAt desc){

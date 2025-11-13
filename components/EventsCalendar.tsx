@@ -9,6 +9,8 @@ type Event = {
   location?: string;
   startDate: string;
   endDate?: string;
+  rsvpYes?: number;
+  rsvpMaybe?: number;
 };
 
 type Props = {
@@ -42,6 +44,93 @@ export default function EventsCalendar({ events }: Props) {
 
     return map;
   }, [events]);
+
+  const [rsvpState, setRsvpState] = useState(() =>
+    {events.map((e) => {
+    const start = new Date(e.startDate);
+    const dateLabel = start.toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+
+    const counts = rsvpState[e._id] || {yes: e.rsvpYes ?? 0, maybe: e.rsvpMaybe ?? 0};
+    const disabled = pendingEventId === e._id;
+
+    return (
+        <div key={e._id} className="card">
+        <div className="flex items-center justify-between gap-2">
+            <div>
+            <div className="font-semibold text-brand-800">
+                {e.title}
+            </div>
+            <div className="text-xs text-gray-600">
+                {dateLabel}
+                {e.location ? ` • ${e.location}` : ''}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+                {counts.yes} going · {counts.maybe} maybe
+            </div>
+            </div>
+        </div>
+        {e.description && (
+            <p className="text-sm mt-1">{e.description}</p>
+        )}
+
+        <div className="flex gap-2 mt-2">
+            <button
+            type="button"
+            disabled={disabled}
+            onClick={() => handleRsvp(e._id, 'yes')}
+            className="px-3 py-1 rounded-full text-xs font-medium border border-accent-500 text-accent-700 hover:bg-accent-50 disabled:opacity-60"
+            >
+            I’m going
+            </button>
+            <button
+            type="button"
+            disabled={disabled}
+            onClick={() => handleRsvp(e._id, 'maybe')}
+            className="px-3 py-1 rounded-full text-xs font-medium border border-brand-200 text-brand-700 hover:bg-brand-50 disabled:opacity-60"
+            >
+            Maybe
+            </button>
+        </div>
+        </div>
+    );
+    })}
+
+const [pendingEventId, setPendingEventId] = useState<string | null>(null);
+
+async function handleRsvp(eventId: string, kind: 'yes' | 'maybe') {
+  try {
+    setPendingEventId(eventId);
+
+    // optimistic update
+    setRsvpState((prev) => {
+      const current = prev[eventId] || {yes: 0, maybe: 0};
+      return {
+        ...prev,
+        [eventId]: {
+          yes: current.yes + (kind === 'yes' ? 1 : 0),
+          maybe: current.maybe + (kind === 'maybe' ? 1 : 0),
+        },
+      };
+    });
+
+    await fetch('/api/rsvp', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({eventId, response: kind}),
+    });
+  } catch (e) {
+    console.error('RSVP failed', e);
+    // TODO: rollback if you want to be fancy
+  } finally {
+    setPendingEventId(null);
+  }
+}
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();

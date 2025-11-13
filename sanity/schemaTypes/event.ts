@@ -32,5 +32,17 @@ export default defineType({
       title: 'End Date & Time',
       type: 'datetime',
     }),
+    defineField({
+      name: 'rsvpYes',
+      title: 'RSVP – Going',
+      type: 'number',
+      initialValue: 0,
+    }),
+    defineField({
+      name: 'rsvpMaybe',
+      title: 'RSVP – Maybe',
+      type: 'number',
+      initialValue: 0,
+    }),
   ],
 });
