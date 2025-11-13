@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { CalendarPlus, Download } from 'lucide-react';
 
 type Event = {
   _id: string;
@@ -84,7 +85,6 @@ function downloadIcs(e: Event) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-
 
 type RsvpKind = 'yes' | 'maybe';
 
@@ -443,6 +443,35 @@ export default function EventsCalendar({ events }: Props) {
                       Maybe
                     </button>
                   </div>
+                  {/* ⬇️ Add this block right under the RSVP buttons */}
+                <div className="flex flex-wrap gap-2 mt-3">
+                {/* Google Calendar icon button */}
+                <a
+                    href={buildGoogleCalendarUrl(e)}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Add to Google Calendar"
+                    className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-accent-500 text-accent-700 hover:bg-accent-50"
+                >
+                    <CalendarPlus className="w-4 h-4" />
+                    <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    Add to Google Calendar
+                    </span>
+                </a>
+
+                {/* .ics download icon button */}
+                <button
+                    type="button"
+                    aria-label="Download .ics file"
+                    onClick={() => downloadIcs(e)}
+                    className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-brand-300 text-brand-700 hover:bg-brand-50"
+                >
+                    <Download className="w-4 h-4" />
+                    <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    Download .ics
+                    </span>
+                </button>
+                </div>
                 </div>
               );
             })}
