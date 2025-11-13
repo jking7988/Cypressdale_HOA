@@ -1,18 +1,24 @@
-import { groq } from 'next-sanity';
+import {groq} from 'next-sanity';
 
 export const homeQuery = groq`{
-  "posts": *[_type == "post"] | order(_createdAt desc)[0..5]{ _id, title, excerpt, body },
-"events": *[_type == "event" && dateTime(coalesce(startDate, start)) >= now()] 
-  | order(coalesce(startDate, start) asc)[0..4]{
+  "posts": *[_type == "post"] | order(_createdAt desc)[0..5]{
     _id,
     title,
-    "startDate": coalesce(startDate, start),
-    "endDate": coalesce(endDate, end),
-    location,
-    description
-  }`;
+    excerpt,
+    body
+  },
+  "events": *[_type == "event" && defined(coalesce(startDate, start)) && dateTime(coalesce(startDate, start)) >= now()]
+    | order(coalesce(startDate, start) asc)[0..4]{
+      _id,
+      title,
+      "startDate": coalesce(startDate, start),
+      "endDate": coalesce(endDate, end),
+      location,
+      description
+    }
+}`;
 
-export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc) {
+export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc){
   _id,
   title,
   excerpt,
@@ -21,7 +27,7 @@ export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc) {
 }`;
 
 export const eventsQuery = groq`*[_type == "event" && defined(coalesce(startDate, start))]
-  | order(coalesce(startDate, start) asc) {
+  | order(coalesce(startDate, start) asc){
     _id,
     title,
     description,
@@ -30,4 +36,10 @@ export const eventsQuery = groq`*[_type == "event" && defined(coalesce(startDate
     "endDate": coalesce(endDate, end)
   }`;
 
-export const documentsQuery = groq`*[_type == "documentFile"] | order(_createdAt desc){ _id, title, description, category, "fileUrl": file.asset->url }`;
+export const documentsQuery = groq`*[_type == "documentFile"] | order(_createdAt desc){
+  _id,
+  title,
+  description,
+  category,
+  "fileUrl": file.asset->url
+}`;
