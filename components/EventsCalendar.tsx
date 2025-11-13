@@ -17,6 +17,75 @@ type Props = {
   events: Event[];
 };
 
+function formatDateForCalendar(dateStr?: string) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  // Use UTC ISO, strip separators: YYYYMMDDTHHmmssZ
+  const iso = d.toISOString(); // e.g. 2025-12-05T17:55:00.000Z
+  return iso.replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+function buildGoogleCalendarUrl(e: Event) {
+  const start = formatDateForCalendar(e.startDate);
+  const end = formatDateForCalendar(e.endDate || e.startDate);
+  if (!start || !end) return '#';
+
+  const base = 'https://www.google.com/calendar/render?action=TEMPLATE';
+  const params = new URLSearchParams({
+    text: e.title || 'Event',
+    dates: `${start}/${end}`,
+    details: e.description || '',
+    location: e.location || '',
+  });
+
+  return `${base}&${params.toString()}`;
+}
+
+function downloadIcs(e: Event) {
+  const start = formatDateForCalendar(e.startDate);
+  const end = formatDateForCalendar(e.endDate || e.startDate);
+  if (!start || !end) return;
+
+  const now = new Date();
+  const dtstamp = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+  const escapeText = (text: string) =>
+    text.replace(/,/g, '\\,').replace(/;/g, '\\;').replace(/\n/g, '\\n');
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Cypressdale HOA//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${e._id}@cypressdalehoa.com`,
+    `DTSTAMP:${dtstamp}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${escapeText(e.title || 'Event')}`,
+    e.description ? `DESCRIPTION:${escapeText(e.description)}` : '',
+    e.location ? `LOCATION:${escapeText(e.location)}` : '',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].filter(Boolean);
+
+  const icsContent = lines.join('\r\n');
+  const blob = new Blob([icsContent], {
+    type: 'text/calendar;charset=utf-8',
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `event-${e._id}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+
 type RsvpKind = 'yes' | 'maybe';
 
 function normalizeDate(d: Date) {
