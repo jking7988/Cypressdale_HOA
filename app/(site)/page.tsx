@@ -136,9 +136,9 @@ export default async function HomePage() {
         <h2 className="h2 mb-3">Quick links</h2>
         <p className="muted mb-3 text-sm">
           Jump straight to the most commonly used areas of the Cypressdale site.
-        </p>     
+        </p>
 
-          <div className="grid gap-3 md:grid-cols-5">
+        <div className="grid gap-3 md:grid-cols-5">
           <Link href="/events" className="card hover:bg-brand-50 transition-colors">
             <div className="text-xs font-semibold text-brand-600 mb-1">
               Events & Calendar
