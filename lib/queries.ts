@@ -5,18 +5,17 @@ export const homeQuery = groq`{
     _id,
     title,
     excerpt,
-    body
+    body,
+    _createdAt
   },
-  "events": *[_type == "event" && defined(coalesce(startDate, start)) && dateTime(coalesce(startDate, start)) >= now()]
-    | order(coalesce(startDate, start) asc)[0..4]{
+  "events": *[_type == "event" && defined(startDate)]
+    | order(startDate asc)[0..50]{
       _id,
       title,
-      "startDate": coalesce(startDate, start),
-      "endDate": coalesce(endDate, end),
-      location,
       description,
-      rsvpYes,
-      rsvpMaybe
+      location,
+      startDate,
+      endDate
     }
 }`;
 

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { client } from '@/lib/sanity.client';
@@ -39,11 +41,29 @@ function formatDate(dateStr?: string) {
 }
 
 export default async function HomePage() {
-  const { posts, events } = await client.fetch<HomeData>(homeQuery);
+  const { posts = [], events = [] } = await client.fetch<HomeData>(homeQuery);
 
-  const nextEvent = events?.[0];
-  const moreEvents = (events || []).slice(1, 4);
-  const latestPosts = (posts || []).slice(0, 3);
+  // Make sure events are sorted by date, just in case
+  const sortedEvents = [...events].filter(e => e.startDate).sort((a, b) => {
+    const da = new Date(a.startDate!).getTime();
+    const db = new Date(b.startDate!).getTime();
+    return da - db;
+  });
+
+  const now = new Date().getTime();
+
+  // upcoming = events whose start is now or later
+  const upcomingEvents = sortedEvents.filter(e => {
+    const t = new Date(e.startDate!).getTime();
+    return !Number.isNaN(t) && t >= now;
+  });
+
+  const nextEvent = upcomingEvents[0] || null;
+  const moreEvents = upcomingEvents.slice(1, 4);
+  const latestPosts = posts.slice(0, 3);
+
+  // (Optional, but handy while debugging)
+  console.log('HOME events count:', events.length, 'upcoming:', upcomingEvents.length);
 
   return (
     <div className="space-y-10">
@@ -200,9 +220,9 @@ export default async function HomePage() {
             View all events →
           </Link>
         </div>
-        {events && events.length > 0 ? (
+        {upcomingEvents.length > 0 ? (
           <div className="grid gap-3 md:grid-cols-2">
-            {events.slice(0, 4).map((e) => (
+            {upcomingEvents.slice(0, 4).map((e) => (
               <div key={e._id} className="card">
                 <div className="text-xs font-semibold text-brand-600 mb-1">
                   {formatDate(e.startDate)}
@@ -222,7 +242,7 @@ export default async function HomePage() {
             ))}
           </div>
         ) : (
-          <p className="muted text-sm">No events have been added yet.</p>
+          <p className="muted text-sm">No upcoming events have been added yet.</p>
         )}
       </section>
 
