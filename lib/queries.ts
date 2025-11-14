@@ -43,10 +43,20 @@ export const eventsQuery = groq`*[_type == "event"]
     rsvpMaybe
   }`;
 
-export const documentsQuery = groq`*[_type == "documentFile"] | order(_createdAt desc){
-  _id,
-  title,
-  description,
-  category,
-  "fileUrl": file.asset->url
-}`;
+export const documentsWithFoldersQuery = groq`
+{
+  "folders": *[_type == "documentFolder"]{
+    _id,
+    title,
+    "parentId": parent._ref
+  },
+  "files": *[_type == "documentFile"]{
+    _id,
+    title,
+    category,
+    description,
+    "fileUrl": file.asset->url,
+    "folderId": folder._ref
+  }
+}
+`;
