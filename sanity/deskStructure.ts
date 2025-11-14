@@ -8,7 +8,6 @@ export const deskStructure: StructureResolver = (S) =>
       S.listItem()
         .title('Document Library')
         .child(
-          // Column that lists each top-level folder
           S.documentTypeList('documentFolder')
             .title('Folders')
             .filter('_type == "documentFolder" && !defined(parent)')
@@ -18,7 +17,6 @@ export const deskStructure: StructureResolver = (S) =>
               return S.list()
                 .title('Folder')
                 .items([
-                  // Open the folder editor (rename, delete, etc.)
                   S.listItem()
                     .title('Edit Folder')
                     .child(
@@ -26,8 +24,6 @@ export const deskStructure: StructureResolver = (S) =>
                         .schemaType('documentFolder')
                         .documentId(folderId)
                     ),
-
-                  // Show contents = subfolders + files
                   S.listItem()
                     .title('Contents')
                     .child(
@@ -38,12 +34,11 @@ export const deskStructure: StructureResolver = (S) =>
                             '(_type == "documentFile" && folder._ref in [$folderId, $publishedId])'
                         )
                         .params({folderId, publishedId})
-                        // ⬇️ IMPORTANT: "+" menu items, with auto-parent/auto-folder
                         .initialValueTemplates([
-                          S.initialValueTemplateItem('subfolderInFolder', {
-                            parentId: publishedId,
-                          }),
-                          S.initialValueTemplateItem('fileInFolder', {
+                          S.initialValueTemplateItem('subfolderInFolder').parameters(
+                            {parentId: publishedId}
+                          ),
+                          S.initialValueTemplateItem('fileInFolder').parameters({
                             folderId: publishedId,
                           }),
                         ])
@@ -52,8 +47,14 @@ export const deskStructure: StructureResolver = (S) =>
             })
         ),
 
-      // (You already removed All Files; keep it gone if you want)
-      // S.listItem()...
+      // 👇 NEW: Unfiled docs – anything without a folder
+      S.listItem()
+        .title('Unfiled Documents')
+        .child(
+          S.documentList()
+            .title('Unfiled Documents')
+            .filter('_type == "documentFile" && !defined(folder)')
+        ),
 
       // Other content types
       ...S.documentTypeListItems().filter(

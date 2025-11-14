@@ -254,16 +254,10 @@ export default async function HomePage() {
                   </p>
                 )}
                 {p.excerpt && (
-                  <p className="text-xs text-gray-700 line-clamp-4 mb-3">
+                  <p className="text-xs text-gray-700 line-clamp-4">
                     {p.excerpt}
                   </p>
                 )}
-                <Link
-                  href="/news"
-                  className="mt-auto text-[11px] font-medium text-brand-700 hover:underline"
-                >
-                  View in news →
-                </Link>
               </article>
             ))}
           </div>
