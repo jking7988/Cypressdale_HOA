@@ -51,23 +51,22 @@ export default function Nav() {
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
         >
-          {/* Hamburger / X */}
-          <div className="w-5 h-5 relative">
+          <div className="flex flex-col justify-center items-center gap-1">
             <span
-              className={`absolute h-[2px] w-full bg-current transition-transform ${
-                open ? 'top-2.5 rotate-45' : 'top-1 rotate-0'
+              className={`h-[2px] w-5 bg-current transition-transform duration-200 ${
+                open ? 'translate-y-[6px] rotate-45' : ''
               }`}
-            ></span>
+            />
             <span
-              className={`absolute h-[2px] w-full bg-current transition-opacity ${
-                open ? 'opacity-0' : 'top-2.5 opacity-100'
+              className={`h-[2px] w-5 bg-current transition-opacity duration-200 ${
+                open ? 'opacity-0' : 'opacity-100'
               }`}
-            ></span>
+            />
             <span
-              className={`absolute h-[2px] w-full bg-current transition-transform ${
-                open ? 'top-2.5 -rotate-45' : 'top-4 rotate-0'
+              className={`h-[2px] w-5 bg-current transition-transform duration-200 ${
+                open ? '-translate-y-[6px] -rotate-45' : ''
               }`}
-            ></span>
+            />
           </div>
         </button>
       </div>
