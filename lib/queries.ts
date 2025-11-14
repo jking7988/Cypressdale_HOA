@@ -8,18 +8,22 @@ export const homeQuery = groq`{
     body,
     _createdAt
   },
-  "events": *[_type == "event" && defined(startDate)]
-    | order(startDate asc)[0..50]{
+  // reuse the same logic as eventsQuery
+  "events": *[_type == "event"]
+    | order(coalesce(startDate, start) asc)[0..50]{
       _id,
       title,
       description,
       location,
-      startDate,
-      endDate
+      // normalize to startDate/endDate for React
+      "startDate": coalesce(startDate, start),
+      "endDate": coalesce(endDate, end),
+      rsvpYes,
+      rsvpMaybe
     }
 }`;
 
-export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc){
+export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc) {
   _id,
   title,
   excerpt,
@@ -27,7 +31,7 @@ export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc){
   _createdAt
 }`;
 
-export const eventsQuery = groq`*[_type == "event" && defined(coalesce(startDate, start))]
+export const eventsQuery = groq`*[_type == "event"]
   | order(coalesce(startDate, start) asc){
     _id,
     title,

@@ -12,29 +12,25 @@ export default defineType({
       type: 'string',
       validation: (Rule) => Rule.required(),
     }),
-
     defineField({
       name: 'description',
       title: 'Description',
       type: 'text',
     }),
-
-    // Optional: simple string category (you can swap to an options list later)
     defineField({
       name: 'category',
       title: 'Category',
       type: 'string',
     }),
-
-    // 🔑 Link to your documentFolder
     defineField({
       name: 'folder',
       title: 'Folder',
       type: 'reference',
       to: [{type: 'documentFolder'}],
       description: 'Which folder this document belongs to.',
+      validation: (Rule) =>
+        Rule.required().error('Please choose a folder for this document'),
     }),
-
     defineField({
       name: 'file',
       title: 'File',

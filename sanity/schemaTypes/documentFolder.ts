@@ -23,11 +23,14 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'parent',
-      title: 'Parent Folder',
-      type: 'reference',
-      to: [{ type: 'documentFolder' }],
-      description: 'Leave empty for a top-level folder.',
-    }),
+        name: 'parent',
+        title: 'Parent Folder',
+        type: 'reference',
+        to: [{type: 'documentFolder'}],
+        options: {
+            filter: '__id != $id', // prevents self-reference
+            filterParams: {id: 'documentFolder'},
+        },
+        })
   ],
 });

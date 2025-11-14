@@ -5,56 +5,58 @@ export const deskStructure: StructureResolver = (S) =>
   S.list()
     .title('Content')
     .items([
-      // === Document Library ===
       S.listItem()
         .title('Document Library')
         .child(
-          // List of all folders
+          // Column that lists each top-level folder
           S.documentTypeList('documentFolder')
             .title('Folders')
-            .child((folderId) =>
-              S.list()
-                .title('Folder contents')
+            .filter('_type == "documentFolder" && !defined(parent)')
+            .child((folderId) => {
+              const publishedId = folderId.replace(/^drafts\./, '')
+
+              return S.list()
+                .title('Folder')
                 .items([
-                  // --- Subfolders ---
+                  // Open the folder editor (rename, delete, etc.)
                   S.listItem()
-                    .title('Subfolders')
+                    .title('Edit Folder')
                     .child(
-                      S.documentList()
-                        .title('Subfolders')
-                        .filter(
-                          '_type == "documentFolder" && parent._ref == $folderId'
-                        )
-                        .params({folderId})
+                      S.document()
+                        .schemaType('documentFolder')
+                        .documentId(folderId)
                     ),
 
-                  // --- Files in this folder ---
+                  // Show contents = subfolders + files
                   S.listItem()
-                    .title('Files')
+                    .title('Contents')
                     .child(
                       S.documentList()
-                        .title('Files in folder')
+                        .title('Contents')
                         .filter(
-                          '_type == "documentFile" && folder._ref == $folderId'
+                          '(_type == "documentFolder" && parent._ref in [$folderId, $publishedId]) || ' +
+                            '(_type == "documentFile" && folder._ref in [$folderId, $publishedId])'
                         )
-                        .params({folderId})
+                        .params({folderId, publishedId})
+                        // ⬇️ IMPORTANT: "+" menu items, with auto-parent/auto-folder
+                        .initialValueTemplates([
+                          S.initialValueTemplateItem('subfolderInFolder', {
+                            parentId: publishedId,
+                          }),
+                          S.initialValueTemplateItem('fileInFolder', {
+                            folderId: publishedId,
+                          }),
+                        ])
                     ),
                 ])
-            )
+            })
         ),
 
-      // Optional: quick access to all files
-      S.listItem()
-        .title('All Files')
-        .child(S.documentTypeList('documentFile').title('All Files')),
+      // (You already removed All Files; keep it gone if you want)
+      // S.listItem()...
 
-      S.divider(),
-
-      // All other document types (everything except folder + file)
+      // Other content types
       ...S.documentTypeListItems().filter(
-        (listItem) =>
-          !['documentFolder', 'documentFile'].includes(
-            String(listItem.getId())
-          )
+        (i) => !['documentFolder', 'documentFile'].includes(String(i.getId()))
       ),
     ])

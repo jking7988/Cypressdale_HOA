@@ -27,43 +27,30 @@ type HomeData = {
   events: Event[];
 };
 
-function formatDate(dateStr?: string) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return '';
-  return d.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
 export default async function HomePage() {
   const { posts = [], events = [] } = await client.fetch<HomeData>(homeQuery);
 
-  // Make sure events are sorted by date, just in case
-  const sortedEvents = [...events].filter(e => e.startDate).sort((a, b) => {
-    const da = new Date(a.startDate!).getTime();
-    const db = new Date(b.startDate!).getTime();
-    return da - db;
-  });
+  // 1) Normalize and sort events by startDate
+  const sortedEvents = events
+    .filter((e) => e.startDate)
+    .sort((a, b) => {
+      const da = new Date(eSafeDate(a.startDate)).getTime();
+      const db = new Date(eSafeDate(b.startDate)).getTime();
+      return da - db;
+    });
 
-  const now = new Date().getTime();
-
-  // upcoming = events whose start is now or later
-  const upcomingEvents = sortedEvents.filter(e => {
-    const t = new Date(e.startDate!).getTime();
-    return !Number.isNaN(t) && t >= now;
-  });
-
-  const nextEvent = upcomingEvents[0] || null;
+  // 2) Treat all sorted events as "upcoming" for now
+  const upcomingEvents = sortedEvents;
+  const nextEvent = upcomingEvents[0] ?? null;
   const moreEvents = upcomingEvents.slice(1, 4);
   const latestPosts = posts.slice(0, 3);
 
-  // (Optional, but handy while debugging)
-  console.log('HOME events count:', events.length, 'upcoming:', upcomingEvents.length);
+  console.log(
+    'HOME events count:',
+    events.length,
+    'sorted/upcoming:',
+    upcomingEvents.length,
+  );
 
   return (
     <div className="space-y-10">
@@ -341,4 +328,22 @@ export default async function HomePage() {
       </section>
     </div>
   );
+}
+
+// helper so TS doesn’t freak out & we avoid invalid dates
+function eSafeDate(dateStr?: string) {
+  return dateStr ?? '';
+}
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
