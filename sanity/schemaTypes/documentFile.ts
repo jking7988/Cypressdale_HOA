@@ -1,5 +1,5 @@
-// schemas/documentFile.ts
-import {defineType, defineField} from 'sanity';
+// documentFile.ts
+import {defineType, defineField} from 'sanity'
 
 export default defineType({
   name: 'documentFile',
@@ -19,26 +19,21 @@ export default defineType({
     }),
     defineField({
       name: 'category',
-      title: 'Category',
+      title: 'Category / Folder',
       type: 'string',
-    }),
-    defineField({
-      name: 'folder',
-      title: 'Folder',
-      type: 'reference',
-      to: [{type: 'documentFolder'}],
-      description: 'Which folder this document belongs to.',
-      validation: (Rule) =>
-        Rule.required().error('Please choose a folder for this document'),
+      options: {
+        list: [          
+          {title: 'Neighborhood Plat Maps', value: 'Neighborhood Plat Maps'},
+          // add more “folders” here if you want
+        ],
+      },
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'file',
       title: 'File',
       type: 'file',
-      options: {
-        accept: '.pdf,.doc,.docx',
-      },
       validation: (Rule) => Rule.required(),
     }),
   ],
-});
+})

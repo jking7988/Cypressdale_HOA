@@ -8,20 +8,22 @@ export const homeQuery = groq`{
     body,
     _createdAt
   },
-  // reuse the same logic as eventsQuery
   "events": *[_type == "event"]
     | order(coalesce(startDate, start) asc)[0..50]{
       _id,
       title,
       description,
       location,
-      // normalize to startDate/endDate for React
       "startDate": coalesce(startDate, start),
       "endDate": coalesce(endDate, end),
       rsvpYes,
-      rsvpMaybe
+      rsvpMaybe,
+      "flyerUrl": flyer.asset->url,
+      "flyerMime": flyer.asset->mimeType,
+      "flyerName": flyer.asset->originalFilename
     }
 }`;
+
 
 export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc) {
   _id,
@@ -40,23 +42,17 @@ export const eventsQuery = groq`*[_type == "event"]
     "startDate": coalesce(startDate, start),
     "endDate": coalesce(endDate, end),
     rsvpYes,
-    rsvpMaybe
+    rsvpMaybe,
+    "flyerUrl": flyer.asset->url,
+    "flyerMime": flyer.asset->mimeType,
+    "flyerName": flyer.asset->originalFilename
   }`;
 
-export const documentsWithFoldersQuery = groq`
-{
-  "folders": *[_type == "documentFolder"]{
-    _id,
-    title,
-    "parentId": parent._ref
-  },
-  "files": *[_type == "documentFile"]{
-    _id,
-    title,
-    category,
-    description,
-    "fileUrl": file.asset->url,
-    "folderId": folder._ref
-  }
-}
-`;
+// queries.ts
+export const documentsQuery = groq`*[_type == "documentFile"] | order(category asc, title asc){
+  _id,
+  title,
+  description,
+  category,
+  "fileUrl": file.asset->url
+}`;

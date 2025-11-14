@@ -32,6 +32,18 @@ export default defineType({
       title: 'End Date & Time',
       type: 'datetime',
     }),
+
+    // 👇 NEW: optional flyer upload (image or PDF)
+    defineField({
+      name: 'flyer',
+      title: 'Flyer (optional)',
+      type: 'file',
+      options: {
+        // allow images & PDF
+        accept: 'image/*,application/pdf',
+      },
+    }),
+
     defineField({
       name: 'rsvpYes',
       title: 'RSVP – Going',

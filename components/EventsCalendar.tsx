@@ -8,10 +8,13 @@ type Event = {
   title: string;
   description?: string;
   location?: string;
-  startDate: string;
+  startDate?: string;
   endDate?: string;
   rsvpYes?: number;
   rsvpMaybe?: number;
+  flyerUrl?: string;
+  flyerMime?: string;
+  flyerName?: string;
 };
 
 type Props = {
@@ -357,21 +360,23 @@ export default function EventsCalendar({ events }: Props) {
               </p>
               <div className="space-y-2">
                 {selectedEvents.map((e) => {
-                  const start = new Date(e.startDate);
-                  const timeLabel = start.toLocaleTimeString(undefined, {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  });
+                    if (!e.startDate) return null; // guard
 
-                  const counts =
-                    rsvpState[e._id] || {
-                      yes: e.rsvpYes ?? 0,
-                      maybe: e.rsvpMaybe ?? 0,
-                    };
-                  const disabled = pendingEventId === e._id;
+                    const start = new Date(e.startDate);
+                    const timeLabel = start.toLocaleTimeString(undefined, {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                    });
 
-                  return (
-                    <div key={e._id} className="card">
+                    const counts =
+                        rsvpState[e._id] || {
+                        yes: e.rsvpYes ?? 0,
+                        maybe: e.rsvpMaybe ?? 0,
+                        };
+                    const disabled = pendingEventId === e._id;
+
+                    return (
+                        <div key={e._id} className="card">
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <div className="text-sm font-semibold text-brand-800">
@@ -389,6 +394,35 @@ export default function EventsCalendar({ events }: Props) {
                       {e.description && (
                         <p className="text-sm mt-1">{e.description}</p>
                       )}
+
+                      {/* Flyer preview / link */}
+                    {e.flyerUrl && (
+                    <div className="mt-2">
+                        {e.flyerMime?.startsWith('image/') ? (
+                        <a
+                            href={e.flyerUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-block"
+                        >
+                            <img
+                            src={e.flyerUrl}
+                            alt={e.flyerName || `${e.title} flyer`}
+                            className="max-h-40 rounded-lg border border-brand-100 shadow-sm"
+                            />
+                        </a>
+                        ) : (
+                        <a
+                            href={e.flyerUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs text-accent-700 hover:underline"
+                        >
+                            View event flyer{e.flyerName ? ` (${e.flyerName})` : ''}
+                        </a>
+                        )}
+                    </div>
+                    )}
 
                       {/* RSVP buttons */}
                       <div className="flex gap-2 mt-2">
@@ -454,14 +488,17 @@ export default function EventsCalendar({ events }: Props) {
 
           <div className="space-y-2 mt-3">
             {events.map((e) => {
-              const start = new Date(e.startDate);
-              const dateLabel = start.toLocaleString(undefined, {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-              });
+                if (!e.startDate) return null; // guard
+
+                const start = new Date(e.startDate);
+                const dateLabel = start.toLocaleString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                });
+
 
               const counts =
                 rsvpState[e._id] || {
