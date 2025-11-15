@@ -1,4 +1,3 @@
-// schemas/post.ts
 import {defineField, defineType, defineArrayMember} from 'sanity';
 
 export default defineType({
@@ -21,10 +20,8 @@ export default defineType({
       of: [
         defineArrayMember({
           type: 'block',
-          styles: [
-            {title: 'Normal', value: 'normal'},
-          ],
-          lists: [], // keep excerpts simple: no bullet lists
+          styles: [{title: 'Normal', value: 'normal'}],
+          lists: [],
           marks: {
             decorators: [
               {title: 'Bold', value: 'strong'},
@@ -35,18 +32,21 @@ export default defineType({
                 name: 'link',
                 type: 'object',
                 title: 'Link',
-                fields: [
-                  {
-                    name: 'href',
-                    type: 'url',
-                    title: 'URL',
-                  },
-                ],
+                fields: [{name: 'href', type: 'url', title: 'URL'}],
               },
             ],
           },
         }),
       ],
+    }),
+
+    // ⭐ NEW: date used for the calendar / deadline / effective date
+    defineField({
+      name: 'newsDate',
+      title: 'News date / deadline',
+      type: 'datetime',
+      description:
+        'Used on the news calendar (e.g. submission deadline, effective date). If empty, publish date is used.',
     }),
 
     defineField({

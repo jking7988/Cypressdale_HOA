@@ -33,14 +33,16 @@ export const homeQuery = groq`{
     }
 }`;
 
-export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc) {
-  _id,
-  title,
-  slug,
-  excerpt,
-  body,
-  _createdAt
-}`;
+export const postsQuery = groq`*[_type == "post"]
+  | order(coalesce(newsDate, publishedAt, _createdAt) desc) {
+    _id,
+    title,
+    excerpt,
+    body,
+    _createdAt,
+    publishedAt,
+    newsDate
+  }`;
 
 export const eventsQuery = groq`*[_type == "event"]
   | order(coalesce(startDate, start) asc){
