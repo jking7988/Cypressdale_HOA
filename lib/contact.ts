@@ -4,7 +4,6 @@ export type ContactRole =
   | 'general'
   | 'board'
   | 'management'
-  | 'acc'
   | 'pool';
 
 export type ContactEntry = {

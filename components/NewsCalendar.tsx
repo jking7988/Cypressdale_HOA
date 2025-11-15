@@ -28,15 +28,41 @@ export function NewsCalendar({
 
   const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  const todayKey = useMemo(() => {
-    return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-  }, []);
+  const todayKey = useMemo(
+    () => new Date().toISOString().slice(0, 10),
+    [],
+  );
 
   // Go to previous / next month
   const goMonth = (delta: number) => {
     const d = new Date(currentYear, currentMonth + delta, 1);
     setCurrentYear(d.getFullYear());
     setCurrentMonth(d.getMonth());
+  };
+
+  // Go back to *today* (month & optional scroll)
+  const goToday = () => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    setCurrentYear(y);
+    setCurrentMonth(m);
+
+    const key = today.toISOString().slice(0, 10);
+
+    if (dateKeysWithPosts.includes(key)) {
+      setSelectedKey(key);
+
+      const el = document.getElementById(`news-${key}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      // today has no news – just show the ring, no selection
+      setSelectedKey(null);
+    }
+
+    setDrawerKey(null);
   };
 
   // All month keys we have news for, e.g. "2025-11"
@@ -114,7 +140,8 @@ export function NewsCalendar({
 
   return (
     <aside className="card space-y-3">
-      <div className="flex items-center justify-between">
+      {/* Header + controls */}
+      <div className="flex items-start justify-between gap-2">
         <div>
           <h2 className="text-sm font-semibold text-brand-900">
             News by date
@@ -124,21 +151,32 @@ export function NewsCalendar({
           </p>
         </div>
 
-        {/* Month navigation */}
-        <div className="flex items-center gap-1">
+        <div className="flex flex-col items-end gap-1">
+          {/* Month navigation */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => goMonth(-1)}
+              className="h-6 w-6 rounded-full border border-emerald-100 text-xs text-emerald-800 hover:bg-emerald-50"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={() => goMonth(1)}
+              className="h-6 w-6 rounded-full border border-emerald-100 text-xs text-emerald-800 hover:bg-emerald-50"
+            >
+              ›
+            </button>
+          </div>
+
+          {/* Today button */}
           <button
             type="button"
-            onClick={() => goMonth(-1)}
-            className="h-6 w-6 rounded-full border border-emerald-100 text-xs text-emerald-800 hover:bg-emerald-50"
+            onClick={goToday}
+            className="mt-1 h-6 rounded-full px-2 text-[10px] border border-emerald-100 text-emerald-800 hover:bg-emerald-50"
           >
-            ‹
-          </button>
-          <button
-            type="button"
-            onClick={() => goMonth(1)}
-            className="h-6 w-6 rounded-full border border-emerald-100 text-xs text-emerald-800 hover:bg-emerald-50"
-          >
-            ›
+            Today
           </button>
         </div>
       </div>
@@ -222,6 +260,22 @@ export function NewsCalendar({
             </div>
           );
         })}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-2 flex flex-wrap gap-3 items-center">
+        <div className="flex items-center gap-1 text-[10px] text-gray-500">
+          <span className="inline-block h-3 w-3 rounded-full bg-emerald-100 border border-emerald-200" />
+          <span>Has news</span>
+        </div>
+        <div className="flex items-center gap-1 text-[10px] text-gray-500">
+          <span className="inline-block h-3 w-3 rounded-full bg-brand-600" />
+          <span>Selected</span>
+        </div>
+        <div className="flex items-center gap-1 text-[10px] text-gray-500">
+          <span className="inline-block h-3 w-3 rounded-full border border-emerald-200" />
+          <span>Today</span>
+        </div>
       </div>
 
       {/* Hover preview */}

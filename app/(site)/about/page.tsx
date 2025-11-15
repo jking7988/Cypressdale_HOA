@@ -1,5 +1,6 @@
 import { ContactLink } from '@/components/ContactLink';
 import { ContactCards } from '@/components/ContactCards';
+import { AccSpectrumNotice } from '@/components/AccSpectrumNotice';
 
 export default function AboutPage() {
   return (
@@ -35,6 +36,9 @@ export default function AboutPage() {
             <ContactLink role="general" showIcon />
             .
           </p>
+
+          {/* ACC via Spectrum */}
+          <AccSpectrumNotice />
         </div>
 
         {/* Right: contact roles/cards */}
