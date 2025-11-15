@@ -7,19 +7,16 @@ export default function Nav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header
-      className="border-b border-brand-100 bg-brand-50/60 backdrop-blur"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
+    <header className="border-b border-brand-100 bg-brand-50/60 backdrop-blur">
       <div className="container flex items-center justify-between py-4">
         {/* Left: logo + hamburger */}
         <div className="flex items-center gap-3">
-          {/* Hamburger button – all screen sizes */}
           <button
             className="p-2 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-100"
             onClick={() => setOpen((prev) => !prev)}
+            onMouseEnter={() => setOpen(true)}
             aria-label="Toggle menu"
+            aria-expanded={open}
           >
             <div className="flex flex-col justify-center items-center gap-1">
               <span
@@ -40,67 +37,80 @@ export default function Nav() {
             </div>
           </button>
 
-          {/* Logo */}
           <Link
             href="/"
-            className="font-bold text-xl text-brand-700"
+            className="font-bold text-xl text-brand-700 flex items-center gap-2"
             onClick={() => setOpen(false)}
           >
-            Cypressdale HOA
+            <span>🏘️</span>
+            <span>Cypressdale HOA</span>
           </Link>
-        </div>       
+        </div>        
       </div>
 
-      {/* Dropdown menu – appears on hover or click, all screen sizes */}
       {open && (
-        <div className="border-t border-brand-100 bg-brand-50/80 backdrop-blur">
+        <div
+          className="border-t border-brand-100 bg-brand-50/80 backdrop-blur"
+          onMouseLeave={() => setOpen(false)}
+        >
           <nav className="container flex flex-col py-2">
             <Link
-              href="/about"
+              href="/"
               onClick={() => setOpen(false)}
-              className="py-2 text-brand-700 hover:bg-brand-100 rounded px-1"
+              className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
             >
-              About
-            </Link>
+              🏠 <span>Home</span>
+            </Link>           
+
             <Link
               href="/news"
               onClick={() => setOpen(false)}
-              className="py-2 text-brand-700 hover:bg-brand-100 rounded px-1"
+              className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
             >
-              News
+              🗞️ <span>News</span>
             </Link>
+
             <Link
               href="/events"
               onClick={() => setOpen(false)}
-              className="py-2 text-brand-700 hover:bg-brand-100 rounded px-1"
+              className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
             >
-              Events
+              📅 <span>Events</span>
             </Link>
 
-            {/* Slightly emphasized Pool link in dropdown (mobile + desktop) */}
             <Link
               href="/pool"
               onClick={() => setOpen(false)}
-              className="py-2 text-brand-700 hover:bg-brand-100 rounded px-1"
-            >              
-              <span>Pool</span>
+              className="py-2 px-1 text-accent-700 bg-accent-50 hover:bg-accent-100 rounded font-medium flex items-center gap-2"
+            >
+              🌊 <span>Pool</span>
             </Link>
 
             <Link
               href="/documents"
               onClick={() => setOpen(false)}
-              className="py-2 text-brand-700 hover:bg-brand-100 rounded px-1"
+              className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
             >
-              Documents
+              📄 <span>Documents</span>
             </Link>
+
+            {/* About now uses ℹ️ */}
+            <Link
+              href="/about"
+              onClick={() => setOpen(false)}
+              className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
+            >
+              ℹ️ <span>About</span>
+            </Link>
+
             <a
               href="https://cypressdale-admin.sanity.studio/"
               target="_blank"
               rel="noreferrer"
               onClick={() => setOpen(false)}
-              className="py-2 text-accent-600 hover:bg-accent-50 rounded px-1 font-medium"
+              className="py-2 px-1 text-accent-600 hover:bg-accent-50 rounded font-medium flex items-center gap-2"
             >
-              Admin
+              🔐 <span>Admin</span>
             </a>
           </nav>
         </div>

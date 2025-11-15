@@ -1,28 +1,107 @@
 // app/pool/page.tsx
+import Link from 'next/link';
 import PoolCalendar from '@/components/PoolCalendar';
 
 export const dynamic = 'force-dynamic';
 
 export default function PoolPage() {
+  const now = new Date();
+  const month = now.getMonth(); // 0–11
+  const inPoolSeason = month >= 4 && month <= 8; // May–Sept
+
   return (
     <div className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="h1">Cypressdale Pool</h1>
-        <p className="muted max-w-2xl">
-          Check pool hours, open/closed days, and important rules for using the
-          Cypressdale community pool.
+      {/* Header with gradient & hero feel */}
+      <header className="space-y-4 rounded-2xl bg-gradient-to-r from-sky-50 via-cyan-50 to-emerald-50 border border-sky-100 px-4 py-5 md:px-6 md:py-6">
+        <div className="inline-flex items-center gap-2 rounded-full bg-white/80 text-accent-700 border border-accent-200 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] shadow-sm">
+          <span>🌊</span>
+          <span>Community Pool</span>
+        </div>
+
+        <h1 className="h1 flex flex-wrap items-center gap-2">
+          <span>Cypressdale Pool</span>
+          <span className="text-2xl md:text-3xl">☀️</span>
+        </h1>
+
+        <p className="muted max-w-2xl text-sm">
+          Relax, cool off, and connect with your neighbors at the Cypressdale
+          community pool. Check the calendar, review the rules, and get ready
+          for a great day in the sun.
         </p>
+
+        {/* Seasonal status banner */}
+        <div
+          className={`flex items-center gap-2 text-xs font-medium rounded-xl px-3 py-2 max-w-xl ${
+            inPoolSeason
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              : 'bg-gray-50 text-gray-600 border border-gray-200'
+          }`}
+        >
+          <span>{inPoolSeason ? '🏊‍♀️' : '🍂'}</span>
+          <span>
+            {inPoolSeason
+              ? 'Pool season is currently active. Check the calendar for open days and hours.'
+              : 'The pool is currently closed for the season. Check back closer to summer for updated dates.'}
+          </span>
+        </div>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)]">
-        {/* LEFT: Calendar */}
-        <PoolCalendar />
+      {/* Know before you go strip */}
+      <section className="grid gap-3 md:grid-cols-3">
+        <div className="card flex flex-col gap-1">
+          <span className="text-sm font-semibold text-brand-800">
+            Who can use the pool?
+          </span>
+          <p className="text-xs text-gray-600">
+            Cypressdale residents and their guests with a valid pool pass and
+            current assessments.
+          </p>
+        </div>
+        <div className="card flex flex-col gap-1">
+          <span className="text-sm font-semibold text-brand-800">
+            What should I bring?
+          </span>
+          <p className="text-xs text-gray-600">
+            Pool pass, towels, sunscreen, and a great attitude. Please leave
+            glass and alcohol at home.
+          </p>
+        </div>
+        <div className="card flex flex-col gap-1">
+          <span className="text-sm font-semibold text-brand-800">
+            Little swimmers
+          </span>
+          <p className="text-xs text-gray-600">
+            Children 8 and under must be accompanied by an adult. Coast
+            Guard–approved flotation devices only.
+          </p>
+        </div>
+      </section>
+
+      <div className="grid gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)] items-start">
+        {/* LEFT: Calendar, wrapped in a card */}
+        <section className="card space-y-3 border border-emerald-100 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-emerald-900 flex items-center gap-2">
+              <span>📅</span>
+              <span>Pool schedule & status</span>
+            </h2>
+            <p className="text-[11px] text-gray-500">
+              Weather & maintenance may affect availability.
+            </p>
+          </div>
+
+          <div className="border-t border-emerald-100 pt-3">
+            <PoolCalendar />
+          </div>
+        </section>
 
         {/* RIGHT: Info cards */}
         <div className="space-y-4">
-          <section className="card space-y-2">
-            <h2 className="text-lg font-semibold text-brand-800">
-              Pool Hours (Weather Permitting)
+          {/* Hours */}
+          <section className="card space-y-2 border border-emerald-50 shadow-sm">
+            <h2 className="text-lg font-semibold text-brand-800 flex items-center gap-2">
+              <span>🕒</span>
+              <span>Pool Hours (Weather Permitting)</span>
             </h2>
             <p className="text-sm text-gray-700">
               Hours may vary by season. Please refer to your most recent pool
@@ -39,33 +118,49 @@ export default function PoolPage() {
             </p>
           </section>
 
-          <section className="card space-y-2">
-            <h2 className="text-lg font-semibold text-brand-800">
-              Access & Requirements
+          {/* Access & requirements */}
+          <section className="card space-y-2 border border-emerald-50 shadow-sm">
+            <h2 className="text-lg font-semibold text-brand-800 flex items-center gap-2">
+              <span>🔑</span>
+              <span>Access & Requirements</span>
             </h2>
             <ul className="text-sm text-gray-700 list-disc list-inside space-y-1">
-              <li>Pool address: 4815 Elmbrook Drive, Spring, TX 77388</li>
-              <li>Must be current on all assessments to receive a pool ID card.</li>
-              <li>Pool access is for residents/members; guest rules may apply.</li>
+              <li>
+                Pool address:{' '}
+                <span className="font-medium">
+                  4815 Elmbrook Drive, Spring, TX 77388
+                </span>
+              </li>
+              <li>
+                Must be current on all assessments to receive a pool ID card.
+              </li>
+              <li>
+                Pool access is for residents/members; guest rules may apply.
+              </li>
               <li>All users must follow posted pool rules at all times.</li>
             </ul>
             <a
               href="https://swimmingpoolpasses.net/cypressdale/"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center text-sm text-accent-700 hover:underline"
+              className="inline-flex items-center text-sm text-accent-700 hover:underline gap-1 mt-2"
             >
-              Get or manage your pool pass →
+              <span>💳</span>
+              <span>Get or manage your pool pass</span>
+              <span>→</span>
             </a>
           </section>
 
-          <section className="card space-y-2">
-            <h2 className="text-lg font-semibold text-brand-800">
-              Pool Rules
+          {/* Rules + link to documents page */}
+          <section className="card space-y-2 border border-emerald-50 shadow-sm">
+            <h2 className="text-lg font-semibold text-brand-800 flex items-center gap-2">
+              <span>📏</span>
+              <span>Pool Rules</span>
             </h2>
             <p className="text-sm text-gray-700">
-              For everyone&apos;s safety and enjoyment, please review the current
-              Cypressdale pool rules before visiting.
+              We want the pool to be fun, relaxing, and safe for everyone.
+              Please help us by following these guidelines while you enjoy
+              the water.
             </p>
             <ul className="text-sm text-gray-700 list-disc list-inside space-y-1">
               <li>No running or excessive horseplay.</li>
@@ -73,24 +168,15 @@ export default function PoolPage() {
               <li>Children 8 and under must be accompanied by an adult.</li>
               <li>Swimsuits only—no cutoffs or street clothes in the water.</li>
             </ul>
-            {/* Replace with your actual file URLs once uploaded to the site */}
-            <div className="flex flex-wrap gap-2 mt-2">
-              <a
-                href="/docs/Pool-Info-Sheet-Cypressdale.pdf"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-accent-700 hover:underline"
+            <div className="mt-3">
+              <Link
+                href="/documents"
+                className="text-xs text-accent-700 hover:underline inline-flex items-center gap-1"
               >
-                View Pool Information Sheet (PDF)
-              </a>
-              <a
-                href="/docs/2022-Cypressdale-Pool-Rules.pdf"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-accent-700 hover:underline"
-              >
-                View Full Pool Rules (PDF)
-              </a>
+                <span>📂</span>
+                <span>View all pool documents on the Documents page</span>
+                <span>→</span>
+              </Link>
             </div>
           </section>
         </div>
@@ -98,4 +184,3 @@ export default function PoolPage() {
     </div>
   );
 }
-

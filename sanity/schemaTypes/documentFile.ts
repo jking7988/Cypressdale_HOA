@@ -24,6 +24,8 @@ export default defineType({
       options: {
         list: [          
           {title: 'Neighborhood Plat Maps', value: 'Neighborhood Plat Maps'},
+          {title: 'Pool Information', value: 'Pool Information'},
+          {title: 'ACC Documents', value: 'ACC Documents'},
           // add more “folders” here if you want
         ],
       },

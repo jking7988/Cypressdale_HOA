@@ -73,3 +73,13 @@ export const documentsQuery = groq`*[_type == "documentFile"] | order(category a
   category,
   "fileUrl": file.asset->url
 }`;
+
+export const poolDocumentsQuery = groq`*[
+  _type == "documentFile" &&
+  category match "Pool*"
+] | order(title asc){
+  _id,
+  title,
+  description,
+  "fileUrl": file.asset->url
+}`;
