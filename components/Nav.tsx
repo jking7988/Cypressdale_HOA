@@ -94,6 +94,14 @@ export default function Nav() {
               📄 <span>Documents</span>
             </Link>
 
+            <Link
+              href="/yard-of-the-month"
+              onClick={() => setOpen(false)}
+              className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
+            >
+                <span>Yard of the Month</span>
+            </Link>
+
             {/* About now uses ℹ️ */}
             <Link
               href="/about"
