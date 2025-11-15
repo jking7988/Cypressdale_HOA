@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type MiniPost = { id: string; title: string };
@@ -51,6 +51,7 @@ export function NewsCalendar({
     const key = today.toISOString().slice(0, 10);
 
     if (dateKeysWithPosts.includes(key)) {
+      // only select today if there is news
       setSelectedKey(key);
 
       const el = document.getElementById(`news-${key}`);
@@ -58,7 +59,7 @@ export function NewsCalendar({
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     } else {
-      // today has no news – just show the ring, no selection
+      // today has no news – clear selection
       setSelectedKey(null);
     }
 
@@ -94,18 +95,6 @@ export function NewsCalendar({
     }
     return set;
   }, [dateKeysWithPosts, currentYear, currentMonth]);
-
-  // Default selectedKey to the latest date in this month (if we have one)
-  useEffect(() => {
-    if (!selectedKey) {
-      const keysForMonth = dateKeysWithPosts
-        .filter((k) => k.startsWith(currentMonthKey))
-        .sort();
-      if (keysForMonth.length) {
-        setSelectedKey(keysForMonth[keysForMonth.length - 1]);
-      }
-    }
-  }, [currentMonthKey, dateKeysWithPosts, selectedKey]);
 
   const handleDayClick = (dateKey: string) => {
     setSelectedKey(dateKey);
