@@ -1,4 +1,3 @@
-// deskStructure.ts
 // @ts-nocheck
 
 export const deskStructure = (S) =>
@@ -10,28 +9,44 @@ export const deskStructure = (S) =>
         .title('Documents')
         .child(
           S.documentTypeList('documentFile')
-            .title('Documents')
+            .title('Documents'),
         ),
 
-      // Events
+      // Events → each event shows its own sub-list
       S.listItem()
         .title('Events')
         .child(
           S.documentTypeList('event')
             .title('Events')
+            .child((eventId) =>
+              S.list()
+                .title('Event')
+                .items([
+                  // Event editor
+                  S.listItem()
+                    .title('Event details')
+                    .child(
+                      S.document()
+                        .schemaType('event')
+                        .documentId(eventId),
+                    ),
+
+                  // RSVP Responses for this event
+                  S.listItem()
+                    .title('RSVP Responses')
+                    .child(
+                      S.documentTypeList('rsvpResponse')
+                        .title('RSVP Responses')
+                        .filter('event._ref == $eventId')
+                        .params({eventId}),
+                    ),
+                ]),
+            ),
         ),
 
-      // RSVPs (if you want a direct view)
-      S.listItem()
-        .title('RSVP Responses')
-        .child(
-          S.documentTypeList('rsvpResponse')
-            .title('RSVP Responses')
-        ),
-
-      // Everything else (posts, contact, etc.)
+      // Everything else (posts, etc.)
       ...S.documentTypeListItems().filter((item) => {
-        const id = String(item.getId())
-        return !['documentFile', 'event', 'rsvpResponse'].includes(id)
+        const id = String(item.getId());
+        return !['documentFile', 'event', 'rsvpResponse'].includes(id);
       }),
-    ])
+    ]);

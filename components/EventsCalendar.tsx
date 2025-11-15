@@ -15,18 +15,23 @@ type Event = {
   flyerUrl?: string;
   flyerMime?: string;
   flyerName?: string;
+  recentRsvps?: {
+    status?: 'yes' | 'maybe';
+    createdAt?: string;
+  }[];
 };
 
 type Props = {
   events: Event[];
 };
 
+type RsvpKind = 'yes' | 'maybe';
+
 function formatDateForCalendar(dateStr?: string) {
   if (!dateStr) return null;
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return null;
-  // Use UTC ISO, strip separators: YYYYMMDDTHHmmssZ
-  const iso = d.toISOString(); // e.g. 2025-12-05T17:55:00.000Z
+  const iso = d.toISOString();
   return iso.replace(/[-:]/g, '').split('.')[0] + 'Z';
 }
 
@@ -89,8 +94,6 @@ function downloadIcs(e: Event) {
   URL.revokeObjectURL(url);
 }
 
-type RsvpKind = 'yes' | 'maybe';
-
 function normalizeDate(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -119,7 +122,7 @@ export default function EventsCalendar({ events }: Props) {
     return map;
   }, [events]);
 
-  // --- RSVP state ---
+  // RSVP state
   const [rsvpState, setRsvpState] = useState(() =>
     Object.fromEntries(
       events.map((e) => [
@@ -166,7 +169,7 @@ export default function EventsCalendar({ events }: Props) {
       setPendingEventId(modalEvent._id);
       setErrorMsg(null);
 
-      // optimistic update of counts
+      // optimistic update
       setRsvpState((prev) => {
         const current = prev[modalEvent._id] || { yes: 0, maybe: 0 };
         return {
@@ -194,7 +197,6 @@ export default function EventsCalendar({ events }: Props) {
       }
 
       setSuccessMsg('RSVP received, thank you!');
-      // close modal after brief delay
       setTimeout(() => {
         closeRsvpModal();
       }, 800);
@@ -207,7 +209,7 @@ export default function EventsCalendar({ events }: Props) {
     }
   }
 
-  // --- Calendar computation ---
+  // Calendar computation
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
 
@@ -219,7 +221,6 @@ export default function EventsCalendar({ events }: Props) {
   const weeks: (Date | null)[][] = [];
   let currentWeek: (Date | null)[] = [];
 
-  // Fill leading empty cells
   for (let i = 0; i < startWeekDay; i++) {
     currentWeek.push(null);
   }
@@ -270,30 +271,35 @@ export default function EventsCalendar({ events }: Props) {
 
   return (
     <>
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)]">
+      <div className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)] items-start">
         {/* LEFT: Calendar + selected-day events */}
         <div className="space-y-4">
-          {/* Calendar */}
-          <div className="card">
+          {/* Calendar card */}
+          <div className="card shadow-sm border border-emerald-100">
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
                 onClick={goPrevMonth}
-                className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50"
+                className="px-2 py-1 rounded-lg border border-emerald-100 text-emerald-800 text-sm hover:bg-emerald-50 hover:-translate-y-[1px] transition"
               >
                 ‹
               </button>
-              <div className="font-semibold text-brand-800">{monthLabel}</div>
+              <div className="text-sm font-semibold text-emerald-900 flex items-center gap-2">
+                <span>{monthLabel}</span>
+                <span className="text-[10px] rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5">
+                  Calendar
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={goNextMonth}
-                className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50"
+                className="px-2 py-1 rounded-lg border border-emerald-100 text-emerald-800 text-sm hover:bg-emerald-50 hover:-translate-y-[1px] transition"
               >
                 ›
               </button>
             </div>
 
-            <div className="grid grid-cols-7 text-xs font-medium text-brand-600 mb-1">
+            <div className="grid grid-cols-7 text-[11px] font-medium text-emerald-700 mb-1">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
                 <div key={d} className="text-center py-1">
                   {d}
@@ -323,17 +329,17 @@ export default function EventsCalendar({ events }: Props) {
                       type="button"
                       onClick={() => setSelectedDate(date)}
                       className={[
-                        'h-9 rounded-lg w-full flex flex-col items-center justify-center border text-xs',
+                        'h-9 w-full rounded-lg flex flex-col items-center justify-center border text-xs transition',
                         isSelected
-                          ? 'bg-brand-600 text-white border-brand-600'
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                           : hasEvents
-                          ? 'border-accent-300 bg-accent-50 text-brand-800'
-                          : 'border-brand-100 text-brand-700 hover:bg-brand-50',
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+                          : 'border-gray-100 text-gray-700 hover:bg-gray-50',
                       ].join(' ')}
                     >
                       <span>{date.getDate()}</span>
                       {hasEvents && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-accent-500 mt-0.5" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-0.5" />
                       )}
                     </button>
                   );
@@ -342,41 +348,47 @@ export default function EventsCalendar({ events }: Props) {
             </div>
 
             <p className="text-xs text-gray-500 mt-3">
-              Click a highlighted day to see events.
+              Click a highlighted day to see its events.
             </p>
           </div>
 
-          {/* Selected-day events UNDER the calendar */}
+          {/* Selected-day events */}
           {selectedEvents && selectedEvents.length > 0 && (
-            <div className="card">
-              <p className="text-sm font-semibold mb-3">
-                Events on{' '}
-                {selectedDate?.toLocaleDateString(undefined, {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
+            <div className="card border border-emerald-100 shadow-sm">
+              <p className="text-sm font-semibold mb-3 flex items-center gap-2 text-emerald-900">
+                <span>Events on</span>
+                <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800 border border-emerald-100">
+                  {selectedDate?.toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
               </p>
-              <div className="space-y-2">
+
+              <div className="space-y-3">
                 {selectedEvents.map((e) => {
-                    if (!e.startDate) return null; // guard
+                  if (!e.startDate) return null;
 
-                    const start = new Date(e.startDate);
-                    const timeLabel = start.toLocaleTimeString(undefined, {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                    });
+                  const start = new Date(e.startDate);
+                  const timeLabel = start.toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  });
 
-                    const counts =
-                        rsvpState[e._id] || {
-                        yes: e.rsvpYes ?? 0,
-                        maybe: e.rsvpMaybe ?? 0,
-                        };
-                    const disabled = pendingEventId === e._id;
+                  const counts =
+                    rsvpState[e._id] || {
+                      yes: e.rsvpYes ?? 0,
+                      maybe: e.rsvpMaybe ?? 0,
+                    };
+                  const disabled = pendingEventId === e._id;
 
-                    return (
-                        <div key={e._id} className="card">
+                  return (
+                    <div
+                      key={e._id}
+                      className="card border border-emerald-50 bg-emerald-50/40 shadow-sm"
+                    >
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <div className="text-sm font-semibold text-brand-800">
@@ -386,20 +398,29 @@ export default function EventsCalendar({ events }: Props) {
                             {timeLabel}
                             {e.location ? ` • ${e.location}` : ''}
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {counts.yes} going · {counts.maybe} maybe
+                          <div className="flex items-center gap-2 mt-1 text-[11px]">
+                            <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-emerald-700">
+                              <span className="mr-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              {counts.yes} going
+                            </span>
+                            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700">
+                              <span className="mr-1 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                              {counts.maybe} maybe
+                            </span>
                           </div>
                         </div>
                       </div>
+
                       {e.description && (
-                        <p className="text-sm mt-1">{e.description}</p>
+                        <p className="text-sm mt-1 text-gray-800">
+                          {e.description}
+                        </p>
                       )}
 
                       {/* Flyer preview / link */}
                       {e.flyerUrl && (
                         <div className="mt-2">
                           {e.flyerMime?.startsWith('image/') ? (
-                            // Show images directly
                             <a
                               href={e.flyerUrl}
                               target="_blank"
@@ -409,12 +430,11 @@ export default function EventsCalendar({ events }: Props) {
                               <img
                                 src={e.flyerUrl}
                                 alt={e.flyerName || `${e.title} flyer`}
-                                className="max-h-40 rounded-lg border border-brand-100 shadow-sm"
+                                className="max-h-40 rounded-lg border border-emerald-100 shadow-sm"
                               />
                             </a>
                           ) : e.flyerMime === 'application/pdf' ? (
-                            // Show PDFs embedded
-                            <div className="rounded-lg border border-brand-100 overflow-hidden">
+                            <div className="rounded-lg border border-emerald-100 overflow-hidden">
                               <iframe
                                 src={e.flyerUrl}
                                 title={e.flyerName || `${e.title} flyer`}
@@ -422,14 +442,14 @@ export default function EventsCalendar({ events }: Props) {
                               />
                             </div>
                           ) : (
-                            // Fallback for any other file type
                             <a
                               href={e.flyerUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-xs text-accent-700 hover:underline"
+                              className="text-xs text-emerald-700 hover:underline"
                             >
-                              View event flyer{e.flyerName ? ` (${e.flyerName})` : ''}
+                              View event flyer
+                              {e.flyerName ? ` (${e.flyerName})` : ''}
                             </a>
                           )}
                         </div>
@@ -441,7 +461,7 @@ export default function EventsCalendar({ events }: Props) {
                           type="button"
                           disabled={disabled}
                           onClick={() => openRsvpModal(e, 'yes')}
-                          className="px-3 py-1 rounded-full text-xs font-medium border border-accent-500 text-accent-700 hover:bg-accent-50 disabled:opacity-60"
+                          className="px-3 py-1 rounded-full text-xs font-medium border border-emerald-500 text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
                         >
                           I&apos;m going
                         </button>
@@ -449,7 +469,7 @@ export default function EventsCalendar({ events }: Props) {
                           type="button"
                           disabled={disabled}
                           onClick={() => openRsvpModal(e, 'maybe')}
-                          className="px-3 py-1 rounded-full text-xs font-medium border border-brand-200 text-brand-700 hover:bg-brand-50 disabled:opacity-60"
+                          className="px-3 py-1 rounded-full text-xs font-medium border border-emerald-200 text-emerald-800 hover:bg-emerald-50 disabled:opacity-60"
                         >
                           Maybe
                         </button>
@@ -462,7 +482,7 @@ export default function EventsCalendar({ events }: Props) {
                           target="_blank"
                           rel="noreferrer"
                           aria-label="Add to Google Calendar"
-                          className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-accent-500 text-accent-700 hover:bg-accent-50"
+                          className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-emerald-500 text-emerald-700 hover:bg-emerald-50"
                         >
                           <CalendarPlus className="w-4 h-4" />
                           <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -474,7 +494,7 @@ export default function EventsCalendar({ events }: Props) {
                           type="button"
                           aria-label="Download .ics file"
                           onClick={() => downloadIcs(e)}
-                          className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-brand-300 text-brand-700 hover:bg-brand-50"
+                          className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-emerald-200 text-emerald-800 hover:bg-emerald-50"
                         >
                           <Download className="w-4 h-4" />
                           <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -492,24 +512,31 @@ export default function EventsCalendar({ events }: Props) {
 
         {/* RIGHT: All upcoming events list */}
         <div className="space-y-3">
-          <h2 className="h2">Upcoming Events</h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="h2 flex items-center gap-2">
+              <span>Upcoming Events</span>
+              <span className="text-[11px] rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5">
+                {events.length} total
+              </span>
+            </h2>
+          </div>
+
           {events.length === 0 && (
             <p className="muted">No events have been posted yet.</p>
           )}
 
-          <div className="space-y-2 mt-3">
+          <div className="space-y-3 mt-3">
             {events.map((e) => {
-                if (!e.startDate) return null; // guard
+              if (!e.startDate) return null;
 
-                const start = new Date(e.startDate);
-                const dateLabel = start.toLocaleString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                });
-
+              const start = new Date(e.startDate);
+              const dateLabel = start.toLocaleString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+              });
 
               const counts =
                 rsvpState[e._id] || {
@@ -519,88 +546,103 @@ export default function EventsCalendar({ events }: Props) {
               const disabled = pendingEventId === e._id;
 
               return (
-                <div key={e._id} className="card">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <div className="font-semibold text-brand-800">
-                        {e.title}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {dateLabel}
-                        {e.location ? ` • ${e.location}` : ''}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {counts.yes} going · {counts.maybe} maybe
+                <div
+                  key={e._id}
+                  className="card relative overflow-hidden border border-emerald-50 transition hover:-translate-y-[1px] hover:shadow-md"
+                >
+                  {/* accent bar */}
+                  <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-300" />
+
+                  <div className="pl-3">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                        <span>📅</span>
+                        <span>{dateLabel}</span>
                       </div>
                     </div>
-                  </div>
-                  {e.description && (
-                    <p className="text-sm mt-1">{e.description}</p>
-                  )}
+                    <div className="font-semibold text-brand-800">
+                      {e.title}
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      {e.location}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-[11px]">
+                      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-emerald-700">
+                        <span className="mr-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        {counts.yes} going
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-amber-700">
+                        <span className="mr-1 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                        {counts.maybe} maybe
+                      </span>
+                    </div>
 
-                              {e.description && (
-              <p className="text-sm mt-1">{e.description}</p>
-            )}
-                    
-                  {e.flyerUrl && (
-                    <div className="mt-2">
+                    {e.description && (
+                      <p className="text-sm mt-1 text-gray-800">
+                        {e.description}
+                      </p>
+                    )}
+
+                    {e.flyerUrl && (
+                      <div className="mt-2">
+                        <a
+                          href={e.flyerUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-emerald-700 hover:underline"
+                        >
+                          View event flyer
+                        </a>
+                      </div>
+                    )}
+
+                    {/* RSVP buttons */}
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => openRsvpModal(e, 'yes')}
+                        className="px-3 py-1 rounded-full text-xs font-medium border border-emerald-500 text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
+                      >
+                        I&apos;m going
+                      </button>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => openRsvpModal(e, 'maybe')}
+                        className="px-3 py-1 rounded-full text-xs font-medium border border-emerald-200 text-emerald-800 hover:bg-emerald-50 disabled:opacity-60"
+                      >
+                        Maybe
+                      </button>
+                    </div>
+
+                    {/* Icon-only calendar export buttons */}
+                    <div className="flex flex-wrap gap-2 mt-3">
                       <a
-                        href={e.flyerUrl}
+                        href={buildGoogleCalendarUrl(e)}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-xs text-accent-700 hover:underline"
+                        aria-label="Add to Google Calendar"
+                        className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-emerald-500 text-emerald-700 hover:bg-emerald-50"
                       >
-                        View event flyer
+                        <CalendarPlus className="w-4 h-4" />
+                        <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                          Add to Google Calendar
+                        </span>
                       </a>
+
+                      <button
+                        type="button"
+                        aria-label="Download .ics file"
+                        onClick={() => downloadIcs(e)}
+                        className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-emerald-200 text-emerald-800 hover:bg-emerald-50"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+                          Download .ics
+                        </span>
+                      </button>
                     </div>
-                  )}
-
-                  {/* RSVP buttons */}
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => openRsvpModal(e, 'yes')}
-                      className="px-3 py-1 rounded-full text-xs font-medium border border-accent-500 text-accent-700 hover:bg-accent-50 disabled:opacity-60"
-                    >
-                      I&apos;m going
-                    </button>
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => openRsvpModal(e, 'maybe')}
-                      className="px-3 py-1 rounded-full text-xs font-medium border border-brand-200 text-brand-700 hover:bg-brand-50 disabled:opacity-60"
-                    >
-                      Maybe
-                    </button>
-                  </div>
-
-                  {/* Icon-only calendar export buttons */}
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <a
-                      href={buildGoogleCalendarUrl(e)}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label="Add to Google Calendar"
-                      className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-accent-500 text-accent-700 hover:bg-accent-50"
-                    >
-                      <CalendarPlus className="w-4 h-4" />
-                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
-                        Add to Google Calendar
-                      </span>
-                    </a>
-
-                    <button
-                      type="button"
-                      aria-label="Download .ics file"
-                      onClick={() => downloadIcs(e)}
-                      className="relative group flex items-center justify-center w-8 h-8 rounded-full border border-brand-300 text-brand-700 hover:bg-brand-50"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-2 py-1 text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
-                        Download .ics
-                      </span>
-                    </button>
                   </div>
                 </div>
               );
@@ -609,7 +651,7 @@ export default function EventsCalendar({ events }: Props) {
         </div>
       </div>
 
-      {/* RSVP Modal (unchanged) */}
+      {/* RSVP Modal */}
       {modalOpen && modalEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
@@ -630,7 +672,7 @@ export default function EventsCalendar({ events }: Props) {
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 />
               </div>
               <div>
@@ -641,7 +683,7 @@ export default function EventsCalendar({ events }: Props) {
                   type="email"
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   placeholder="you@example.com"
                 />
               </div>
@@ -666,7 +708,7 @@ export default function EventsCalendar({ events }: Props) {
                 type="button"
                 onClick={submitRsvpForm}
                 disabled={submitting}
-                className="px-3 py-1.5 text-xs rounded-lg bg-accent-600 text-white font-medium hover:bg-accent-700 disabled:opacity-60"
+                className="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-60"
               >
                 {submitting ? 'Sending…' : 'Submit RSVP'}
               </button>

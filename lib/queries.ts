@@ -20,10 +20,18 @@ export const homeQuery = groq`{
       rsvpMaybe,
       "flyerUrl": flyer.asset->url,
       "flyerMime": flyer.asset->mimeType,
-      "flyerName": flyer.asset->originalFilename
+      "flyerName": flyer.asset->originalFilename,
+
+      // 🔒 anonymized recent RSVP activity
+      "recentRsvps": *[
+        _type == "rsvpResponse" &&
+        event._ref == ^._id
+      ] | order(createdAt desc)[0..10]{
+        status,
+        createdAt
+      }
     }
 }`;
-
 
 export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc) {
   _id,
@@ -45,7 +53,16 @@ export const eventsQuery = groq`*[_type == "event"]
     rsvpMaybe,
     "flyerUrl": flyer.asset->url,
     "flyerMime": flyer.asset->mimeType,
-    "flyerName": flyer.asset->originalFilename
+    "flyerName": flyer.asset->originalFilename,
+
+    // 🔒 anonymized recent RSVP activity
+    "recentRsvps": *[
+      _type == "rsvpResponse" &&
+      event._ref == ^._id
+    ] | order(createdAt desc)[0..10]{
+      status,
+      createdAt
+    }
   }`;
 
 // queries.ts

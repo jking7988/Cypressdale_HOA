@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date().toISOString(),
     });
 
-    // 2) Increment counters on the event document (optional but nice)
+    // 2) Increment counters on the event document
     const field = response === 'yes' ? 'rsvpYes' : 'rsvpMaybe';
 
     await writeClient
@@ -42,4 +42,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({error: 'Server error'}, {status: 500});
   }
 }
-
