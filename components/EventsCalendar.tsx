@@ -396,33 +396,44 @@ export default function EventsCalendar({ events }: Props) {
                       )}
 
                       {/* Flyer preview / link */}
-                    {e.flyerUrl && (
-                    <div className="mt-2">
-                        {e.flyerMime?.startsWith('image/') ? (
-                        <a
-                            href={e.flyerUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-block"
-                        >
-                            <img
-                            src={e.flyerUrl}
-                            alt={e.flyerName || `${e.title} flyer`}
-                            className="max-h-40 rounded-lg border border-brand-100 shadow-sm"
-                            />
-                        </a>
-                        ) : (
-                        <a
-                            href={e.flyerUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-accent-700 hover:underline"
-                        >
-                            View event flyer{e.flyerName ? ` (${e.flyerName})` : ''}
-                        </a>
-                        )}
-                    </div>
-                    )}
+                      {e.flyerUrl && (
+                        <div className="mt-2">
+                          {e.flyerMime?.startsWith('image/') ? (
+                            // Show images directly
+                            <a
+                              href={e.flyerUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-block"
+                            >
+                              <img
+                                src={e.flyerUrl}
+                                alt={e.flyerName || `${e.title} flyer`}
+                                className="max-h-40 rounded-lg border border-brand-100 shadow-sm"
+                              />
+                            </a>
+                          ) : e.flyerMime === 'application/pdf' ? (
+                            // Show PDFs embedded
+                            <div className="rounded-lg border border-brand-100 overflow-hidden">
+                              <iframe
+                                src={e.flyerUrl}
+                                title={e.flyerName || `${e.title} flyer`}
+                                className="w-full h-64"
+                              />
+                            </div>
+                          ) : (
+                            // Fallback for any other file type
+                            <a
+                              href={e.flyerUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-accent-700 hover:underline"
+                            >
+                              View event flyer{e.flyerName ? ` (${e.flyerName})` : ''}
+                            </a>
+                          )}
+                        </div>
+                      )}
 
                       {/* RSVP buttons */}
                       <div className="flex gap-2 mt-2">
@@ -525,6 +536,23 @@ export default function EventsCalendar({ events }: Props) {
                   </div>
                   {e.description && (
                     <p className="text-sm mt-1">{e.description}</p>
+                  )}
+
+                              {e.description && (
+              <p className="text-sm mt-1">{e.description}</p>
+            )}
+                    
+                  {e.flyerUrl && (
+                    <div className="mt-2">
+                      <a
+                        href={e.flyerUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-accent-700 hover:underline"
+                      >
+                        View event flyer
+                      </a>
+                    </div>
                   )}
 
                   {/* RSVP buttons */}

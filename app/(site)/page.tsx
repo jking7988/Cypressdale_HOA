@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
 import { client } from '@/lib/sanity.client';
-import { homeQuery } from '@/lib/queries';
+import { postsQuery, eventsQuery } from '@/lib/queries';
 
 type Post = {
   _id: string;
@@ -20,6 +20,9 @@ type Event = {
   location?: string;
   startDate?: string;
   endDate?: string;
+  flyerUrl?: string;
+  flyerMime?: string;
+  flyerName?: string;
 };
 
 type HomeData = {
@@ -28,9 +31,12 @@ type HomeData = {
 };
 
 export default async function HomePage() {
-  const { posts = [], events = [] } = await client.fetch<HomeData>(homeQuery);
+  const [posts, events] = await Promise.all([
+    client.fetch<Post[]>(postsQuery),
+    client.fetch<Event[]>(eventsQuery),
+  ]);
 
-  // 1) Normalize and sort events by startDate
+  // Sort events
   const sortedEvents = events
     .filter((e) => e.startDate)
     .sort((a, b) => {
@@ -39,7 +45,6 @@ export default async function HomePage() {
       return da - db;
     });
 
-  // 2) Treat all sorted events as "upcoming" for now
   const upcomingEvents = sortedEvents;
   const nextEvent = upcomingEvents[0] ?? null;
   const moreEvents = upcomingEvents.slice(1, 4);
@@ -76,7 +81,7 @@ export default async function HomePage() {
             </h1>
             <p className="text-sm md:text-base text-emerald-50/90 mb-6">
               Your central hub for neighborhood news, events, documents, and board
-              information. Stay up to date and get involved in our community.
+              information. Stay up to date and get involved in the community.
             </p>
 
             <div className="flex flex-wrap gap-3">
@@ -207,30 +212,63 @@ export default async function HomePage() {
             View all events →
           </Link>
         </div>
-        {upcomingEvents.length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {upcomingEvents.slice(0, 4).map((e) => (
-              <div key={e._id} className="card">
-                <div className="text-xs font-semibold text-brand-600 mb-1">
-                  {formatDate(e.startDate)}
-                </div>
-                <div className="font-semibold text-brand-900 text-sm mb-0.5">
-                  {e.title}
-                </div>
-                <div className="text-xs text-gray-600 mb-1">
-                  {e.location}
-                </div>
-                {e.description && (
-                  <p className="text-xs text-gray-700 line-clamp-3">
-                    {e.description}
-                  </p>
+        {upcomingEvents.slice(0, 4).map((e) => (
+        <div key={e._id} className="card">
+          <div className="text-xs font-semibold text-brand-600 mb-1">
+            {formatDate(e.startDate)}
+          </div>
+          <div className="font-semibold text-brand-900 text-sm mb-0.5">
+            {e.title}
+          </div>
+          <div className="text-xs text-gray-600 mb-1">
+            {e.location}
+          </div>
+          {e.description && (
+            <p className="text-xs text-gray-700 line-clamp-3">
+              {e.description}
+            </p>
+          )}
+
+          {/* 👇 Add this block to display the uploaded file */}
+          {e.flyerUrl && (
+            <div className="mt-2 flex justify-center">
+              <div className="w-full max-w-[300px]"> {/* 👈 Half-width-ish */}
+                {e.flyerMime?.startsWith('image/') ? (
+                  <a
+                    href={e.flyerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-block"
+                  >
+                    <img
+                      src={e.flyerUrl}
+                      alt={e.flyerName || `${e.title} flyer`}
+                      className="w-full rounded-lg border border-brand-100 shadow-sm"
+                    />
+                  </a>
+                ) : e.flyerMime === 'application/pdf' ? (
+                  <div className="rounded-lg border border-brand-100 overflow-hidden">
+                    <iframe
+                      src={e.flyerUrl}
+                      title={e.flyerName || `${e.title} flyer`}
+                      className="w-full h-48"
+                    />
+                  </div>
+                ) : (
+                  <a
+                    href={e.flyerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-accent-700 hover:underline"
+                  >
+                    View event file{e.flyerName ? ` (${e.flyerName})` : ''}
+                  </a>
                 )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="muted text-sm">No upcoming events have been added yet.</p>
-        )}
+            </div>
+          )}
+        </div>
+      ))}
       </section>
 
       {/* Latest News */}
@@ -323,6 +361,7 @@ export default async function HomePage() {
     </div>
   );
 }
+
 
 // helper so TS doesn’t freak out & we avoid invalid dates
 function eSafeDate(dateStr?: string) {
