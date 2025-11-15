@@ -12,12 +12,13 @@ import {
   CloudRain,
   CloudLightning,
   Snowflake,
+  AlertCircle,
 } from 'lucide-react';
 
 type Post = {
   _id: string;
   title: string;
-  excerpt?: any;      // Portable Text array
+  excerpt?: any; // Portable Text array
   body?: any;
   _createdAt?: string;
 };
@@ -301,6 +302,20 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Site under development notice */}
+      <section className="card border-amber-200 bg-amber-50/80 text-amber-900 flex gap-3 items-start text-sm">
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+            Site Under Development
+          </p>
+          <p className="mt-1">
+            This website is currently under active development. You may notice
+            periodic changes; if something is not working, please bear with us.
+          </p>
+        </div>
+      </section>
+
       {/* Neighborhood Weather */}
       <section className="space-y-3">
         <h2 className="h2">Neighborhood weather</h2>
@@ -350,7 +365,7 @@ export default async function HomePage() {
                   </div>
                 );
               })}
-            </div>           
+            </div>
           </>
         ) : (
           <p className="muted text-sm">
@@ -460,7 +475,7 @@ export default async function HomePage() {
 
       {/* Latest News */}
       <section className="space-y-3">
-        <div className="flex items-baseline justify-between gap-2">
+        <div className="flex items-baseline justify_between gap-2">
           <h2 className="h2 flex items-center gap-2">
             <span>Latest news</span>
             {latestPosts?.length > 0 && (
