@@ -58,7 +58,6 @@ export const eventsQuery = groq`*[_type == "event"]
     "flyerMime": flyer.asset->mimeType,
     "flyerName": flyer.asset->originalFilename,
 
-    // 🔒 anonymized recent RSVP activity
     "recentRsvps": *[
       _type == "rsvpResponse" &&
       event._ref == ^._id
@@ -68,14 +67,19 @@ export const eventsQuery = groq`*[_type == "event"]
     }
   }`;
 
-// queries.ts
-export const documentsQuery = groq`*[_type == "documentFile"] | order(category asc, title asc){
-  _id,
-  title,
-  description,
-  category,
-  "fileUrl": file.asset->url
-}`;
+/* 🔽 UPDATED BLOCK STARTS HERE */
+export const documentsQuery = groq`*[_type == "documentFile"]
+  | order(category asc, coalesce(uploadedAt, _updatedAt) desc, title asc){
+    _id,
+    title,
+    description,
+    category,
+    // prefer custom uploadedAt, otherwise fall back to system _updatedAt
+    "uploadedAt": coalesce(uploadedAt, _updatedAt),
+    "fileUrl": file.asset->url,
+    "fileName": file.asset->originalFilename
+  }`;
+/* 🔼 UPDATED BLOCK ENDS HERE */
 
 export const poolDocumentsQuery = groq`*[
   _type == "documentFile" &&
@@ -87,7 +91,6 @@ export const poolDocumentsQuery = groq`*[
   "fileUrl": file.asset->url
 }`;
 
-// All winners, newest month first
 export const yardWinnersQuery = groq`*[_type == "yardWinner"] | order(month desc) {
   _id,
   title,
@@ -97,7 +100,6 @@ export const yardWinnersQuery = groq`*[_type == "yardWinner"] | order(month desc
   "photoUrl": photo.asset->url
 }`;
 
-// Single winner by ID (for the [id] page)
 export const yardWinnerByIdQuery = groq`*[_type == "yardWinner" && _id == $id][0]{
   _id,
   title,
