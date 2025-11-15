@@ -7,73 +7,53 @@ export default function Nav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="border-b border-brand-100 bg-brand-50/60 backdrop-blur">
+    <header
+      className="border-b border-brand-100 bg-brand-50/60 backdrop-blur"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       <div className="container flex items-center justify-between py-4">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="font-bold text-xl text-brand-700"
-          onClick={() => setOpen(false)}
-        >
-          Cypressdale HOA
-        </Link>
+        {/* Left: logo + hamburger */}
+        <div className="flex items-center gap-3">
+          {/* Hamburger button – all screen sizes */}
+          <button
+            className="p-2 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-100"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-label="Toggle menu"
+          >
+            <div className="flex flex-col justify-center items-center gap-1">
+              <span
+                className={`h-[2px] w-5 bg-current transition-transform duration-200 ${
+                  open ? 'translate-y-[6px] rotate-45' : ''
+                }`}
+              />
+              <span
+                className={`h-[2px] w-5 bg-current transition-opacity duration-200 ${
+                  open ? 'opacity-0' : 'opacity-100'
+                }`}
+              />
+              <span
+                className={`h-[2px] w-5 bg-current transition-transform duration-200 ${
+                  open ? '-translate-y-[6px] -rotate-45' : ''
+                }`}
+              />
+            </div>
+          </button>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex gap-4">
-          <Link className="hover:text-brand-700 text-brand-600" href="/about">
-            About
-          </Link>
-          <Link className="hover:text-brand-700 text-brand-600" href="/news">
-            News
-          </Link>
-          <Link className="hover:text-brand-700 text-brand-600" href="/events">
-            Events
-          </Link>
+          {/* Logo */}
           <Link
-            className="hover:text-brand-700 text-brand-600"
-            href="/documents"
+            href="/"
+            className="font-bold text-xl text-brand-700"
+            onClick={() => setOpen(false)}
           >
-            Documents
+            Cypressdale HOA
           </Link>
-          <a
-            href="https://cypressdale-admin.sanity.studio/"
-            target="_blank"
-            rel="noreferrer"
-            className="text-accent-600 hover:text-accent-500 font-medium"
-          >
-            Admin
-          </a>
-        </nav>
-
-        {/* Mobile hamburger button */}
-        <button
-          className="md:hidden p-2 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-100"
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
-        >
-          <div className="flex flex-col justify-center items-center gap-1">
-            <span
-              className={`h-[2px] w-5 bg-current transition-transform duration-200 ${
-                open ? 'translate-y-[6px] rotate-45' : ''
-              }`}
-            />
-            <span
-              className={`h-[2px] w-5 bg-current transition-opacity duration-200 ${
-                open ? 'opacity-0' : 'opacity-100'
-              }`}
-            />
-            <span
-              className={`h-[2px] w-5 bg-current transition-transform duration-200 ${
-                open ? '-translate-y-[6px] -rotate-45' : ''
-              }`}
-            />
-          </div>
-        </button>
+        </div>       
       </div>
 
-      {/* Mobile dropdown menu */}
+      {/* Dropdown menu – appears on hover or click, all screen sizes */}
       {open && (
-        <div className="md:hidden border-t border-brand-100 bg-brand-50/80 backdrop-blur">
+        <div className="border-t border-brand-100 bg-brand-50/80 backdrop-blur">
           <nav className="container flex flex-col py-2">
             <Link
               href="/about"
@@ -96,6 +76,16 @@ export default function Nav() {
             >
               Events
             </Link>
+
+            {/* Slightly emphasized Pool link in dropdown (mobile + desktop) */}
+            <Link
+              href="/pool"
+              onClick={() => setOpen(false)}
+              className="py-2 text-brand-700 hover:bg-brand-100 rounded px-1"
+            >              
+              <span>Pool</span>
+            </Link>
+
             <Link
               href="/documents"
               onClick={() => setOpen(false)}
@@ -108,7 +98,7 @@ export default function Nav() {
               target="_blank"
               rel="noreferrer"
               onClick={() => setOpen(false)}
-              className="py-2 text-accent-600 hover:bg-accent-50 rounded px-1"
+              className="py-2 text-accent-600 hover:bg-accent-50 rounded px-1 font-medium"
             >
               Admin
             </a>
