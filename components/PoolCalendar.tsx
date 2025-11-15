@@ -2,105 +2,136 @@
 
 import { useState } from 'react';
 
-function getPoolInfo(date: Date) {
-  const month = date.getMonth(); // 0 = Jan
-  const day = date.getDate();
+type PoolInfo = {
+  inSeason: boolean;
+  isOpen: boolean;
+  hours?: string;
+  note?: string; // e.g. "Memorial Day", "After holiday"
+};
+
+function sameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+// Last Monday in May
+function getMemorialDay(year: number): Date {
+  const d = new Date(year, 4, 31); // May 31
+  while (d.getDay() !== 1) {
+    d.setDate(d.getDate() - 1);
+  }
+  return d;
+}
+
+// First Monday in September
+function getLaborDay(year: number): Date {
+  const d = new Date(year, 8, 1); // Sept 1
+  while (d.getDay() !== 1) {
+    d.setDate(d.getDate() + 1);
+  }
+  return d;
+}
+
+function getPoolInfo(date: Date): PoolInfo {
+  const year = date.getFullYear();
   const weekday = date.getDay(); // 0 = Sun, 1 = Mon, ...
+  const memorialDay = getMemorialDay(year);
+  const laborDay = getLaborDay(year);
 
-  let inSeason = false;
-  let isOpen = false;
-  let hours: string | undefined;
+  const tuesdayAfterMemorial = new Date(memorialDay);
+  tuesdayAfterMemorial.setDate(memorialDay.getDate() + 1);
 
-  // MAY (month 4)
-  if (month === 4) {
-    const mayOpenDays = new Set([1, 2, 8, 9, 15, 16, 22, 23, 29, 30, 31]);
-    inSeason = true;
+  const tuesdayAfterLabor = new Date(laborDay);
+  tuesdayAfterLabor.setDate(laborDay.getDate() + 1);
 
-    if (mayOpenDays.has(day)) {
-      isOpen = true;
-      if (day === 31) {
-        // Memorial Day
-        hours = '11:00–8:00';
-      } else {
-        // Weekend days listed in schedule
-        hours = '11:00–9:00';
-      }
-    }
+  const seasonStart = new Date(year, 4, 31); // May 31
+  const seasonEnd = new Date(year, 8, 1); // Sept 1
+
+  const inMainSeason = date >= seasonStart && date <= seasonEnd;
+
+  const isMemorial = sameDay(date, memorialDay);
+  const isLabor = sameDay(date, laborDay);
+  const isTueAfterMemorial = sameDay(date, tuesdayAfterMemorial);
+  const isTueAfterLabor = sameDay(date, tuesdayAfterLabor);
+
+  // In-season days:
+  // - Main season (May 31–Sept 1)
+  // - Memorial Day & Labor Day (even if outside that window)
+  // - Tuesday after each holiday (shown as closed)
+  const inSeason =
+    inMainSeason ||
+    isMemorial ||
+    isLabor ||
+    isTueAfterMemorial ||
+    isTueAfterLabor;
+
+  if (!inSeason) {
+    return { inSeason: false, isOpen: false };
   }
 
-  // JUNE–AUGUST MAIN SEASON
-  else if (month >= 5 && month <= 7) {
-    inSeason = true;
-
-    let inMainRange = false;
-
-    if (month === 5) {
-      // June 1–30
-      inMainRange = day >= 1 && day <= 30;
-    } else if (month === 6) {
-      // July 1–31
-      inMainRange = day >= 1 && day <= 31;
-    } else if (month === 7) {
-      // August 1–15 plus 21,22,28,29
-      inMainRange =
-        (day >= 1 && day <= 15) || [21, 22, 28, 29].includes(day);
-    }
-    if (month === 5 && day === 1) {
-        return { inSeason: true, isOpen: false, hours: undefined };
-    }
-
-    if (inMainRange) {
-      // Mondays closed
-      if (weekday === 1) {
-        isOpen = false;
-      } else {
-        isOpen = true;
-
-        if (weekday >= 2 && weekday <= 4) {
-          // Tue–Thu
-          hours = '11:00–8:00';
-        } else if (weekday === 0) {
-          // Sunday
-          hours = '11:00–9:00';
-
-          // Special shorter Sundays in late August
-          if (month === 7 && (day === 22 || day === 29)) {
-            hours = '11:00–8:00';
-          }
-        } else {
-          // Fri–Sat
-          hours = '11:00–9:00';
-        }
-      }
-    }
+  // Holiday Mondays: open with special note
+  if (isMemorial) {
+    return {
+      inSeason: true,
+      isOpen: true,
+      hours: '10:00 a.m. – 8:00 p.m.',
+      note: 'Memorial Day',
+    };
   }
 
-  // SEPTEMBER (month 8)
-  else if (month === 8) {
-    inSeason = true;
-    const sepOpenDays = new Set([4, 5, 6, 11, 12, 18, 19, 25, 26]);
-
-    if (sepOpenDays.has(day)) {
-      isOpen = true;
-
-      // Labor Day (6) and Sundays 12,19,26: shorter hours
-      if (day === 6 || day === 12 || day === 19 || day === 26) {
-        hours = '11:00–8:00';
-      } else {
-        hours = '11:00–9:00';
-      }
-    }
+  if (isLabor) {
+    return {
+      inSeason: true,
+      isOpen: true,
+      hours: '10:00 a.m. – 8:00 p.m.',
+      note: 'Labor Day',
+    };
   }
 
-  // Outside May–September: offseason
-  return { inSeason, isOpen, hours };
+  // Tuesday after each holiday: explicitly closed, with note
+  if (isTueAfterMemorial || isTueAfterLabor) {
+    return {
+      inSeason: true,
+      isOpen: false,
+      note: 'After holiday',
+    };
+  }
+
+  // Regular weekly pattern during season
+  // Monday: closed
+  if (weekday === 1) {
+    return { inSeason: true, isOpen: false };
+  }
+
+  // Sunday: 10–6
+  if (weekday === 0) {
+    return {
+      inSeason: true,
+      isOpen: true,
+      hours: '10:00 a.m. – 6:00 p.m.',
+    };
+  }
+
+  // Tuesday–Saturday: 10–8
+  return {
+    inSeason: true,
+    isOpen: true,
+    hours: '10:00 a.m. – 8:00 p.m.',
+  };
 }
 
 export default function PoolCalendar() {
-  const [currentMonth, setCurrentMonth] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
+  const today = new Date();
+  const [currentMonth, setCurrentMonth] = useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1),
+  );
+
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth();
+  const todayDate = today.getDate();
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -151,9 +182,9 @@ export default function PoolCalendar() {
   };
 
   return (
-    <section className="card space-y-4">
+    <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-brand-800">
+        <h2 className="text-base font-semibold text-brand-800">
           Pool Open/Closed Calendar
         </h2>
         <div className="flex items-center gap-2">
@@ -192,15 +223,20 @@ export default function PoolCalendar() {
               return (
                 <div
                   key={`${i}-${j}`}
-                  className="h-9 rounded-lg border border-transparent"
+                  className="h-14 rounded-lg border border-transparent"
                 />
               );
             }
 
-            const { inSeason, isOpen, hours } = getPoolInfo(date);
+            const { inSeason, isOpen, hours, note } = getPoolInfo(date);
+
+            const isToday =
+              date.getFullYear() === todayYear &&
+              date.getMonth() === todayMonth &&
+              date.getDate() === todayDate;
 
             const baseClasses =
-              'h-12 rounded-lg w-full flex flex-col items-center justify-center border text-[11px] px-1 text-center';
+              'h-14 rounded-lg w-full flex flex-col items-center justify-center border text-[11px] px-1 text-center transition-transform duration-150';
 
             let statusClasses = '';
             if (!inSeason) {
@@ -214,12 +250,16 @@ export default function PoolCalendar() {
                 'border-rose-200 bg-rose-50 text-rose-800';
             }
 
+            const ringClasses = isToday
+              ? 'ring-2 ring-sky-300 ring-offset-1 ring-offset-white font-semibold'
+              : '';
+
             const label = !inSeason ? '' : isOpen ? 'Open' : 'Closed';
 
             return (
               <div
                 key={`${i}-${j}`}
-                className={`${baseClasses} ${statusClasses}`}
+                className={`${baseClasses} ${statusClasses} ${ringClasses} hover:scale-[1.02]`}
               >
                 <span>{date.getDate()}</span>
                 {label && (
@@ -230,6 +270,11 @@ export default function PoolCalendar() {
                 {hours && (
                   <span className="mt-0.5 text-[9px] leading-none">
                     {hours}
+                  </span>
+                )}
+                {note && (
+                  <span className="mt-0.5 text-[9px] leading-none">
+                    {note}
                   </span>
                 )}
               </div>
@@ -250,6 +295,10 @@ export default function PoolCalendar() {
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded-sm bg-gray-100 border border-gray-300" />
           <span>Outside pool season</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded-full border border-sky-300" />
+          <span>Today</span>
         </div>
       </div>
     </section>
