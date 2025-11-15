@@ -1,6 +1,7 @@
-// app/pool/page.tsx
+'use client';
+
 import Link from 'next/link';
-import PoolCalendar from '@/components/PoolCalendar';
+import PoolCalendar, { getPoolInfo } from '@/components/PoolCalendar';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,22 @@ export default function PoolPage() {
   const now = new Date();
   const month = now.getMonth(); // 0–11
   const inPoolSeason = month >= 4 && month <= 8; // May–Sept
+
+  const todayInfo = getPoolInfo(now);
+
+  const todayPillText = !todayInfo.inSeason
+    ? 'Pool is closed today (outside pool season).'
+    : todayInfo.isOpen
+    ? `Open today${todayInfo.hours ? ` · ${todayInfo.hours}` : ''}`
+    : 'Closed today (see calendar for next open day).';
+
+  const todayPillClasses = !todayInfo.inSeason
+    ? 'border-gray-200 bg-gray-50 text-gray-700'
+    : todayInfo.isOpen
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+    : 'border-rose-200 bg-rose-50 text-rose-800';
+
+  const todayIcon = !todayInfo.inSeason ? '📅' : todayInfo.isOpen ? '✅' : '⛔';
 
   return (
     <div className="relative min-h-screen">
@@ -20,12 +37,12 @@ export default function PoolPage() {
         }}
       />
       {/* Soft overlay so text stays readable */}
-      <div className="fixed inset-0 -z-10 bg-white/80 backdrop-blur-sm" />
+      <div className="fixed inset-0 -z-10 bg-black/25 backdrop-blur-sm" />
 
-      {/* Page content (stays inside your normal layout width) */}
+      {/* Page content */}
       <div className="relative space-y-8 px-4 md:px-6 py-6">
         {/* Header with gradient & hero feel */}
-        <header className="space-y-4 rounded-2xl bg-gradient-to-r from-sky-50 via-cyan-50 to-emerald-50 border border-sky-100 px-4 py-5 md:px-6 md:py-6 shadow-sm">
+        <header className="space-y-4 rounded-2xl bg-gradient-to-r from-sky-50 via-cyan-50 to-emerald-50 border border-sky-100 px-4 py-5 md:px-6 md:py-6 shadow-sm text-center flex flex-col items-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/80 text-accent-700 border border-accent-200 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] shadow-sm">
             <span>🌊</span>
             <span>Community Pool</span>
@@ -57,11 +74,21 @@ export default function PoolPage() {
                 : 'The pool is currently closed for the season. Check back closer to summer for updated dates.'}
             </span>
           </div>
+
+          {/* Today at the pool pill */}
+          <div className="mt-2">
+            <span
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium ${todayPillClasses}`}
+            >
+              <span>{todayIcon}</span>
+              <span>{todayPillText}</span>
+            </span>
+          </div>
         </header>
 
         {/* Know before you go strip */}
         <section className="grid gap-3 md:grid-cols-3">
-          <div className="card flex flex-col gap-1">
+          <div className="card flex flex-col gap-1 hover:-translate-y-0.5 hover:shadow-md transition">
             <span className="text-sm font-semibold text-brand-800">
               Who can use the pool?
             </span>
@@ -70,16 +97,20 @@ export default function PoolPage() {
               current assessments.
             </p>
           </div>
-          <div className="card flex flex-col gap-1">
+
+          <div className="card flex flex-col gap-1 hover:-translate-y-0.5 hover:shadow-md transition">
             <span className="text-sm font-semibold text-brand-800">
               What should I bring?
             </span>
-            <p className="text-xs text-gray-600">
-              Pool pass or access card, towels, and sunscreen. Please leave
-              glass and alcohol at home.
-            </p>
+            <ul className="text-xs text-gray-600 space-y-1">
+              <li>💳 Pool pass or access card</li>
+              <li>🧴 Sunscreen</li>
+              <li>🩱 Swimsuit & towel</li>
+              <li>🚫 No glass or alcohol</li>
+            </ul>
           </div>
-          <div className="card flex flex-col gap-1">
+
+          <div className="card flex flex-col gap-1 hover:-translate-y-0.5 hover:shadow-md transition">
             <span className="text-sm font-semibold text-brand-800">
               Little swimmers
             </span>
@@ -92,7 +123,7 @@ export default function PoolPage() {
 
         <div className="grid gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)] items-start">
           {/* LEFT: Calendar, wrapped in a card */}
-          <section className="card space-y-3 border border-emerald-100 shadow-sm">
+          <section className="card space-y-3 border border-emerald-100 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-emerald-900 flex items-center gap-2">
                 <span>📅</span>
@@ -111,7 +142,7 @@ export default function PoolPage() {
           {/* RIGHT: Info cards */}
           <div className="space-y-4">
             {/* Hours */}
-            <section className="card space-y-2 border border-emerald-50 shadow-sm">
+            <section className="card space-y-2 border border-emerald-50 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
               <h2 className="text-lg font-semibold text-brand-800 flex items-center gap-2">
                 <span>🕒</span>
                 <span>Pool Hours (Weather Permitting)</span>
@@ -121,9 +152,13 @@ export default function PoolPage() {
                 notice for exact dates and times.
               </p>
               <ul className="text-sm text-gray-700 list-disc list-inside space-y-1">
-                <li>Closed on Mondays for cleaning (except certain holidays).</li>
+                <li>
+                  Closed on Mondays for cleaning (except certain holidays).
+                </li>
                 <li>Open most days between late May and early September.</li>
-                <li>Pool will close during thunder or lightning in the area.</li>
+                <li>
+                  Pool will close during thunder or lightning in the area.
+                </li>
               </ul>
               <p className="text-xs text-gray-500 mt-2">
                 This calendar is for convenience only. Final hours and access
@@ -132,7 +167,7 @@ export default function PoolPage() {
             </section>
 
             {/* Access & requirements */}
-            <section className="card space-y-2 border border-emerald-50 shadow-sm">
+            <section className="card space-y-2 border border-emerald-50 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
               <h2 className="text-lg font-semibold text-brand-800 flex items-center gap-2">
                 <span>🔑</span>
                 <span>Access & Requirements</span>
@@ -170,7 +205,7 @@ export default function PoolPage() {
             </section>
 
             {/* Rules + link to documents page */}
-            <section className="card space-y-2 border border-emerald-50 shadow-sm">
+            <section className="card space-y-2 border border-emerald-50 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
               <h2 className="text-lg font-semibold text-brand-800 flex items-center gap-2">
                 <span>📏</span>
                 <span>Pool Rules</span>

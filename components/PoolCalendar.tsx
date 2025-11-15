@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-type PoolInfo = {
+export type PoolInfo = {
   inSeason: boolean;
   isOpen: boolean;
   hours?: string;
@@ -35,7 +35,8 @@ function getLaborDay(year: number): Date {
   return d;
 }
 
-function getPoolInfo(date: Date): PoolInfo {
+// ✅ Exported so PoolPage can show "Today at the pool"
+export function getPoolInfo(date: Date): PoolInfo {
   const year = date.getFullYear();
   const weekday = date.getDay(); // 0 = Sun, 1 = Mon, ...
   const memorialDay = getMemorialDay(year);
@@ -181,30 +182,43 @@ export default function PoolCalendar() {
     );
   };
 
+  const goToday = () => {
+    setCurrentMonth(new Date(todayYear, todayMonth, 1));
+  };
+
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold text-brand-800">
           Pool Open/Closed Calendar
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-xs">
           <button
             type="button"
-            onClick={goPrevMonth}
-            className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 text-xs"
+            onClick={goToday}
+            className="hidden sm:inline-flex items-center rounded-full border border-brand-200 px-2 py-1 text-[11px] text-brand-700 hover:bg-brand-50 transition"
           >
-            ‹
+            Today
           </button>
-          <div className="font-medium text-brand-800 text-sm">
-            {monthLabel}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={goPrevMonth}
+              className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 text-xs"
+            >
+              ‹
+            </button>
+            <div className="font-medium text-brand-800 text-sm">
+              {monthLabel}
+            </div>
+            <button
+              type="button"
+              onClick={goNextMonth}
+              className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 text-xs"
+            >
+              ›
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={goNextMonth}
-            className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 text-xs"
-          >
-            ›
-          </button>
         </div>
       </div>
 
@@ -259,7 +273,7 @@ export default function PoolCalendar() {
             return (
               <div
                 key={`${i}-${j}`}
-                className={`${baseClasses} ${statusClasses} ${ringClasses} hover:scale-[1.02]`}
+                className={`${baseClasses} ${statusClasses} ${ringClasses} hover:scale-[1.02] hover:shadow-sm`}
               >
                 <span>{date.getDate()}</span>
                 {label && (
