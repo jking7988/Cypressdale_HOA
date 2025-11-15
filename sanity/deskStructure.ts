@@ -40,6 +40,12 @@ export const deskStructure = (S) =>
                         .filter('event._ref == $eventId')
                         .params({eventId}),
                     ),
+                    // sanity/deskStructure.ts (inside the default export)
+                  S.listItem()
+                    .title('Yard of the Month Winners')
+                    .child(
+                      S.documentTypeList('yardWinner').title('Yard of the Month Winners')
+                    ),
                 ]),
             ),
         ),

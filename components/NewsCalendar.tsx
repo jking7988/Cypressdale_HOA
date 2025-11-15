@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 type MiniPost = { id: string; title: string };
 
 type NewsCalendarProps = {
-  baseDateIso: string;                     // e.g. "2025-11-24T12:00:00.000Z"
-  dateKeysWithPosts: string[];             // e.g. ["2025-11-24", "2025-11-30"]
-  postsForDate: Record<string, MiniPost[]>; // dateKey -> posts
+  baseDateIso: string;
+  dateKeysWithPosts: string[];
+  postsForDate: Record<string, MiniPost[]>;
 };
 
 export function NewsCalendar({
@@ -21,7 +21,7 @@ export function NewsCalendar({
   const initial = new Date(baseDateIso);
 
   const [currentYear, setCurrentYear] = useState(initial.getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(initial.getMonth()); // 0–11
+  const [currentMonth, setCurrentMonth] = useState(initial.getMonth());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const [drawerKey, setDrawerKey] = useState<string | null>(null);
@@ -33,14 +33,12 @@ export function NewsCalendar({
     [],
   );
 
-  // Go to previous / next month
   const goMonth = (delta: number) => {
     const d = new Date(currentYear, currentMonth + delta, 1);
     setCurrentYear(d.getFullYear());
     setCurrentMonth(d.getMonth());
   };
 
-  // Go back to *today* (month & optional scroll)
   const goToday = () => {
     const today = new Date();
     const y = today.getFullYear();
@@ -51,22 +49,18 @@ export function NewsCalendar({
     const key = today.toISOString().slice(0, 10);
 
     if (dateKeysWithPosts.includes(key)) {
-      // only select today if there is news
       setSelectedKey(key);
-
       const el = document.getElementById(`news-${key}`);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     } else {
-      // today has no news – clear selection
       setSelectedKey(null);
     }
 
     setDrawerKey(null);
   };
 
-  // All month keys we have news for, e.g. "2025-11"
   const monthKeysWithPosts = useMemo(
     () => new Set(dateKeysWithPosts.map((k) => k.slice(0, 7))),
     [dateKeysWithPosts],
@@ -78,10 +72,9 @@ export function NewsCalendar({
   )}`;
 
   const firstOfMonth = new Date(currentYear, currentMonth, 1);
-  const firstWeekday = firstOfMonth.getDay(); // 0 = Sun
+  const firstWeekday = firstOfMonth.getDay();
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-  // Which day numbers in *this month* have posts?
   const daysWithPosts = useMemo(() => {
     const set = new Set<number>();
     for (const key of dateKeysWithPosts) {
@@ -102,12 +95,10 @@ export function NewsCalendar({
     const posts = postsForDate[dateKey] ?? [];
 
     if (posts.length === 1) {
-      // one news item – go straight to details
       router.push(`/news/${posts[0].id}`);
       return;
     }
 
-    // multiple posts -> open drawer and scroll to the section
     if (posts.length > 1) {
       setDrawerKey(dateKey);
     } else {
@@ -141,7 +132,6 @@ export function NewsCalendar({
         </div>
 
         <div className="flex flex-col items-end gap-1">
-          {/* Month navigation */}
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -159,7 +149,6 @@ export function NewsCalendar({
             </button>
           </div>
 
-          {/* Today button */}
           <button
             type="button"
             onClick={goToday}
@@ -196,7 +185,6 @@ export function NewsCalendar({
 
       {/* Days grid */}
       <div className="grid grid-cols-7 gap-1 text-xs">
-        {/* empty cells before the 1st */}
         {Array.from({ length: firstWeekday }).map((_, i) => (
           <div key={`empty-${i}`} />
         ))}
@@ -224,8 +212,12 @@ export function NewsCalendar({
           }
 
           if (isToday) {
-            // subtle ring around today
-            classes += ' ring-1 ring-offset-1 ring-emerald-200';
+            // if today has NO news, give it its own blue pill
+            if (!hasNews) {
+              classes = `${baseClasses} bg-sky-50 text-sky-700 border border-sky-300`;
+            }
+            // blue ring around today (regardless of hasNews)
+            classes += ' ring-2 ring-offset-1 ring-sky-300';
           }
 
           if (hasNews) {
@@ -251,18 +243,14 @@ export function NewsCalendar({
         })}
       </div>
 
-      {/* Legend */}
+      {/* Legend (no "Selected" now) */}
       <div className="mt-2 flex flex-wrap gap-3 items-center">
         <div className="flex items-center gap-1 text-[10px] text-gray-500">
           <span className="inline-block h-3 w-3 rounded-full bg-emerald-100 border border-emerald-200" />
           <span>Has news</span>
         </div>
         <div className="flex items-center gap-1 text-[10px] text-gray-500">
-          <span className="inline-block h-3 w-3 rounded-full bg-brand-600" />
-          <span>Selected</span>
-        </div>
-        <div className="flex items-center gap-1 text-[10px] text-gray-500">
-          <span className="inline-block h-3 w-3 rounded-full border border-emerald-200" />
+          <span className="inline-block h-3 w-3 rounded-full bg-sky-50 border border-sky-300 ring-2 ring-sky-300" />
           <span>Today</span>
         </div>
       </div>

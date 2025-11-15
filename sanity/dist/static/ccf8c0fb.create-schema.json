@@ -1,0 +1,532 @@
+[
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              },
+              {
+                "flag": "max",
+                "constraint": 160
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "description": "Short teaser shown on the homepage and news list.",
+        "of": [
+          {
+            "marks": {
+              "annotations": [
+                {
+                  "fields": [
+                    {
+                      "validation": [
+                        {
+                          "rules": [
+                            {
+                              "flag": "uri",
+                              "constraint": {
+                                "options": {
+                                  "scheme": [
+                                    "/^http$/",
+                                    "/^https$/"
+                                  ],
+                                  "allowRelative": false,
+                                  "relativeOnly": false,
+                                  "allowCredentials": false
+                                }
+                              }
+                            }
+                          ],
+                          "level": "error"
+                        }
+                      ],
+                      "name": "href",
+                      "type": "url",
+                      "title": "URL"
+                    }
+                  ],
+                  "name": "link",
+                  "type": "object"
+                }
+              ],
+              "decorators": [
+                {
+                  "value": "strong",
+                  "title": "Bold"
+                },
+                {
+                  "value": "em",
+                  "title": "Italic"
+                }
+              ]
+            },
+            "styles": [
+              {
+                "value": "normal",
+                "title": "Normal"
+              }
+            ],
+            "of": [],
+            "type": "block"
+          }
+        ],
+        "name": "excerpt",
+        "type": "array"
+      },
+      {
+        "description": "Used on the news calendar (e.g. submission deadline, effective date). If empty, publish date is used.",
+        "name": "newsDate",
+        "type": "datetime",
+        "title": "News date / deadline"
+      },
+      {
+        "of": [
+          {
+            "marks": {
+              "annotations": [
+                {
+                  "i18nTitleKey": "inputs.portable-text.annotation.link",
+                  "options": {
+                    "modal": {
+                      "type": "popover"
+                    }
+                  },
+                  "fields": [
+                    {
+                      "validation": [
+                        {
+                          "rules": [
+                            {
+                              "flag": "uri",
+                              "constraint": {
+                                "options": {
+                                  "scheme": [
+                                    "/^http$/",
+                                    "/^https$/",
+                                    "/^tel$/",
+                                    "/^mailto$/"
+                                  ],
+                                  "allowRelative": true,
+                                  "relativeOnly": false,
+                                  "allowCredentials": false
+                                }
+                              }
+                            }
+                          ],
+                          "level": "error"
+                        }
+                      ],
+                      "description": "A valid web, email, phone, or relative link.",
+                      "name": "href",
+                      "type": "url",
+                      "title": "Link"
+                    }
+                  ],
+                  "name": "link",
+                  "type": "object"
+                }
+              ],
+              "decorators": [
+                {
+                  "value": "strong",
+                  "title": "Strong"
+                },
+                {
+                  "value": "em",
+                  "title": "Italic"
+                },
+                {
+                  "value": "code",
+                  "title": "Code"
+                },
+                {
+                  "value": "underline",
+                  "title": "Underline"
+                },
+                {
+                  "value": "strike-through",
+                  "title": "Strike"
+                }
+              ]
+            },
+            "lists": [
+              {
+                "value": "bullet",
+                "title": "Bulleted list"
+              },
+              {
+                "value": "number",
+                "title": "Numbered list"
+              }
+            ],
+            "styles": [
+              {
+                "value": "normal",
+                "title": "Normal"
+              },
+              {
+                "value": "h1",
+                "title": "Heading 1"
+              },
+              {
+                "value": "h2",
+                "title": "Heading 2"
+              },
+              {
+                "value": "h3",
+                "title": "Heading 3"
+              },
+              {
+                "value": "h4",
+                "title": "Heading 4"
+              },
+              {
+                "value": "h5",
+                "title": "Heading 5"
+              },
+              {
+                "value": "h6",
+                "title": "Heading 6"
+              },
+              {
+                "value": "blockquote",
+                "title": "Quote"
+              }
+            ],
+            "of": [],
+            "type": "block"
+          }
+        ],
+        "name": "body",
+        "type": "array"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "publishedAt",
+        "type": "datetime",
+        "title": "Publish Date"
+      }
+    ],
+    "name": "post",
+    "type": "document",
+    "title": "Post / News"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "name": "location",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "startDate",
+        "type": "datetime",
+        "title": "Start Date & Time"
+      },
+      {
+        "name": "endDate",
+        "type": "datetime",
+        "title": "End Date & Time"
+      },
+      {
+        "options": {
+          "accept": "image/*,application/pdf"
+        },
+        "name": "flyer",
+        "type": "file",
+        "title": "Flyer (optional)"
+      },
+      {
+        "initialValue": 0,
+        "name": "rsvpYes",
+        "type": "number",
+        "title": "RSVP – Going"
+      },
+      {
+        "initialValue": 0,
+        "name": "rsvpMaybe",
+        "type": "number",
+        "title": "RSVP – Maybe"
+      }
+    ],
+    "name": "event",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "options": {
+          "list": [
+            {
+              "title": "Neighborhood Plat Maps",
+              "value": "Neighborhood Plat Maps"
+            },
+            {
+              "title": "Pool Information",
+              "value": "Pool Information"
+            },
+            {
+              "title": "ACC Documents",
+              "value": "ACC Documents"
+            }
+          ]
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "valid",
+                "constraint": [
+                  "Neighborhood Plat Maps",
+                  "Pool Information",
+                  "ACC Documents"
+                ]
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "category",
+        "type": "string",
+        "title": "Category / Folder"
+      },
+      {
+        "options": {
+          "storeOriginalFilename": true
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "file",
+        "type": "file"
+      },
+      {
+        "readOnly": true,
+        "name": "uploadedAt",
+        "type": "datetime"
+      }
+    ],
+    "name": "documentFile",
+    "type": "document",
+    "title": "Document (PDF, etc.)"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "to": [
+          {
+            "type": "event"
+          }
+        ],
+        "name": "event",
+        "type": "reference"
+      },
+      {
+        "options": {
+          "list": [
+            {
+              "title": "Going",
+              "value": "yes"
+            },
+            {
+              "title": "Maybe",
+              "value": "maybe"
+            }
+          ],
+          "layout": "radio"
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "valid",
+                "constraint": [
+                  "yes",
+                  "maybe"
+                ]
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "status",
+        "type": "string"
+      },
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "email",
+        "type": "string"
+      },
+      {
+        "name": "createdAt",
+        "type": "datetime",
+        "title": "Submitted At"
+      }
+    ],
+    "name": "rsvpResponse",
+    "type": "document",
+    "title": "RSVP Response"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Example: \"May 2025 – Oak Bend Section\" or similar.",
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "options": {
+          "dateFormat": "MMMM yyyy"
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Pick any day in the winning month. Displayed as Month + Year on the site.",
+        "name": "month",
+        "type": "date"
+      },
+      {
+        "description": "Optional. Use a street or block instead of a full address for privacy.",
+        "name": "streetOrBlock",
+        "type": "string",
+        "title": "Street / Block (optional)"
+      },
+      {
+        "rows": 3,
+        "description": "Short description of what made this yard stand out (used on the website).",
+        "name": "description",
+        "type": "text",
+        "title": "Notes / Description (optional)"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "description": "Optional photo of the winning yard. You can blur the house number if desired.",
+        "name": "photo",
+        "type": "image",
+        "title": "Photo (optional)"
+      }
+    ],
+    "name": "yardWinner",
+    "type": "document",
+    "title": "Yard of the Month Winner"
+  }
+]

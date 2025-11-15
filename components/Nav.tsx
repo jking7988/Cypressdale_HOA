@@ -45,7 +45,7 @@ export default function Nav() {
             <span>🏘️</span>
             <span>Cypressdale HOA</span>
           </Link>
-        </div>        
+        </div>
       </div>
 
       {open && (
@@ -60,7 +60,7 @@ export default function Nav() {
               className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
             >
               🏠 <span>Home</span>
-            </Link>           
+            </Link>
 
             <Link
               href="/news"
@@ -99,7 +99,7 @@ export default function Nav() {
               onClick={() => setOpen(false)}
               className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
             >
-                <span>Yard of the Month</span>
+              🌿 <span>Yard of the Month</span>
             </Link>
 
             {/* About now uses ℹ️ */}

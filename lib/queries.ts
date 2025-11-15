@@ -86,3 +86,23 @@ export const poolDocumentsQuery = groq`*[
   description,
   "fileUrl": file.asset->url
 }`;
+
+// All winners, newest month first
+export const yardWinnersQuery = groq`*[_type == "yardWinner"] | order(month desc) {
+  _id,
+  title,
+  month,
+  streetOrBlock,
+  description,
+  "photoUrl": photo.asset->url
+}`;
+
+// Single winner by ID (for the [id] page)
+export const yardWinnerByIdQuery = groq`*[_type == "yardWinner" && _id == $id][0]{
+  _id,
+  title,
+  month,
+  streetOrBlock,
+  description,
+  "photoUrl": photo.asset->url
+}`;

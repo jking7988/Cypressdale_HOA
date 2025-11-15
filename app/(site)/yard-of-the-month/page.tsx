@@ -1,9 +1,35 @@
 // app/yard-of-the-month/page.tsx
+import Link from 'next/link';
+import { client } from '@/lib/sanity.client';
+import { yardWinnersQuery } from '@/lib/queries';
 import { ContactLink } from '@/components/ContactLink';
 
 export const dynamic = 'force-dynamic';
 
-export default function YardOfTheMonthPage() {
+type YardWinner = {
+  _id: string;
+  title: string;
+  month?: string;
+  streetOrBlock?: string;
+  description?: string;
+  photoUrl?: string;
+};
+
+function formatMonth(month?: string) {
+  if (!month) return '';
+  const d = new Date(month);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, {
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+export default async function YardOfTheMonthPage() {
+  const winners = await client.fetch<YardWinner[]>(yardWinnersQuery);
+  const currentWinner = winners[0] ?? null;
+  const pastWinners = winners.slice(1);
+
   return (
     <div className="space-y-8">
       {/* Page header */}
@@ -61,9 +87,8 @@ export default function YardOfTheMonthPage() {
             </li>
           </ol>
           <p className="text-xs text-gray-500">
-            Final details (including start month, prizes, and judging schedule)
-            are being finalized. This page will be updated as the program
-            launches.
+            The HOA may adjust criteria, prizes, or schedule over time as the
+            program evolves.
           </p>
         </div>
       </section>
@@ -112,24 +137,106 @@ export default function YardOfTheMonthPage() {
         </p>
       </section>
 
-      {/* Winners section (placeholder for now) */}
+      {/* Current winner */}
       <section className="card space-y-3">
-        <h2 className="h2 text-lg">Yard of the Month winners</h2>
-        <p className="text-sm text-gray-700">
-          Once the program begins, this section will highlight recent winners.
-          To respect resident privacy, winners may be listed by street/block
-          rather than full names.
-        </p>
-        <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-6 text-sm text-gray-600 text-center">
-          <p className="font-medium text-emerald-900 mb-1">
-            Winners coming soon
-          </p>
-          <p>
-            The Yard of the Month program is being finalized. Check back after
-            the first selection month to see the latest featured yards.
-          </p>
-        </div>
+        <h2 className="h2 text-lg">Current winner</h2>
+        {currentWinner ? (
+          <article className="rounded-2xl border border-emerald-100 bg-white/90 shadow-md overflow-hidden flex flex-col md:flex-row">
+            {currentWinner.photoUrl && (
+              <div className="relative h-40 md:h-auto md:w-1/3 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={currentWinner.photoUrl}
+                  alt={currentWinner.title}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )}
+            <div className="p-4 space-y-1 md:flex-1">
+              <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
+                {formatMonth(currentWinner.month) || 'Month not set'}
+              </p>
+              <h3 className="text-sm font-semibold text-emerald-900">
+                {currentWinner.title}
+              </h3>
+              {currentWinner.streetOrBlock && (
+                <p className="text-xs text-gray-600">
+                  {currentWinner.streetOrBlock}
+                </p>
+              )}
+              {currentWinner.description && (
+                <p className="text-xs text-gray-700 mt-1">
+                  {currentWinner.description}
+                </p>
+              )}
+              <Link
+                href={`/yard-of-the-month/${currentWinner._id}`}
+                className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline mt-2"
+              >
+                View details & past winners →
+              </Link>
+            </div>
+          </article>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-6 text-sm text-gray-600 text-center">
+            <p className="font-medium text-emerald-900 mb-1">
+              Winners coming soon
+            </p>
+            <p>
+              The Yard of the Month program is being finalized. Check back after
+              the first selection month to see the latest featured yards.
+            </p>
+          </div>
+        )}
       </section>
+
+      {/* Past winners */}
+      {pastWinners.length > 0 && (
+        <section className="card space-y-3">
+          <h2 className="h2 text-lg">Past winners</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {pastWinners.map((w) => (
+              <article
+                key={w._id}
+                className="rounded-2xl border border-emerald-100 bg-white/90 shadow-md overflow-hidden flex flex-col"
+              >
+                {w.photoUrl && (
+                  <div className="relative h-32 w-full overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={w.photoUrl}
+                      alt={w.title}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="p-4 space-y-1">
+                  <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
+                    {formatMonth(w.month) || 'Month not set'}
+                  </p>
+                  <h3 className="text-sm font-semibold text-emerald-900">
+                    {w.title}
+                  </h3>
+                  {w.streetOrBlock && (
+                    <p className="text-xs text-gray-600">{w.streetOrBlock}</p>
+                  )}
+                  {w.description && (
+                    <p className="text-xs text-gray-700 mt-1 line-clamp-3">
+                      {w.description}
+                    </p>
+                  )}
+                  <Link
+                    href={`/yard-of-the-month/${w._id}`}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline mt-2"
+                  >
+                    View details →
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Questions / contact */}
       <section className="card space-y-2">

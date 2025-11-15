@@ -1,5 +1,5 @@
-// documentFile.ts
-import {defineType, defineField} from 'sanity'
+// schemas/documentFile.ts
+import { defineType, defineField } from 'sanity';
 
 export default defineType({
   name: 'documentFile',
@@ -22,10 +22,10 @@ export default defineType({
       title: 'Category / Folder',
       type: 'string',
       options: {
-        list: [          
-          {title: 'Neighborhood Plat Maps', value: 'Neighborhood Plat Maps'},
-          {title: 'Pool Information', value: 'Pool Information'},
-          {title: 'ACC Documents', value: 'ACC Documents'},
+        list: [
+          { title: 'Neighborhood Plat Maps', value: 'Neighborhood Plat Maps' },
+          { title: 'Pool Information', value: 'Pool Information' },
+          { title: 'ACC Documents', value: 'ACC Documents' },
           // add more “folders” here if you want
         ],
       },
@@ -36,6 +36,20 @@ export default defineType({
       title: 'File',
       type: 'file',
       validation: (Rule) => Rule.required(),
+      options: {
+        storeOriginalFilename: true,
+      },
+    }),
+    defineField({
+      name: 'uploadedAt',
+      title: 'Uploaded At',
+      type: 'datetime',
+      readOnly: true,
     }),
   ],
-})
+
+  // This is allowed in Sanity v3 – sets default values for new documents
+  initialValue: () => ({
+    uploadedAt: new Date().toISOString(),
+  }),
+});
