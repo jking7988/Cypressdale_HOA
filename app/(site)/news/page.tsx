@@ -1,11 +1,19 @@
 export const dynamic = 'force-dynamic';
 
+import Link from 'next/link';
 import { client } from '@/lib/sanity.client';
 import { postsQuery } from '@/lib/queries';
 import { PortableText } from '@portabletext/react';
 
+type Post = {
+  _id: string;
+  title: string;
+  excerpt?: any;      // Portable Text array
+  body?: any;
+  _createdAt?: string;
+};
 export default async function NewsPage() {
-  const posts = await client.fetch(postsQuery);
+  const posts = await client.fetch<Post[]>(postsQuery);
 
   return (
     <div className="space-y-6">
@@ -32,48 +40,48 @@ export default async function NewsPage() {
 
       {posts.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2">
-          {posts.map((p: any) => {
-            const created = new Date(p._createdAt);
+            {posts.map((p) => {
+            const created = p._createdAt ? new Date(p._createdAt) : null;
+            const href = `/news/${p._id}`;
 
             return (
-              <article
+            <Link
                 key={p._id}
-                className="card flex flex-col gap-2 border border-emerald-50 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md hover:border-emerald-100"
-              >
-                {/* Title + date */}
-                <div>
-                  <h2 className="text-base md:text-lg font-semibold text-brand-900 mb-0.5 flex items-center gap-1.5">
-                    <span>🗞️</span>
-                    <span>{p.title}</span>
-                  </h2>
+                href={href}
+                className="group"
+            >
+                <article className="card flex flex-col gap-2 border border-emerald-50 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md hover:border-emerald-100">
+                    <div>
+                    <h2 className="text-base md:text-lg font-semibold text-brand-900 mb-0.5 flex items-center gap-1.5">
+                        <span>🗞️</span>
+                        <span>{p.title}</span>
+                    </h2>
+                    {created && (
+                        <p className="text-[11px] text-gray-500">
+                        {created.toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                        })}
+                        </p>
+                    )}
+                    </div>
 
-                  <p className="text-[11px] text-gray-500">
-                    {created.toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
+                    {p.excerpt && (
+                        <div className="text-sm text-gray-700 mt-2 line-clamp-3">
+                            <PortableText value={p.excerpt} />
+                        </div>
+                        )}
 
-                {/* Excerpt */}
-                {p.excerpt && (
-                  <p className="text-sm text-gray-700">
-                    {p.excerpt}
-                  </p>
-                )}
-
-                {/* Body */}
-                {p.body && (
-                  <div className="prose max-w-none prose-sm mt-1">
-                    <PortableText value={p.body} />
-                  </div>
-                )}
-              </article>
+                    <p className="mt-2 text-[11px] font-medium text-emerald-700 group-hover:underline">
+                    Read full update →
+                    </p>
+                </article>
+                </Link>
             );
-          })}
+            })}
         </div>
-      )}
+        )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ export const homeQuery = groq`{
   "posts": *[_type == "post"] | order(_createdAt desc)[0..5]{
     _id,
     title,
+    slug,
     excerpt,
     body,
     _createdAt
@@ -22,7 +23,6 @@ export const homeQuery = groq`{
       "flyerMime": flyer.asset->mimeType,
       "flyerName": flyer.asset->originalFilename,
 
-      // 🔒 anonymized recent RSVP activity
       "recentRsvps": *[
         _type == "rsvpResponse" &&
         event._ref == ^._id
@@ -36,6 +36,7 @@ export const homeQuery = groq`{
 export const postsQuery = groq`*[_type == "post"] | order(_createdAt desc) {
   _id,
   title,
+  slug,
   excerpt,
   body,
   _createdAt

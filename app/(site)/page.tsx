@@ -1,15 +1,24 @@
 export const dynamic = 'force-dynamic';
 
+import { PortableText } from '@portabletext/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { client } from '@/lib/sanity.client';
 import { postsQuery, eventsQuery } from '@/lib/queries';
+import {
+  Sun,
+  Cloud,
+  CloudSun,
+  CloudRain,
+  CloudLightning,
+  Snowflake,
+} from 'lucide-react';
 
 type Post = {
   _id: string;
   title: string;
-  excerpt?: string;
-  body?: string;
+  excerpt?: any;      // Portable Text array
+  body?: any;
   _createdAt?: string;
 };
 
@@ -30,10 +39,76 @@ type HomeData = {
   events: Event[];
 };
 
+type DailyForecast = {
+  date: string;
+  min: number;
+  max: number;
+  phrase: string;
+};
+
+type AccuWeatherResponse = {
+  DailyForecasts: {
+    Date: string;
+    Temperature: {
+      Minimum: { Value: number; Unit: string };
+      Maximum: { Value: number; Unit: string };
+    };
+    Day: { IconPhrase: string };
+  }[];
+};
+
+async function getSevenDayForecast(): Promise<DailyForecast[]> {
+  const apiKey = process.env.ACCUWEATHER_API_KEY;
+  const locationKey = process.env.ACCUWEATHER_LOCATION_KEY; // set this in .env.local
+
+  if (!apiKey || !locationKey) {
+    console.warn(
+      'Weather: missing ACCUWEATHER_API_KEY or ACCUWEATHER_LOCATION_KEY. apiKey?',
+      !!apiKey,
+      'locationKey?',
+      !!locationKey,
+    );
+    return [];
+  }
+
+  // 5 day forecast, Fahrenheit
+  const url = `https://dataservice.accuweather.com/forecasts/v1/daily/5day/${locationKey}?apikey=${apiKey}&metric=false`;
+
+  try {
+    const res = await fetch(url, {
+      // cache for 30 minutes
+      next: { revalidate: 60 * 30 },
+    });
+
+    if (!res.ok) {
+      console.warn('Weather: failed to fetch forecast', res.status, res.statusText);
+      return [];
+    }
+
+    const data = (await res.json()) as AccuWeatherResponse;
+
+    if (!data?.DailyForecasts?.length) {
+      console.warn('Weather: no DailyForecasts returned from API');
+      return [];
+    }
+
+    return data.DailyForecasts.map((d) => ({
+      date: d.Date,
+      min: d.Temperature.Minimum.Value,
+      max: d.Temperature.Maximum.Value,
+      phrase: d.Day.IconPhrase,
+    }));
+  } catch (err) {
+    console.error('Weather: error calling AccuWeather', err);
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const [posts, events] = await Promise.all([
+  const [posts, events, forecast] = await Promise.all([
     client.fetch<Post[]>(postsQuery),
     client.fetch<Event[]>(eventsQuery),
+    getSevenDayForecast(),
   ]);
 
   // Sort events
@@ -49,6 +124,7 @@ export default async function HomePage() {
   const nextEvent = upcomingEvents[0] ?? null;
   const moreEvents = upcomingEvents.slice(1, 4);
   const latestPosts = posts.slice(0, 3);
+  const latestPost = latestPosts[0] ?? null;
 
   console.log(
     'HOME events count:',
@@ -59,167 +135,233 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-10">
-      {/* Hero */}      
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-700 text-white shadow-lg">
-          {/* Background photo overlay */}
-          <div className="absolute inset-0 opacity-25">
-            <Image
-              src="/images/hero.jpg"
-              alt="Cypressdale neighborhood"
-              fill
-              className="object-cover"
-            />
+      {/* Hero */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-700 text-white shadow-lg">
+        {/* Background photo overlay */}
+        <div className="absolute inset-0 opacity-25">
+          <Image
+            src="/images/hero.jpg"
+            alt="Cypressdale neighborhood"
+            fill
+            className="object-cover"
+          />
+        </div>
+
+        {/* Subtle vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+
+        <div className="relative px-6 py-10 md:px-10 md:py-16 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+          <div className="max-w-xl space-y-4">
+            {/* Status pill */}
+            <div className="inline-flex items-center gap-2 rounded-full bg-black/25 px-3 py-1 text-[11px] uppercase tracking-[0.18em]">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-60 animate-ping" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-100" />
+              </span>
+              <span className="text-emerald-50/90">
+                Cypressdale Community Portal
+              </span>
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-semibold mb-1">
+              Welcome to Cypressdale
+            </h1>
+            <p className="text-sm md:text-base text-emerald-50/90">
+              Your central hub for neighborhood news, events, documents, and board
+              information. Stay up to date and get involved in the community.
+            </p>
+
+            {/* CTA row */}
+            <div className="flex flex-wrap gap-3 pt-1">
+              <Link
+                href="/events"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-900/40 text-emerald-50 text-sm font-medium px-4 py-2 hover:bg-emerald-800/70 hover:-translate-y-[1px] transition"
+              >
+                <span>View community events</span>
+                <span>📅</span>
+              </Link>
+
+              <Link
+                href="/news"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-900/40 text-emerald-50 text-sm font-medium px-4 py-2 hover:bg-emerald-800/70 hover:-translate-y-[1px] transition"
+              >
+                <span>View community news</span>
+                <span>📰</span>
+              </Link>
+
+              <Link
+                href="/pool"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-900/40 text-emerald-50 text-sm font-medium px-4 py-2 hover:bg-emerald-800/70 hover:-translate-y-[1px] transition"
+              >
+                <span>View pool information</span>
+                <span>🏊‍♂️</span>
+              </Link>
+
+              <Link
+                href="/documents"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-900/40 text-emerald-50 text-sm font-medium px-4 py-2 hover:bg-emerald-800/70 hover:-translate-y-[1px] transition"
+              >
+                <span>Access HOA documents</span>
+                <span>📄</span>
+              </Link>
+
+              <a
+                href="https://www.facebook.com/groups/943724017657884"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-900/40 text-emerald-50 text-sm font-medium px-4 py-2 hover:bg-emerald-800/70 hover:-translate-y-[1px] transition"
+              >
+                <span>Join our Facebook group</span>
+                <span>💬</span>
+              </a>
+            </div>
           </div>
 
-          {/* Subtle vignette */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
-
-          <div className="relative px-6 py-10 md:px-10 md:py-16 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-            <div className="max-w-xl space-y-4">
-              {/* Status pill */}
-              <div className="inline-flex items-center gap-2 rounded-full bg-black/25 px-3 py-1 text-[11px] uppercase tracking-[0.18em]">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-60 animate-ping" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-100" />
-                </span>
-                <span className="text-emerald-50/90">Cypressdale Community Portal</span>
-              </div>
-
-              <h1 className="text-3xl md:text-4xl font-semibold mb-1">
-                Welcome to Cypressdale
-              </h1>
-              <p className="text-sm md:text-base text-emerald-50/90">
-                Your central hub for neighborhood news, events, documents, and board information.
-                Stay up to date and get involved in the community.
-              </p>
-
-              {/* CTA row */}
-              <div className="flex flex-wrap gap-3 pt-1">
+          {/* Quick "highlight" card */}
+          <div className="bg-white/95 text-emerald-900 rounded-2xl shadow-md p-4 w-full md:w-80 border border-emerald-50">
+            <p className="text-xs font-semibold text-emerald-600 mb-1 flex items-center gap-1">
+              <span className="text-[10px]">⭐</span>
+              <span>Next community event</span>
+            </p>
+            {nextEvent ? (
+              <>
+                <p className="text-sm font-semibold">{nextEvent.title}</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  {formatDate(nextEvent.startDate)}
+                  {nextEvent.location ? ` • ${nextEvent.location}` : ''}
+                </p>
+                {nextEvent.description && (
+                  <p className="text-xs text-gray-700 mt-2 line-clamp-3">
+                    {nextEvent.description}
+                  </p>
+                )}
                 <Link
                   href="/events"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white text-emerald-800 text-sm font-medium px-4 py-2 shadow-sm hover:bg-emerald-50 hover:shadow-md hover:-translate-y-[1px] transition"
+                  className="inline-flex items-center mt-3 text-xs font-medium text-emerald-700 hover:underline"
                 >
-                  <span>View community events</span>
-                  <span>📅</span>
+                  View full calendar →
                 </Link>
 
-                <Link
-                  href="/documents"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 text-emerald-50 text-sm font-medium px-4 py-2 hover:bg-emerald-700/60 hover:-translate-y-[1px] transition"
-                >
-                  <span>Access HOA documents</span>
-                  <span>📄</span>
-                </Link>
-
-                <a
-                  href="https://www.facebook.com/groups/943724017657884"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100/80 bg-emerald-900/40 text-emerald-50 text-sm font-medium px-4 py-2 hover:bg-emerald-800/70 hover:-translate-y-[1px] transition"
-                >
-                  <span>Join our Facebook group</span>
-                  <span>💬</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Quick "highlight" card */}
-            <div className="bg-white/95 text-emerald-900 rounded-2xl shadow-md p-4 w-full md:w-80 border border-emerald-50">
-              <p className="text-xs font-semibold text-emerald-600 mb-1 flex items-center gap-1">
-                <span className="text-[10px]">⭐</span>
-                <span>Next community event</span>
-              </p>
-              {nextEvent ? (
-                <>
-                  <p className="text-sm font-semibold">{nextEvent.title}</p>
-                  <p className="text-xs text-gray-600 mt-1">
-                    {formatDate(nextEvent.startDate)}
-                    {nextEvent.location ? ` • ${nextEvent.location}` : ''}
-                  </p>
-                  {nextEvent.description && (
-                    <p className="text-xs text-gray-700 mt-2 line-clamp-3">
-                      {nextEvent.description}
+                {/* Latest news teaser under next community event */}
+                {latestPost && (
+                  <div className="mt-4 border-t border-emerald-100 pt-3">
+                    <p className="text-[11px] font-semibold text-emerald-600 mb-1 flex items-center gap-1">
+                      <span>🗞️</span>
+                      <span>Latest news</span>
                     </p>
-                  )}
-                  <Link
-                    href="/events"
-                    className="inline-flex items-center mt-3 text-xs font-medium text-emerald-700 hover:underline"
-                  >
-                    View full calendar →
-                  </Link>
-                </>
-              ) : (
-                <p className="text-xs text-gray-600">
+                    <p className="text-xs font-medium text-emerald-900 line-clamp-2">
+                      {latestPost.title}
+                    </p>
+                    {latestPost._createdAt && (
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {formatDate(latestPost._createdAt)}
+                      </p>
+                    )}
+                    <Link
+                      href="/news"
+                      className="inline-flex items-center mt-2 text-[11px] font-medium text-emerald-700 hover:underline"
+                    >
+                      Read all news →
+                    </Link>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-gray-600 mb-2">
                   No events have been scheduled yet. Check back soon!
                 </p>
-              )}
-            </div>
+
+                {/* Still show latest news even if no event */}
+                {latestPost && (
+                  <div className="mt-2 border-t border-emerald-100 pt-3">
+                    <p className="text-[11px] font-semibold text-emerald-600 mb-1 flex items-center gap-1">
+                      <span>🗞️</span>
+                      <span>Latest news</span>
+                    </p>
+                    <p className="text-xs font-medium text-emerald-900 line-clamp-2">
+                      {latestPost.title}
+                    </p>
+                    {latestPost._createdAt && (
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {formatDate(latestPost._createdAt)}
+                      </p>
+                    )}
+                    <Link
+                      href="/news"
+                      className="inline-flex items-center mt-2 text-[11px] font-medium text-emerald-700 hover:underline"
+                    >
+                      Read all news →
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        </section>
-
-      {/* Quick Links */}
-      <section>
-        <h2 className="h2 mb-3">Quick links</h2>
-        <p className="muted mb-3 text-sm">
-          Jump straight to the most commonly used areas of the Cypressdale site.
-        </p>
-
-        <div className="grid gap-3 md:grid-cols-5">
-          <Link href="/events" className="card hover:bg-brand-50 transition-colors">
-            <div className="text-xs font-semibold text-brand-600 mb-1">
-              Events & Calendar
-            </div>
-            <div className="text-sm text-brand-900">
-              See upcoming neighborhood gatherings, meetings, and community activities.
-            </div>
-          </Link>
-
-          <Link href="/news" className="card hover:bg-brand-50 transition-colors">
-            <div className="text-xs font-semibold text-brand-600 mb-1">
-              News & Announcements
-            </div>
-            <div className="text-sm text-brand-900">
-              Read recent updates from the board and important community notices.
-            </div>
-          </Link>
-
-          <Link href="/documents" className="card hover:bg-brand-50 transition-colors">
-            <div className="text-xs font-semibold text-brand-600 mb-1">
-              Documents & Forms
-            </div>
-            <div className="text-sm text-brand-900">
-              Access bylaws, ACC forms, policies, and other official HOA documents.
-            </div>
-          </Link>
-
-          <Link href="/contact" className="card hover:bg-brand-50 transition-colors">
-            <div className="text-xs font-semibold text-brand-600 mb-1">
-              Contact & Board
-            </div>
-            <div className="text-sm text-brand-900">
-              Reach the HOA board or management company with questions or requests.
-            </div>
-          </Link>
-
-          <a
-            href="https://www.facebook.com/groups/943724017657884"
-            target="_blank"
-            rel="noreferrer"
-            className="card hover:bg-brand-50 transition-colors"
-          >
-            <div className="text-xs font-semibold text-brand-600 mb-1">
-              Facebook Community Group
-            </div>
-            <div className="text-sm text-brand-900">
-              Connect with neighbors, see photos, and get informal updates in our
-              residents-only Facebook group.
-            </div>
-          </a>
         </div>
       </section>
 
+      {/* Neighborhood Weather */}
+      <section className="space-y-3">
+        <h2 className="h2">Neighborhood weather</h2>
+        <p className="muted text-sm">
+          5-day forecast for Cypressdale (powered by AccuWeather).
+        </p>
+
+        {forecast.length > 0 ? (
+          <>
+            {/* full-width-ish scrolling strip */}
+            <div className="-mx-4 flex gap-3 overflow-x-auto pb-2 px-4 md:mx-0 md:px-0">
+              {forecast.map((day, idx) => {
+                const meta = getWeatherMeta(day.phrase);
+                const Icon = meta.Icon;
+
+                return (
+                  <div
+                    key={day.date}
+                    className={`card group min-w-[130px] text-center flex-shrink-0 py-3 transition-transform duration-150 hover:-translate-y-1 hover:shadow-md ${meta.cardBg} ring-1 ${meta.ringClass}`}
+                  >
+                    {/* Day label */}
+                    <p className="text-xs font-semibold text-brand-700 mb-1">
+                      {formatWeatherDayLabel(day.date, idx)}
+                    </p>
+
+                    {/* Icon with subtle animation */}
+                    <div className="flex justify-center mb-2">
+                      <Icon
+                        className={`h-8 w-8 ${meta.iconClass} transition-transform duration-150 group-hover:scale-110`}
+                        strokeWidth={1.5}
+                      />
+                    </div>
+
+                    {/* Temps */}
+                    <p className="text-base font-semibold text-brand-900">
+                      {Math.round(day.max)}°
+                      <span className="text-xs text-gray-500 font-normal">
+                        {' '}
+                        / {Math.round(day.min)}°
+                      </span>
+                    </p>
+
+                    {/* Phrase */}
+                    <p className="text-[11px] text-gray-600 mt-1 line-clamp-2">
+                      {day.phrase}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>           
+          </>
+        ) : (
+          <p className="muted text-sm">
+            Weather forecast is temporarily unavailable while we update our data
+            provider.
+          </p>
+        )}
+      </section>
+
       {/* Upcoming Events Preview */}
-      `<section className="space-y-3">
+      <section className="space-y-3">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="h2 flex items-center gap-2">
             <span>Upcoming events</span>
@@ -227,7 +369,10 @@ export default async function HomePage() {
               {upcomingEvents.length || 0} scheduled
             </span>
           </h2>
-          <Link href="/events" className="text-xs text-brand-700 hover:underline flex items-center gap-1">
+          <Link
+            href="/events"
+            className="text-xs text-brand-700 hover:underline flex items-center gap-1"
+          >
             <span>View all events</span>
             <span>→</span>
           </Link>
@@ -295,7 +440,8 @@ export default async function HomePage() {
                             rel="noreferrer"
                             className="text-[11px] text-accent-700 hover:underline"
                           >
-                            View event file{e.flyerName ? ` (${e.flyerName})` : ''}
+                            View event file
+                            {e.flyerName ? ` (${e.flyerName})` : ''}
                           </a>
                         )}
                       </div>
@@ -306,54 +452,62 @@ export default async function HomePage() {
             ))}
           </div>
         ) : (
-          <p className="muted text-sm">No upcoming events have been added yet.</p>
+          <p className="muted text-sm">
+            No upcoming events have been added yet.
+          </p>
         )}
-      </section>`
+      </section>
 
       {/* Latest News */}
-    <section className="space-y-3">
-      <div className="flex items-baseline justify-between gap-2">
-        <h2 className="h2 flex items-center gap-2">
-          <span>Latest news</span>
-          {latestPosts?.length > 0 && (
-            <span className="text-[11px] rounded-full bg-sky-100 text-sky-800 px-2 py-0.5">
-              Updated recently
-            </span>
-          )}
-        </h2>
-        <Link href="/news" className="text-xs text-brand-700 hover:underline flex items-center gap-1">
-          <span>View all news</span>
-          <span>→</span>
-        </Link>
-      </div>
-      {latestPosts && latestPosts.length > 0 ? (
-        <div className="grid gap-3 md:grid-cols-3">
-          {latestPosts.map((p) => (
-            <article
-              key={p._id}
-              className="card flex flex-col transition hover:-translate-y-[1px] hover:shadow-md hover:border-brand-100"
-            >
-              <h3 className="text-sm font-semibold text-brand-900 mb-1 line-clamp-2">
-                {p.title}
-              </h3>
-              {p._createdAt && (
-                <p className="text-[11px] text-gray-500 mb-1 flex items-center gap-1">
-                  <span>🗞️</span>
-                  <span>{formatDate(p._createdAt)}</span>
-                </p>
-              )}
-              {p.excerpt && (
-                <p className="text-xs text-gray-700 line-clamp-4">
-                  {p.excerpt}
-                </p>
-              )}
-            </article>
-          ))}
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 className="h2 flex items-center gap-2">
+            <span>Latest news</span>
+            {latestPosts?.length > 0 && (
+              <span className="text-[11px] rounded-full bg-sky-100 text-sky-800 px-2 py-0.5">
+                Updated recently
+              </span>
+            )}
+          </h2>
+          <Link
+            href="/news"
+            className="text-xs text-brand-700 hover:underline flex items-center gap-1"
+          >
+            <span>View all news</span>
+            <span>→</span>
+          </Link>
         </div>
-      ) : (
-        <p className="muted text-sm">No news posts have been published yet.</p>
-      )}
-    </section>
+        {latestPosts && latestPosts.length > 0 ? (
+          <div className="grid gap-3 md:grid-cols-3">
+            {latestPosts.map((p) => (
+              <Link
+                key={p._id}
+                href={`/news/${p._id}`}
+                className="card flex flex-col transition hover:-translate-y-[1px] hover:shadow-md hover:border-brand-100"
+              >
+                <h3 className="text-sm font-semibold text-brand-900 mb-1 line-clamp-2">
+                  {p.title}
+                </h3>
+                {p._createdAt && (
+                  <p className="text-[11px] text-gray-500 mb-1 flex items-center gap-1">
+                    <span>🗞️</span>
+                    <span>{formatDate(p._createdAt)}</span>
+                  </p>
+                )}
+                {p.excerpt && (
+                  <div className="text-xs text-gray-700 line-clamp-4">
+                    <PortableText value={p.excerpt} />
+                  </div>
+                )}
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="muted text-sm">
+            No news posts have been published yet.
+          </p>
+        )}
+      </section>
 
       {/* About / Community Info */}
       <section className="grid gap-6 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)] items-start">
@@ -362,18 +516,18 @@ export default async function HomePage() {
           <p className="text-sm text-gray-700 mb-2">
             Cypressdale is a deed-restricted community dedicated to keeping our
             neighborhood safe, clean, and welcoming for all residents. The HOA
-            coordinates maintenance of shared areas, enforces community standards,
-            and communicates important updates to homeowners.
+            coordinates maintenance of shared areas, enforces community
+            standards, and communicates important updates to homeowners.
           </p>
           <p className="text-sm text-gray-700 mb-2">
             This website is designed to make it easy to stay informed, access
-            documents, and participate in community events. If you have questions
-            or suggestions, please reach out to the HOA board or our management
-            company through the contact page.
+            documents, and participate in community events. If you have
+            questions or suggestions, please reach out to the HOA board or our
+            management company through the contact page.
           </p>
         </div>
 
-        {/* Photo grid – swap these with real neighborhood photos */}
+        {/* Photo grid */}
         <div className="grid grid-cols-2 gap-3">
           <div className="relative h-32 md:h-40 rounded-2xl overflow-hidden">
             <Image
@@ -413,7 +567,6 @@ export default async function HomePage() {
   );
 }
 
-
 // helper so TS doesn’t freak out & we avoid invalid dates
 function eSafeDate(dateStr?: string) {
   return dateStr ?? '';
@@ -430,4 +583,73 @@ function formatDate(dateStr?: string) {
     hour: 'numeric',
     minute: '2-digit',
   });
+}
+
+function formatWeatherDayLabel(dateStr: string, index: number) {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '';
+
+  if (index === 0) return 'Today';
+  if (index === 1) return 'Tomorrow';
+
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short',
+  });
+}
+
+function getWeatherMeta(phrase: string) {
+  const p = phrase.toLowerCase();
+
+  if (p.includes('storm') || p.includes('thunder')) {
+    return {
+      Icon: CloudLightning,
+      iconClass: 'text-yellow-600',
+      cardBg: 'bg-amber-50',
+      ringClass: 'ring-amber-100',
+    };
+  }
+
+  if (p.includes('rain') || p.includes('shower') || p.includes('drizzle')) {
+    return {
+      Icon: CloudRain,
+      iconClass: 'text-sky-700',
+      cardBg: 'bg-sky-50',
+      ringClass: 'ring-sky-100',
+    };
+  }
+
+  if (p.includes('snow') || p.includes('flurries')) {
+    return {
+      Icon: Snowflake,
+      iconClass: 'text-blue-500',
+      cardBg: 'bg-slate-50',
+      ringClass: 'ring-slate-100',
+    };
+  }
+
+  if (p.includes('cloud') || p.includes('overcast')) {
+    return {
+      Icon: Cloud,
+      iconClass: 'text-slate-600',
+      cardBg: 'bg-slate-50',
+      ringClass: 'ring-slate-100',
+    };
+  }
+
+  if (p.includes('sun') || p.includes('clear')) {
+    return {
+      Icon: Sun,
+      iconClass: 'text-amber-500',
+      cardBg: 'bg-amber-50',
+      ringClass: 'ring-amber-100',
+    };
+  }
+
+  // default partly-cloudy
+  return {
+    Icon: CloudSun,
+    iconClass: 'text-emerald-700',
+    cardBg: 'bg-emerald-50',
+    ringClass: 'ring-emerald-100',
+  };
 }

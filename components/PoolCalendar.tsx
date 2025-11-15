@@ -35,7 +35,7 @@ function getLaborDay(year: number): Date {
   return d;
 }
 
-// ✅ Exported so PoolPage can show "Today at the pool"
+// Exported so PoolPage can show "Today at the pool"
 export function getPoolInfo(date: Date): PoolInfo {
   const year = date.getFullYear();
   const weekday = date.getDay(); // 0 = Sun, 1 = Mon, ...
@@ -189,14 +189,14 @@ export default function PoolCalendar() {
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-brand-800">
+        <h2 className="text-[15px] md:text-base font-semibold text-brand-800">
           Pool Open/Closed Calendar
         </h2>
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs md:text-[13px]">
           <button
             type="button"
             onClick={goToday}
-            className="hidden sm:inline-flex items-center rounded-full border border-brand-200 px-2 py-1 text-[11px] text-brand-700 hover:bg-brand-50 transition"
+            className="hidden sm:inline-flex items-center rounded-full border border-brand-200 px-2.5 py-1 text-[12px] text-brand-700 hover:bg-brand-50 transition"
           >
             Today
           </button>
@@ -204,17 +204,17 @@ export default function PoolCalendar() {
             <button
               type="button"
               onClick={goPrevMonth}
-              className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 text-xs"
+              className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 text-[12px]"
             >
               ‹
             </button>
-            <div className="font-medium text-brand-800 text-sm">
+            <div className="font-medium text-brand-800 text-[13px] md:text-sm">
               {monthLabel}
             </div>
             <button
               type="button"
               onClick={goNextMonth}
-              className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 text-xs"
+              className="px-2 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 text-[12px]"
             >
               ›
             </button>
@@ -222,7 +222,7 @@ export default function PoolCalendar() {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 text-[11px] font-medium text-brand-600 mb-1">
+      <div className="grid grid-cols-7 text-[12px] font-medium text-brand-600 mb-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
           <div key={d} className="text-center py-1">
             {d}
@@ -230,7 +230,7 @@ export default function PoolCalendar() {
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-xs">
+      <div className="grid grid-cols-7 gap-1 text-[12px]">
         {weeks.map((week, i) =>
           week.map((date, j) => {
             if (!date) {
@@ -250,7 +250,7 @@ export default function PoolCalendar() {
               date.getDate() === todayDate;
 
             const baseClasses =
-              'h-14 rounded-lg w-full flex flex-col items-center justify-center border text-[11px] px-1 text-center transition-transform duration-150';
+              'h-14 rounded-lg w-full flex flex-col items-center justify-center border text-[12px] px-1 text-center transition-transform duration-150';
 
             let statusClasses = '';
             if (!inSeason) {
@@ -277,17 +277,17 @@ export default function PoolCalendar() {
               >
                 <span>{date.getDate()}</span>
                 {label && (
-                  <span className="mt-0.5 text-[9px] leading-none">
+                  <span className="mt-0.5 text-[10px] leading-none">
                     {label}
                   </span>
                 )}
                 {hours && (
-                  <span className="mt-0.5 text-[9px] leading-none">
+                  <span className="mt-0.5 text-[10px] leading-none">
                     {hours}
                   </span>
                 )}
                 {note && (
-                  <span className="mt-0.5 text-[9px] leading-none">
+                  <span className="mt-0.5 text-[10px] leading-none">
                     {note}
                   </span>
                 )}
@@ -297,7 +297,7 @@ export default function PoolCalendar() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 mt-2">
+      <div className="flex flex-wrap items-center gap-3 text-[12px] text-gray-600 mt-2">
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded-sm bg-emerald-200 border border-emerald-400" />
           <span>Open (see hours)</span>

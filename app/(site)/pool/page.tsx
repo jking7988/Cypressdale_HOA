@@ -1,9 +1,145 @@
 'use client';
 
 import Link from 'next/link';
-import PoolCalendar, { getPoolInfo } from '@/components/PoolCalendar';
+import PoolCalendar from '@/components/PoolCalendar';
+import {
+  Waves,
+  SunMedium,
+  CalendarDays,
+  Clock,
+  KeyRound,
+  Ruler,
+  CreditCard,
+  FolderOpen,
+  Info,
+  Droplets,
+  Ban,
+  Users,
+  Baby,
+  CheckCircle2,
+  XCircle,
+  Cloudy,
+} from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
+
+// --- Local pool schedule helpers (used for "Today at the pool") ---
+
+type PoolInfo = {
+  inSeason: boolean;
+  isOpen: boolean;
+  hours?: string;
+  note?: string;
+};
+
+function sameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+// Last Monday in May
+function getMemorialDay(year: number): Date {
+  const d = new Date(year, 4, 31); // May 31
+  while (d.getDay() !== 1) {
+    d.setDate(d.getDate() - 1);
+  }
+  return d;
+}
+
+// First Monday in September
+function getLaborDay(year: number): Date {
+  const d = new Date(year, 8, 1); // Sept 1
+  while (d.getDay() !== 1) {
+    d.setDate(d.getDate() + 1);
+  }
+  return d;
+}
+
+function getPoolInfo(date: Date): PoolInfo {
+  const year = date.getFullYear();
+  const weekday = date.getDay(); // 0 = Sun, 1 = Mon, ...
+  const memorialDay = getMemorialDay(year);
+  const laborDay = getLaborDay(year);
+
+  const tuesdayAfterMemorial = new Date(memorialDay);
+  tuesdayAfterMemorial.setDate(memorialDay.getDate() + 1);
+
+  const tuesdayAfterLabor = new Date(laborDay);
+  tuesdayAfterLabor.setDate(laborDay.getDate() + 1);
+
+  const seasonStart = new Date(year, 4, 31); // May 31
+  const seasonEnd = new Date(year, 8, 1); // Sept 1
+
+  const inMainSeason = date >= seasonStart && date <= seasonEnd;
+
+  const isMemorial = sameDay(date, memorialDay);
+  const isLabor = sameDay(date, laborDay);
+  const isTueAfterMemorial = sameDay(date, tuesdayAfterMemorial);
+  const isTueAfterLabor = sameDay(date, tuesdayAfterLabor);
+
+  const inSeason =
+    inMainSeason ||
+    isMemorial ||
+    isLabor ||
+    isTueAfterMemorial ||
+    isTueAfterLabor;
+
+  if (!inSeason) {
+    return { inSeason: false, isOpen: false };
+  }
+
+  if (isMemorial) {
+    return {
+      inSeason: true,
+      isOpen: true,
+      hours: '10:00 a.m. – 8:00 p.m.',
+      note: 'Memorial Day',
+    };
+  }
+
+  if (isLabor) {
+    return {
+      inSeason: true,
+      isOpen: true,
+      hours: '10:00 a.m. – 8:00 p.m.',
+      note: 'Labor Day',
+    };
+  }
+
+  if (isTueAfterMemorial || isTueAfterLabor) {
+    return {
+      inSeason: true,
+      isOpen: false,
+      note: 'After holiday',
+    };
+  }
+
+  // Monday during season: closed
+  if (weekday === 1) {
+    return { inSeason: true, isOpen: false };
+  }
+
+  // Sunday: 10–6
+  if (weekday === 0) {
+    return {
+      inSeason: true,
+      isOpen: true,
+      hours: '10:00 a.m. – 6:00 p.m.',
+    };
+  }
+
+  // Tuesday–Saturday: 10–8
+  return {
+    inSeason: true,
+    isOpen: true,
+    hours: '10:00 a.m. – 8:00 p.m.',
+  };
+}
+
+// --- Page component ---
 
 export default function PoolPage() {
   const now = new Date();
@@ -24,217 +160,270 @@ export default function PoolPage() {
     ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
     : 'border-rose-200 bg-rose-50 text-rose-800';
 
-  const todayIcon = !todayInfo.inSeason ? '📅' : todayInfo.isOpen ? '✅' : '⛔';
+  const TodayIcon = !todayInfo.inSeason
+    ? CalendarDays
+    : todayInfo.isOpen
+    ? CheckCircle2
+    : XCircle;
+
+  const SeasonIcon = inPoolSeason ? SunMedium : Cloudy;
 
   return (
-    <div className="relative min-h-screen">
-      {/* FULL-SCREEN BACKGROUND IMAGE */}
-      <div
-        className="fixed inset-0 -z-20 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url('/images/pool.jpg')",
-          backgroundAttachment: 'fixed',
-        }}
-      />
-      {/* Soft overlay so text stays readable */}
-      <div className="fixed inset-0 -z-10 bg-black/25 backdrop-blur-sm" />
+    <>
+      <div className="relative min-h-screen">
+        {/* FULL-SCREEN BACKGROUND IMAGE */}
+        <div
+          className="fixed inset-0 -z-20 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('/images/pool.jpg')",
+            backgroundAttachment: 'fixed',
+          }}
+        />
+        {/* Slightly dark overlay so text pops */}
+        <div className="fixed inset-0 -z-10 bg-black/25 backdrop-blur-sm" />
 
-      {/* Page content */}
-      <div className="relative space-y-8 px-4 md:px-6 py-6">
-        {/* Header with gradient & hero feel */}
-        <header className="space-y-4 rounded-2xl bg-gradient-to-r from-sky-50 via-cyan-50 to-emerald-50 border border-sky-100 px-4 py-5 md:px-6 md:py-6 shadow-sm text-center flex flex-col items-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 text-accent-700 border border-accent-200 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] shadow-sm">
-            <span>🌊</span>
-            <span>Community Pool</span>
-          </div>
+        {/* Page content */}
+        <div className="relative space-y-8 px-4 md:px-6 py-6">
+          {/* Header with gradient & hero feel */}
+          <header className="space-y-4 rounded-2xl bg-gradient-to-r from-sky-50/95 via-cyan-50/95 to-emerald-50/95 border border-sky-100 px-4 py-6 md:px-8 md:py-8 shadow-sm text-center flex flex-col items-center hover:-translate-y-0.5 hover:shadow-md transition">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/90 text-accent-700 border border-accent-200 px-4 py-1.5 text-[12px] md:text-xs font-semibold uppercase tracking-[0.18em] shadow-sm">
+              <Waves className="w-3.5 h-3.5" />
+              <span>Community Pool</span>
+            </div>
 
-          <h1 className="h1 flex flex-wrap items-center gap-2">
-            <span>Cypressdale Pool</span>
-            <span className="text-2xl md:text-3xl">☀️</span>
-          </h1>
+            <h1 className="h1 flex flex-wrap items-center justify-center gap-3 text-3xl md:text-4xl leading-tight">
+              <span>Cypressdale Pool</span>
+              <SunMedium className="w-8 h-8 md:w-10 md:h-10 animate-float-slow text-amber-500" />
+            </h1>
 
-          <p className="muted max-w-2xl text-sm">
-            Relax, cool off, and connect with your neighbors at the Cypressdale
-            community pool. Check the calendar, review the rules, and get ready
-            for a great day in the sun.
-          </p>
+            <p className="muted max-w-2xl text-[15px] md:text-base">
+              Relax, cool off, and connect with your neighbors at the
+              Cypressdale community pool. Check the calendar, review the rules,
+              and get ready for a great day in the sun.
+            </p>
 
-          {/* Seasonal status banner */}
-          <div
-            className={`flex items-center gap-2 text-xs font-medium rounded-xl px-3 py-2 max-w-xl ${
-              inPoolSeason
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-gray-50 text-gray-600 border border-gray-200'
-            }`}
-          >
-            <span>{inPoolSeason ? '🏊‍♀️' : '🍂'}</span>
-            <span>
-              {inPoolSeason
-                ? 'Pool season is currently active. Check the calendar for open days and hours.'
-                : 'The pool is currently closed for the season. Check back closer to summer for updated dates.'}
-            </span>
-          </div>
-
-          {/* Today at the pool pill */}
-          <div className="mt-2">
-            <span
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium ${todayPillClasses}`}
+            {/* Seasonal status banner */}
+            <div
+              className={`flex items-center gap-2 text-[13px] md:text-sm font-medium rounded-xl px-4 py-2 max-w-xl ${
+                inPoolSeason
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-gray-50 text-gray-600 border border-gray-200'
+              }`}
             >
-              <span>{todayIcon}</span>
-              <span>{todayPillText}</span>
-            </span>
-          </div>
-        </header>
+              <SeasonIcon className="w-4 h-4" />
+              <span>
+                {inPoolSeason
+                  ? 'Pool season is currently active. Check the calendar for open days and hours.'
+                  : 'The pool is currently closed for the season. Check back closer to summer for updated dates.'}
+              </span>
+            </div>
 
-        {/* Know before you go strip */}
-        <section className="grid gap-3 md:grid-cols-3">
-          <div className="card flex flex-col gap-1 hover:-translate-y-0.5 hover:shadow-md transition">
-            <span className="text-sm font-semibold text-brand-800">
-              Who can use the pool?
-            </span>
-            <p className="text-xs text-gray-600">
-              Cypressdale residents and their guests with a valid pool pass and
-              current assessments.
-            </p>
-          </div>
+            {/* Today at the pool pill */}
+            <div className="mt-1">
+              <span
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] md:text-sm font-medium ${todayPillClasses}`}
+              >
+                <TodayIcon className="w-4 h-4" />
+                <span>{todayPillText}</span>
+              </span>
+            </div>
+          </header>
 
-          <div className="card flex flex-col gap-1 hover:-translate-y-0.5 hover:shadow-md transition">
-            <span className="text-sm font-semibold text-brand-800">
-              What should I bring?
-            </span>
-            <ul className="text-xs text-gray-600 space-y-1">
-              <li>💳 Pool pass or access card</li>
-              <li>🧴 Sunscreen</li>
-              <li>🩱 Swimsuit & towel</li>
-              <li>🚫 No glass or alcohol</li>
-            </ul>
-          </div>
-
-          <div className="card flex flex-col gap-1 hover:-translate-y-0.5 hover:shadow-md transition">
-            <span className="text-sm font-semibold text-brand-800">
-              Little swimmers
-            </span>
-            <p className="text-xs text-gray-600">
-              Children 8 and under must be accompanied by an adult. Coast
-              Guard–approved flotation devices only.
-            </p>
-          </div>
-        </section>
-
-        <div className="grid gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)] items-start">
-          {/* LEFT: Calendar, wrapped in a card */}
-          <section className="card space-y-3 border border-emerald-100 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-emerald-900 flex items-center gap-2">
-                <span>📅</span>
-                <span>Pool schedule & status</span>
-              </h2>
-              <p className="text-[11px] text-gray-500">
-                Weather & maintenance may affect availability.
+          {/* Know before you go strip */}
+          <section className="grid gap-3 md:grid-cols-3">
+            <div className="card flex flex-col gap-2 hover:-translate-y-0.5 hover:shadow-md transition">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-brand-700" />
+                <span className="text-base md:text-lg font-semibold text-brand-800">
+                  Who can use the pool?
+                </span>
+              </div>
+              <p className="text-sm md:text-[15px] text-gray-600">
+                Cypressdale residents and their guests with a valid pool pass
+                and current assessments.
               </p>
             </div>
 
-            <div className="border-t border-emerald-100 pt-3">
-              <PoolCalendar />
+            <div className="card flex flex-col gap-2 hover:-translate-y-0.5 hover:shadow-md transition">
+              <div className="flex items-center gap-2">
+                <Info className="w-4 h-4 text-brand-700" />
+                <span className="text-base md:text-lg font-semibold text-brand-800">
+                  What should I bring?
+                </span>
+              </div>
+              <ul className="text-sm md:text-[15px] text-gray-600 space-y-1">
+                <li className="flex items-center gap-2">
+                  <CreditCard className="w-3.5 h-3.5 text-brand-700" />
+                  <span>Pool pass or access card</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <SunMedium className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Sunscreen</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Droplets className="w-3.5 h-3.5 text-cyan-500" />
+                  <span>Swimsuit & towel</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Ban className="w-3.5 h-3.5 text-rose-500" />
+                  <span>No glass or alcohol</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="card flex flex-col gap-2 hover:-translate-y-0.5 hover:shadow-md transition">
+              <div className="flex items-center gap-2">
+                <Baby className="w-4 h-4 text-brand-700" />
+                <span className="text-base md:text-lg font-semibold text-brand-800">
+                  Little swimmers
+                </span>
+              </div>
+              <p className="text-sm md:text-[15px] text-gray-600">
+                Children 8 and under must be accompanied by an adult. Coast
+                Guard–approved flotation devices only.
+              </p>
             </div>
           </section>
 
-          {/* RIGHT: Info cards */}
-          <div className="space-y-4">
-            {/* Hours */}
-            <section className="card space-y-2 border border-emerald-50 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
-              <h2 className="text-lg font-semibold text-brand-800 flex items-center gap-2">
-                <span>🕒</span>
-                <span>Pool Hours (Weather Permitting)</span>
-              </h2>
-              <p className="text-sm text-gray-700">
-                Hours may vary by season. Please refer to your most recent pool
-                notice for exact dates and times.
-              </p>
-              <ul className="text-sm text-gray-700 list-disc list-inside space-y-1">
-                <li>
-                  Closed on Mondays for cleaning (except certain holidays).
-                </li>
-                <li>Open most days between late May and early September.</li>
-                <li>
-                  Pool will close during thunder or lightning in the area.
-                </li>
-              </ul>
-              <p className="text-xs text-gray-500 mt-2">
-                This calendar is for convenience only. Final hours and access
-                are determined by the Association and management company.
-              </p>
-            </section>
+          <div className="grid gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)] items-start">
+            {/* LEFT: Calendar, wrapped in a card */}
+            <section className="card space-y-3 border border-emerald-100 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-emerald-800" />
+                  <h2 className="text-base md:text-lg font-semibold text-emerald-900">
+                    Pool schedule & status
+                  </h2>
+                </div>
+                <p className="text-[11px] md:text-xs text-gray-500">
+                  Weather & maintenance may affect availability.
+                </p>
+              </div>
 
-            {/* Access & requirements */}
-            <section className="card space-y-2 border border-emerald-50 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
-              <h2 className="text-lg font-semibold text-brand-800 flex items-center gap-2">
-                <span>🔑</span>
-                <span>Access & Requirements</span>
-              </h2>
-              <ul className="text-sm text-gray-700 list-disc list-inside space-y-1">
-                <li>
-                  Pool address:{' '}
-                  <span className="font-medium">
-                    4815 Elmbrook Drive, Spring, TX 77388
-                  </span>
-                </li>
-                <li>
-                  Must be current on all assessments to receive a pool ID card
-                  or access device.
-                </li>
-                <li>
-                  A pool access card/device is required to enter the facility
-                  and will not allow access when the pool is scheduled closed.
-                </li>
-                <li>
-                  Pool access is for residents/members; guest rules may apply.
-                </li>
-                <li>All users must follow posted pool rules at all times.</li>
-              </ul>
-              <a
-                href="https://swimmingpoolpasses.net/cypressdale/"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center text-sm text-accent-700 hover:underline gap-1 mt-2"
-              >
-                <span>💳</span>
-                <span>Get or manage your pool pass</span>
-                <span>→</span>
-              </a>
-            </section>
-
-            {/* Rules + link to documents page */}
-            <section className="card space-y-2 border border-emerald-50 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
-              <h2 className="text-lg font-semibold text-brand-800 flex items-center gap-2">
-                <span>📏</span>
-                <span>Pool Rules</span>
-              </h2>
-              <p className="text-sm text-gray-700">
-                We want the pool to be fun, relaxing, and safe for everyone.
-                Please help us by following these guidelines while you enjoy
-                the water.
-              </p>
-              <ul className="text-sm text-gray-700 list-disc list-inside space-y-1">
-                <li>No running or excessive horseplay.</li>
-                <li>No glass items in the pool area.</li>
-                <li>Children 8 and under must be accompanied by an adult.</li>
-                <li>Swimsuits only—no cutoffs or street clothes in the water.</li>
-              </ul>
-              <div className="mt-3">
-                <Link
-                  href="/documents"
-                  className="text-xs text-accent-700 hover:underline inline-flex items-center gap-1"
-                >
-                  <span>📂</span>
-                  <span>View all pool documents on the Documents page</span>
-                  <span>→</span>
-                </Link>
+              <div className="border-t border-emerald-100 pt-3">
+                <PoolCalendar />
               </div>
             </section>
+
+            {/* RIGHT: Info cards */}
+            <div className="space-y-4">
+              {/* Hours */}
+              <section className="card space-y-2 border border-emerald-50 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-brand-800" />
+                  <h2 className="text-lg md:text-xl font-semibold text-brand-800">
+                    Pool Hours (Weather Permitting)
+                  </h2>
+                </div>
+                <p className="text-sm md:text-[15px] text-gray-700">
+                  Hours may vary by season. Please refer to your most recent
+                  pool notice for exact dates and times.
+                </p>
+                <ul className="text-sm md:text-[15px] text-gray-700 list-disc list-inside space-y-1">
+                  <li>
+                    Closed on Mondays for cleaning (except certain holidays).
+                  </li>
+                  <li>Open most days between late May and early September.</li>
+                  <li>
+                    Pool will close during thunder or lightning in the area.
+                  </li>
+                </ul>
+                <p className="text-xs md:text-[13px] text-gray-500 mt-2">
+                  This calendar is for convenience only. Final hours and access
+                  are determined by the Association and management company.
+                </p>
+              </section>
+
+              {/* Access & requirements */}
+              <section className="card space-y-2 border border-emerald-50 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="w-5 h-5 text-brand-800" />
+                  <h2 className="text-lg md:text-xl font-semibold text-brand-800">
+                    Access & Requirements
+                  </h2>
+                </div>
+                <ul className="text-sm md:text-[15px] text-gray-700 list-disc list-inside space-y-1">
+                  <li>
+                    Pool address:{' '}
+                    <span className="font-medium">
+                      4815 Elmbrook Drive, Spring, TX 77388
+                    </span>
+                  </li>
+                  <li>
+                    Must be current on all assessments to receive a pool ID card
+                    or access device.
+                  </li>
+                  <li>
+                    A pool access card/device is required to enter the facility
+                    and will not allow access when the pool is scheduled closed.
+                  </li>
+                  <li>
+                    Pool access is for residents/members; guest rules may apply.
+                  </li>
+                  <li>All users must follow posted pool rules at all times.</li>
+                </ul>
+                <a
+                  href="https://swimmingpoolpasses.net/cypressdale/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center text-sm md:text-[15px] text-accent-700 hover:underline gap-1 mt-2"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>Get or manage your pool pass</span>
+                  <span>→</span>
+                </a>
+              </section>
+
+              {/* Rules + link to documents page */}
+              <section className="card space-y-2 border border-emerald-50 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">
+                <div className="flex items-center gap-2">
+                  <Ruler className="w-5 h-5 text-brand-800" />
+                  <h2 className="text-lg md:text-xl font-semibold text-brand-800">
+                    Pool Rules
+                  </h2>
+                </div>
+                <p className="text-sm md:text-[15px] text-gray-700">
+                  We want the pool to be fun, relaxing, and safe for everyone.
+                  Please help us by following these guidelines while you enjoy
+                  the water.
+                </p>
+                <ul className="text-sm md:text-[15px] text-gray-700 list-disc list-inside space-y-1">
+                  <li>No running or excessive horseplay.</li>
+                  <li>No glass items in the pool area.</li>
+                  <li>Children 8 and under must be accompanied by an adult.</li>
+                  <li>Swimsuits only—no cutoffs or street clothes in the water.</li>
+                </ul>
+                <div className="mt-3">
+                  <Link
+                    href="/documents"
+                    className="text-xs md:text-[13px] text-accent-700 hover:underline inline-flex items-center gap-1"
+                  >
+                    <FolderOpen className="w-4 h-4" />
+                    <span>View all pool documents on the Documents page</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Custom animation for subtle float on the sun icon */}
+      <style jsx global>{`
+        @keyframes float-slow {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-4px);
+          }
+        }
+        .animate-float-slow {
+          animation: float-slow 6s ease-in-out infinite;
+        }
+      `}</style>
+    </>
   );
 }
