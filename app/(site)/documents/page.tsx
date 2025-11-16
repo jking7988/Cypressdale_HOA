@@ -9,35 +9,58 @@ type DocFile = {
   _id: string;
   title: string;
   description?: string;
-  category?: string;
   fileUrl: string;
-  uploadedAt?: string;
   fileName?: string;
+  uploadedAt?: string;
+  folderId?: string;
+  folderTitle?: string;
+  folderDescription?: string;
+  folderOrder?: number;
+};
+
+type FolderGroup = {
+  id: string;
+  title: string;
+  description?: string;
+  order: number;
+  files: DocFile[];
 };
 
 export default async function DocumentsPage() {
   const docs = await client.fetch<DocFile[]>(documentsQuery);
 
-  // Group docs by category
-  const grouped: Record<string, DocFile[]> = docs.reduce(
-    (acc, doc) => {
-      const key = doc.category || 'Other';
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(doc);
-      return acc;
-    },
-    {} as Record<string, DocFile[]>,
-  );
+  // Group documents by folder
+  const folderMap = new Map<string, FolderGroup>();
 
-  const categories = Object.entries(grouped).sort(([a], [b]) =>
-    a.localeCompare(b),
+  docs.forEach((doc) => {
+    const id = doc.folderId ?? 'uncategorized';
+    const title = doc.folderTitle ?? 'Other documents';
+    const description = doc.folderDescription;
+    const order =
+      doc.folderOrder !== undefined && doc.folderOrder !== null
+        ? doc.folderOrder
+        : 9999;
+
+    if (!folderMap.has(id)) {
+      folderMap.set(id, {
+        id,
+        title,
+        description,
+        order,
+        files: [],
+      });
+    }
+
+    folderMap.get(id)!.files.push(doc);
+  });
+
+  const folders = Array.from(folderMap.values()).sort(
+    (a, b) =>
+      a.order - b.order || a.title.localeCompare(b.title),
   );
 
   return (
-    // 🔥 Full-bleed wrapper: escapes the parent .container so the background
-    // spans the entire viewport width
-    <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-gradient-to-b from-amber-200 via-amber-100 to-amber-200 py-12 px-3 sm:px-6">
-      {/* We re-center content inside the full-bleed area */}
+    <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-gradient-to-b from-amber-200 via-amber-100 to-amber-200 py-12 px-3 sm:px-6 overflow-x-hidden">
       <div className="max-w-5xl mx-auto relative">
         {/* Folder tab */}
         <div className="absolute -top-6 left-6 sm:left-10">
@@ -59,15 +82,14 @@ export default async function DocumentsPage() {
             </p>
           </header>
 
-          {/* Categories */}
-          {categories.length === 0 && (
+          {folders.length === 0 && (
             <p className="muted">No documents available yet.</p>
           )}
 
-          {categories.length > 0 && (
+          {folders.length > 0 && (
             <ul className="space-y-4">
-              {categories.map(([category, files]) => (
-                <li key={category} className="space-y-2">
+              {folders.map((folder) => (
+                <li key={folder.id} className="space-y-2">
                   <details className="group border border-amber-200/80 rounded-2xl bg-amber-50/70 shadow-sm">
                     <summary className="cursor-pointer flex items-center justify-between gap-3 px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -75,17 +97,25 @@ export default async function DocumentsPage() {
                           <FolderClosed className="w-4 h-4 text-amber-800 group-open:hidden" />
                           <FolderOpen className="w-4 h-4 text-amber-800 hidden group-open:inline-block" />
                         </span>
-                        <span className="font-semibold text-amber-900">
-                          {category}
-                        </span>
+                        <div>
+                          <span className="font-semibold text-amber-900 block">
+                            {folder.title}
+                          </span>
+                          {folder.description && (
+                            <span className="text-[11px] text-amber-900/80">
+                              {folder.description}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200/80">
-                        {files.length} file{files.length !== 1 ? 's' : ''}
+                        {folder.files.length} file
+                        {folder.files.length !== 1 ? 's' : ''}
                       </span>
                     </summary>
 
                     <div className="border-t border-amber-200/80 px-5 py-4 space-y-2">
-                      {files.map((file) => {
+                      {folder.files.map((file) => {
                         const ext =
                           file.fileName?.split('.').pop()?.toUpperCase() ||
                           'FILE';

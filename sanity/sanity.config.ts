@@ -1,9 +1,9 @@
-// sanity.config.ts
-import {defineConfig} from 'sanity'
-import {structureTool} from 'sanity/structure'
-import {visionTool} from '@sanity/vision'
-import schemaTypes from './schemaTypes'
-import {deskStructure} from './deskStructure'
+import {defineConfig} from 'sanity';
+import {structureTool} from 'sanity/structure';
+import {visionTool} from '@sanity/vision';
+import schemaTypes from './schemaTypes';
+import {deskStructure} from './deskStructure';
+import {teamChatTool} from './teamChatTool';
 
 export default defineConfig({
   name: 'default',
@@ -13,18 +13,16 @@ export default defineConfig({
   basePath: '/',
 
   plugins: [
-    // you can keep your custom desk structure, we’ll update it later
     structureTool({structure: deskStructure}),
     visionTool(),
+    teamChatTool(), // ✅ Team Chat appears as a separate tool
   ],
 
-  // ✅ schema is just your types now – no templates needed
   schema: {
     types: schemaTypes,
   },
 
-  // ✅ no special document actions – use the normal delete, etc.
   document: {
     actions: (prev) => prev,
   },
-})
+});

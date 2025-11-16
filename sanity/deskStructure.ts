@@ -1,3 +1,4 @@
+// deskStructure.ts
 // @ts-nocheck
 
 export const deskStructure = (S) =>
@@ -8,51 +9,46 @@ export const deskStructure = (S) =>
       S.listItem()
         .title('Documents')
         .child(
-          S.documentTypeList('documentFile')
-            .title('Documents'),
+          S.list()
+            .title('Documents')
+            .items([
+              S.listItem()
+                .title('Folders')
+                .child(
+                  S.documentTypeList('documentFolder').title('Document Folders'),
+                ),
+              S.listItem()
+                .title('Files')
+                .child(
+                  S.documentTypeList('documentFile').title('Document Files'),
+                ),
+            ]),
         ),
 
-      // Events → each event shows its own sub-list
+      // Events
       S.listItem()
         .title('Events')
-        .child(
-          S.documentTypeList('event')
-            .title('Events')
-            .child((eventId) =>
-              S.list()
-                .title('Event')
-                .items([
-                  // Event editor
-                  S.listItem()
-                    .title('Event details')
-                    .child(
-                      S.document()
-                        .schemaType('event')
-                        .documentId(eventId),
-                    ),
+        .child(S.documentTypeList('event').title('Events')),
 
-                  // RSVP Responses for this event
-                  S.listItem()
-                    .title('RSVP Responses')
-                    .child(
-                      S.documentTypeList('rsvpResponse')
-                        .title('RSVP Responses')
-                        .filter('event._ref == $eventId')
-                        .params({eventId}),
-                    ),
-                    // sanity/deskStructure.ts (inside the default export)
-                  S.listItem()
-                    .title('Yard of the Month Winners')
-                    .child(
-                      S.documentTypeList('yardWinner').title('Yard of the Month Winners')
-                    ),
-                ]),
-            ),
-        ),
+      // News
+      S.listItem()
+        .title('News')
+        .child(S.documentTypeList('post').title('News')),
 
-      // Everything else (posts, etc.)
+      // Yard of the Month
+      S.listItem()
+        .title('Yard of the Month Winners')
+        .child(S.documentTypeList('yardWinner').title('Yard of the Month Winners')),
+
+      // Everything else
       ...S.documentTypeListItems().filter((item) => {
         const id = String(item.getId());
-        return !['documentFile', 'event', 'rsvpResponse'].includes(id);
+        return ![
+          'documentFile',
+          'documentFolder',
+          'event',
+          'post',
+          'yardWinner',
+        ].includes(id);
       }),
     ]);

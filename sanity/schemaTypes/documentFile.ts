@@ -1,4 +1,4 @@
-// schemas/documentFile.ts
+// documentFile.ts
 import { defineType, defineField } from 'sanity';
 
 export default defineType({
@@ -18,18 +18,12 @@ export default defineType({
       type: 'text',
     }),
     defineField({
-      name: 'category',
-      title: 'Category / Folder',
-      type: 'string',
-      options: {
-        list: [
-          { title: 'Neighborhood Plat Maps', value: 'Neighborhood Plat Maps' },
-          { title: 'Pool Information', value: 'Pool Information' },
-          { title: 'ACC Documents', value: 'ACC Documents' },
-          // add more “folders” here if you want
-        ],
-      },
+      name: 'folder',
+      title: 'Folder',
+      type: 'reference',
+      to: [{ type: 'documentFolder' }],
       validation: (Rule) => Rule.required(),
+      description: 'Choose which folder this document appears in.',
     }),
     defineField({
       name: 'file',
@@ -47,8 +41,6 @@ export default defineType({
       readOnly: true,
     }),
   ],
-
-  // This is allowed in Sanity v3 – sets default values for new documents
   initialValue: () => ({
     uploadedAt: new Date().toISOString(),
   }),

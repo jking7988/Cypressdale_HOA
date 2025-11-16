@@ -69,21 +69,22 @@ export const eventsQuery = groq`*[_type == "event"]
 
 /* 🔽 UPDATED BLOCK STARTS HERE */
 export const documentsQuery = groq`*[_type == "documentFile"]
-  | order(category asc, coalesce(uploadedAt, _updatedAt) desc, title asc){
+  | order(folder->sortOrder asc, folder->title asc, coalesce(uploadedAt, _updatedAt) desc, title asc) {
     _id,
     title,
     description,
-    category,
-    // prefer custom uploadedAt, otherwise fall back to system _updatedAt
+    "folderId": folder->_id,
+    "folderTitle": folder->title,
+    "folderDescription": folder->description,
+    "folderOrder": folder->sortOrder,
     "uploadedAt": coalesce(uploadedAt, _updatedAt),
     "fileUrl": file.asset->url,
-    "fileName": file.asset->originalFilename
+    "fileName": file.asset->originalFilename,
   }`;
-/* 🔼 UPDATED BLOCK ENDS HERE */
 
 export const poolDocumentsQuery = groq`*[
   _type == "documentFile" &&
-  category match "Pool*"
+  folder->title match "Pool*"
 ] | order(title asc){
   _id,
   title,
@@ -97,14 +98,11 @@ export const yardWinnersQuery = groq`*[_type == "yardWinner"] | order(month desc
   month,
   streetOrBlock,
   description,
-  "photoUrl": photo.asset->url
+  // first photo for cards / hero
+  "photoUrl": photos[0].asset->url,
+  // all photos for detail page / lightbox
+  "photoUrls": photos[].asset->url
 }`;
 
-export const yardWinnerByIdQuery = groq`*[_type == "yardWinner" && _id == $id][0]{
-  _id,
-  title,
-  month,
-  streetOrBlock,
-  description,
-  "photoUrl": photo.asset->url
-}`;
+
+

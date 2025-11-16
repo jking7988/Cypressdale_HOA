@@ -12,7 +12,8 @@ type YardWinner = {
   month?: string;
   streetOrBlock?: string;
   description?: string;
-  photoUrl?: string;
+  photoUrl?: string;      // first image
+  photoUrls?: string[];   // all images
 };
 
 function formatMonth(month?: string) {
