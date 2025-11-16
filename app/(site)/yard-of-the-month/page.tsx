@@ -55,10 +55,11 @@ export default async function YardOfTheMonthPage() {
           </h1>
 
           <p className="muted max-w-2xl text-sm md:text-base text-emerald-900/80">
-            The Yard of the Month program recognizes Cypressdale neighbors who
-            go above and beyond with their landscaping, curb appeal, and overall
-            care for their homes. It&apos;s a fun way to celebrate pride of
-            ownership and keep our community looking vibrant and welcoming.
+            Beginning in January 2026, the Yard of the Month program recognizes
+            Cypressdale neighbors who go above and beyond with their
+            landscaping, curb appeal, and overall care for their homes. It&apos;s
+            a fun way to celebrate pride of ownership and keep our community
+            looking vibrant and welcoming.
           </p>
         </header>
 
@@ -71,10 +72,10 @@ export default async function YardOfTheMonthPage() {
               <h2 className="h2 text-lg">Program overview</h2>
             </div>
             <p className="text-sm text-emerald-900/90">
-              Each month (season and weather permitting), one Cypressdale home
-              will be selected for outstanding front yard appearance. The
-              winning yard may receive a small recognition prize and may be
-              featured here on the HOA website.
+              Starting in January 2026, each month (season and weather
+              permitting), one Cypressdale home will be selected for outstanding
+              front yard appearance. The winning yard will be recognized on the
+              HOA website and through Cypressdale social media announcements.
             </p>
             <p className="text-sm text-emerald-900/90">
               Selections are made by representatives designated by the HOA. The
@@ -128,8 +129,8 @@ export default async function YardOfTheMonthPage() {
               </li>
             </ul>
             <p className="text-xs text-emerald-900/70">
-              The HOA may adjust criteria, prizes, or schedule over time as the
-              program grows.
+              The HOA may adjust criteria, schedule, or recognition details over
+              time as the program grows.
             </p>
           </div>
         </section>
@@ -144,7 +145,7 @@ export default async function YardOfTheMonthPage() {
             <span className="text-xs rounded-full bg-emerald-900/10 text-emerald-900 px-3 py-1 border border-emerald-200/80">
               {currentWinner
                 ? 'Recognizing this month’s standout yard'
-                : 'First selection coming soon'}
+                : 'First selection coming January 2026'}
             </span>
           </div>
 
@@ -192,7 +193,7 @@ export default async function YardOfTheMonthPage() {
           ) : (
             <div className="rounded-3xl border border-dashed border-emerald-300/70 bg-emerald-50/70 px-4 py-6 text-sm text-emerald-900/80 text-center">
               <p className="font-medium text-emerald-950 mb-1">
-                Yard of the Month launching soon
+                Yard of the Month launching January 2026
               </p>
               <p>
                 The program is being finalized. Check back after the first

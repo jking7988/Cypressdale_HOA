@@ -22,10 +22,8 @@ type Message = {
 const ROOM_ID = 'global:board-chat';
 const CHANNEL_NAME = 'team-chat';
 
-// Quick reaction row
 const REACTION_OPTIONS = ['👍', '❤️', '🎉', '👀', '🤔', '✅'];
 
-// Full emoji picker (you can expand / tweak this as you like)
 const EMOJI_PICKER = [
   '👍', '👎', '❤️', '💚', '💛', '💙', '💜', '🤍',
   '😂', '🤣', '😊', '😅', '😇', '🙃', '😉', '😍',
@@ -36,7 +34,6 @@ const EMOJI_PICKER = [
 
 type ReactionsState = Record<string, Record<string, string[]>>;
 
-// Quote line styling
 const quoteLineStyle: React.CSSProperties = {
   borderLeft: '2px solid rgba(148,163,184,0.6)',
   paddingLeft: 8,
@@ -49,7 +46,6 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-// Render text with @mentions + quote ("> ")
 function renderWithMentions(text: string): React.ReactNode {
   const lines = text.split('\n');
 
@@ -58,7 +54,7 @@ function renderWithMentions(text: string): React.ReactNode {
     const isQuote = trimmed.startsWith('>');
     const content = isQuote ? line.replace(/^\s*>\s?/, '') : line;
 
-    const parts = content.split(/(\s+)/); // keep spaces
+    const parts = content.split(/(\s+)/);
     const children = parts.map((part, idx) => {
       if (part.startsWith('@') && part.length > 1 && !part.includes('\n')) {
         return (
@@ -86,7 +82,6 @@ function renderWithMentions(text: string): React.ReactNode {
   });
 }
 
-// Day label helper
 function formatDayLabel(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -178,21 +173,18 @@ const TeamChatView = () => {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
-  const [pendingUndo, setPendingUndo] = useState<{
-    id: string;
-    original: Message;
-  } | null>(null);
-
   const [replyTo, setReplyTo] = useState<Message | null>(null);
 
-  // which message currently has the emoji picker open
   const [emojiPickerFor, setEmojiPickerFor] = useState<string | null>(null);
+  const [composerEmojiOpen, setComposerEmojiOpen] = useState(false);
+
+  // Show controls only on hover
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const channelRef = useRef<any>(null);
   const lastTypingSentRef = useRef<number>(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const deleteTimerRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const [isWindowFocused, setIsWindowFocused] = useState(
@@ -202,7 +194,7 @@ const TeamChatView = () => {
     typeof document !== 'undefined' ? document.title : 'Team Chat',
   );
 
-  // Focus / blur / visibility -> unread & focus state
+  // focus / visibility tracking for unread count
   useEffect(() => {
     function handleFocus() {
       setIsWindowFocused(true);
@@ -233,7 +225,7 @@ const TeamChatView = () => {
     };
   }, []);
 
-  // Tab title notifications
+  // tab title
   useEffect(() => {
     if (typeof document === 'undefined') return;
     if (unreadCount > 0 && !isWindowFocused) {
@@ -243,7 +235,6 @@ const TeamChatView = () => {
     }
   }, [unreadCount, isWindowFocused, originalTitle]);
 
-  // scroll helpers
   function scrollToBottomInstant() {
     if (!bottomRef.current) return;
     bottomRef.current.scrollIntoView({behavior: 'auto', block: 'end'});
@@ -256,7 +247,7 @@ const TeamChatView = () => {
     }, 0);
   }
 
-  // Load history + setup broadcast channel
+  // load history + realtime channel
   useEffect(() => {
     let active = true;
 
@@ -266,6 +257,8 @@ const TeamChatView = () => {
         .from('messages')
         .select('*')
         .eq('room_id', ROOM_ID)
+        // don't load soft-deleted rows
+        .or('deleted.is.null,deleted.eq.false')
         .order('created_at', {ascending: true});
 
       if (!active) return;
@@ -283,11 +276,11 @@ const TeamChatView = () => {
       .on('broadcast', {event: 'message'}, (payload) => {
         const msg = payload.payload as Message;
         setMessages((prev) => [...prev, msg]);
-
         if (!isWindowFocused) {
           setUnreadCount((prev) => prev + 1);
+        } else {
+          scrollToBottomSmooth();
         }
-        // no auto scroll on incoming messages
       })
       .on('broadcast', {event: 'typing'}, (payload) => {
         const {userId: typingId, name} = payload.payload as {
@@ -318,7 +311,6 @@ const TeamChatView = () => {
           userId: string;
         };
 
-        // Toggle reaction for this user
         setReactions((prev) => {
           const next: ReactionsState = {...prev};
           const msgReacts = {...(next[messageId] || {})};
@@ -354,19 +346,13 @@ const TeamChatView = () => {
       })
       .on('broadcast', {event: 'delete'}, (payload) => {
         const {id} = payload.payload as {id: string};
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === id
-              ? {...m, deleted: true, text: '', file_url: null}
-              : m,
-          ),
-        );
+        // ✅ completely remove from local list
+        setMessages((prev) => prev.filter((m) => m.id !== id));
       })
       .subscribe();
 
     channelRef.current = channel;
 
-    // presence pings
     function sendPresence() {
       if (!channelRef.current) return;
       channelRef.current.send({
@@ -378,7 +364,6 @@ const TeamChatView = () => {
     sendPresence();
     const presenceInterval = setInterval(sendPresence, 20_000);
 
-    // prune stale typing & presence
     const pruneInterval = setInterval(() => {
       const cutoffTyping = Date.now() - 3_000;
       const cutoffPresence = Date.now() - 30_000;
@@ -411,7 +396,6 @@ const TeamChatView = () => {
     };
   }, [isWindowFocused, userId, displayName]);
 
-  // Typing broadcast
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
     setInput(value);
@@ -428,9 +412,7 @@ const TeamChatView = () => {
     });
   }
 
-  // Edit handlers
   function startEdit(message: Message) {
-    if (message.deleted) return;
     setEditingId(message.id);
     setEditingText(message.text || '');
   }
@@ -442,7 +424,7 @@ const TeamChatView = () => {
 
   async function saveEdit(message: Message) {
     const newText = editingText.trim();
-    if (!newText || message.deleted) {
+    if (!newText) {
       cancelEdit();
       return;
     }
@@ -479,86 +461,75 @@ const TeamChatView = () => {
     }
   }
 
-  // Delete + undo
   async function deleteMessage(message: Message) {
-    if (message.deleted) return;
-
-    const original = {...message};
     const id = message.id;
 
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.id === id ? {...m, deleted: true, text: '', file_url: null} : m,
-      ),
-    );
+    // 🔥 Immediately remove from UI
+    setMessages((prev) => prev.filter((m) => m.id !== id));
 
-    setPendingUndo({id, original});
+    // Notify other clients to remove
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'delete',
+        payload: {id},
+      });
+    }
 
-    if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
-    deleteTimerRef.current = setTimeout(async () => {
-      setPendingUndo(null);
+    // Try hard delete first
+    const {error} = await supabase.from('messages').delete().eq('id', id);
 
-      if (channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'delete',
-          payload: {id},
-        });
-      }
+    if (error) {
+      console.error('hard delete failed, trying soft delete:', error.message);
 
-      const {error} = await supabase
+      // Fallback: soft delete so it never shows up in future loads
+      const {error: softError} = await supabase
         .from('messages')
         .update({deleted: true, deleted_at: nowIso()})
         .eq('id', id);
 
-      if (error) console.error('delete error', error.message);
-    }, 5000);
-  }
-
-  function undoDelete() {
-    if (!pendingUndo) return;
-    if (deleteTimerRef.current) {
-      clearTimeout(deleteTimerRef.current);
-      deleteTimerRef.current = null;
+      if (softError) {
+        console.error('soft delete also failed:', softError.message);
+      }
     }
-
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.id === pendingUndo.id ? pendingUndo.original : m,
-      ),
-    );
-    setPendingUndo(null);
   }
 
-  // Reply
   function startReply(message: Message) {
-    if (message.deleted) return;
     setReplyTo(message);
     if (inputRef.current) inputRef.current.focus();
   }
 
-  // Send message
   async function handleSend(e?: React.FormEvent) {
     if (e) e.preventDefault();
     let text = input.trim();
     if (!text) return;
 
+    // If we're replying, prepend a nice "Reply to ..." quote block
     if (replyTo) {
       const base = (replyTo.text || '').replace(/\s+/g, ' ').trim();
       const snippet =
         base.length > 160 ? base.slice(0, 157).trimEnd() + '…' : base;
-      const quoteBlock = snippet ? `> ${snippet}\n\n` : '';
+
+      const header = replyTo.author_name
+        ? `Reply to "${replyTo.author_name}"`
+        : 'Reply';
+
+      const quoteLine = snippet ? `${header}: ${snippet}` : header;
+
+      // This ends up rendered inside the grey quote bar
+      const quoteBlock = `> ${quoteLine}\n\n`;
+
       text = quoteBlock + text;
     }
 
     const createdAt = nowIso();
-    const localId =
-      (typeof crypto !== 'undefined' && crypto.randomUUID
+    const messageId =
+      typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
-        : `local-${Date.now()}`);
+        : `local-${Date.now()}`;
 
     const msg: Message = {
-      id: localId,
+      id: messageId,
       room_id: ROOM_ID,
       author_name: displayName,
       text,
@@ -580,6 +551,7 @@ const TeamChatView = () => {
     }
 
     const {error} = await supabase.from('messages').insert({
+      id: messageId,
       room_id: ROOM_ID,
       author_name: displayName,
       text,
@@ -589,12 +561,12 @@ const TeamChatView = () => {
     setSending(false);
 
     if (error) {
-      setMessages((prev) => prev.filter((m) => m.id !== localId));
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
       console.error('Supabase insert error:', error.message);
     }
   }
 
-  // File upload
+
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -617,13 +589,13 @@ const TeamChatView = () => {
       } = supabase.storage.from('chat-uploads').getPublicUrl(path);
 
       const createdAt = nowIso();
-      const localId =
-        (typeof crypto !== 'undefined' && crypto.randomUUID
+      const messageId =
+        typeof crypto !== 'undefined' && crypto.randomUUID
           ? crypto.randomUUID()
-          : `file-${Date.now()}`)
+          : `file-${Date.now()}`;
 
       const msg: Message = {
-        id: localId,
+        id: messageId,
         room_id: ROOM_ID,
         author_name: displayName,
         text: file.name,
@@ -645,6 +617,7 @@ const TeamChatView = () => {
       }
 
       const {error: insertError} = await supabase.from('messages').insert({
+        id: messageId,
         room_id: ROOM_ID,
         author_name: displayName,
         text: file.name,
@@ -655,7 +628,7 @@ const TeamChatView = () => {
       });
 
       if (insertError) {
-        setMessages((prev) => prev.filter((m) => m.id !== localId));
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
         console.error(insertError);
       }
     } finally {
@@ -664,7 +637,6 @@ const TeamChatView = () => {
     }
   }
 
-  // Reaction toggle + broadcast
   function handleReaction(messageId: string, emoji: string) {
     setReactions((prev) => {
       const next: ReactionsState = {...prev};
@@ -702,6 +674,35 @@ const TeamChatView = () => {
     }
   }
 
+  function insertEmojiIntoComposer(emoji: string) {
+    if (!inputRef.current) {
+      setInput((prev) => prev + emoji);
+      return;
+    }
+
+    const el = inputRef.current;
+    const start = el.selectionStart ?? input.length;
+    const end = el.selectionEnd ?? input.length;
+
+    const before = input.slice(0, start);
+    const after = input.slice(end);
+
+    const nextValue = before + emoji + after;
+    const cursorPos = start + emoji.length;
+
+    setInput(nextValue);
+
+    setTimeout(() => {
+      if (!inputRef.current) return;
+      inputRef.current.focus();
+      try {
+        inputRef.current.setSelectionRange(cursorPos, cursorPos);
+      } catch {
+        // ignore
+      }
+    }, 0);
+  }
+
   const typingList = Object.values(typingUsers)
     .map((t) => t.name)
     .filter((n) => n && n !== displayName);
@@ -710,7 +711,7 @@ const TeamChatView = () => {
     ([id]) => id !== userId,
   );
 
-  // ---------- Styles (bigger chat boxes) ----------
+  // --- styles ---
   const containerStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
@@ -901,6 +902,19 @@ const TeamChatView = () => {
     whiteSpace: 'nowrap',
   };
 
+  const emojiToggleButtonStyle: React.CSSProperties = {
+    borderRadius: 999,
+    border: '1px solid rgba(75,85,99,0.9)',
+    background: 'rgba(15,23,42,0.95)',
+    color: '#E5E7EB',
+    fontSize: 16,
+    padding: '6px 10px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
   const textInputStyle: React.CSSProperties = {
     flex: 1,
     borderRadius: 999,
@@ -960,6 +974,18 @@ const TeamChatView = () => {
     padding: '4px 5px',
     cursor: 'pointer',
     fontSize: 18,
+  };
+
+  const composerEmojiPickerStyle: React.CSSProperties = {
+    marginTop: 6,
+    padding: 8,
+    borderRadius: 12,
+    background: 'rgba(15,23,42,0.97)',
+    border: '1px solid rgba(55,65,81,0.9)',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 4,
+    maxWidth: 320,
   };
 
   const typingStr =
@@ -1057,13 +1083,14 @@ const TeamChatView = () => {
               const bubbleStyle = isMe ? bubbleMe : bubbleBase;
               const msgReactions = reactions[m.id] || {};
 
-              // Day separator
               const currentDay = formatDayLabel(m.created_at);
               const prev = index > 0 ? messages[index - 1] : null;
               const prevDay = prev ? formatDayLabel(prev.created_at) : null;
               const showDaySeparator = currentDay && currentDay !== prevDay;
 
               const showHeader = true;
+              const isHovered =
+                hoveredMessageId === m.id || editingId === m.id;
 
               return (
                 <React.Fragment key={m.id}>
@@ -1090,7 +1117,15 @@ const TeamChatView = () => {
                     </div>
                   )}
 
-                  <div style={alignmentStyle}>
+                  <div
+                    style={alignmentStyle}
+                    onMouseEnter={() => setHoveredMessageId(m.id)}
+                    onMouseLeave={() =>
+                      setHoveredMessageId((prev) =>
+                        prev === m.id ? null : prev,
+                      )
+                    }
+                  >
                     <div
                       style={{
                         display: 'flex',
@@ -1113,7 +1148,7 @@ const TeamChatView = () => {
                                   minute: '2-digit',
                                 })}
                               </div>
-                              {m.edited_at && !m.deleted && (
+                              {m.edited_at && (
                                 <span
                                   style={{
                                     fontSize: 11,
@@ -1127,25 +1162,13 @@ const TeamChatView = () => {
                           </div>
                         )}
 
-                        {/* message text / deleted placeholder */}
-                        {m.deleted ? (
-                          <div
-                            style={{
-                              ...bubbleText,
-                              fontStyle: 'italic',
-                              color: '#6B7280',
-                            }}
-                          >
-                            Message deleted
-                          </div>
-                        ) : m.text ? (
+                        {m.text ? (
                           <div style={bubbleText}>
                             {renderWithMentions(m.text)}
                           </div>
                         ) : null}
 
-                        {/* inline edit */}
-                        {editingId === m.id && !m.deleted && (
+                        {editingId === m.id && (
                           <div style={{marginTop: 8}}>
                             <input
                               type="text"
@@ -1156,7 +1179,8 @@ const TeamChatView = () => {
                               style={{
                                 width: '100%',
                                 borderRadius: 10,
-                                border: '1px solid rgba(75,85,99,0.9)',
+                                border:
+                                  '1px solid rgba(75,85,99,0.9)',
                                 background: 'rgba(15,23,42,0.95)',
                                 color: '#E5E7EB',
                                 fontSize: 13,
@@ -1167,7 +1191,6 @@ const TeamChatView = () => {
                           </div>
                         )}
 
-                        {/* Attachment */}
                         {m.file_url && (
                           <div style={{marginTop: 6}}>
                             {m.file_type?.startsWith('image/') ? (
@@ -1204,7 +1227,6 @@ const TeamChatView = () => {
                           </div>
                         )}
 
-                        {/* Reactions display */}
                         {Object.keys(msgReactions).length > 0 && (
                           <div style={reactionsRowStyle}>
                             {Object.entries(msgReactions).map(
@@ -1240,7 +1262,7 @@ const TeamChatView = () => {
                         )}
                       </div>
 
-                      {/* Controls: reactions + reply + edit/delete */}
+                      {/* Controls row */}
                       <div
                         style={{
                           display: 'flex',
@@ -1251,6 +1273,7 @@ const TeamChatView = () => {
                           flexWrap: 'wrap',
                         }}
                       >
+                        {/* Reactions always visible */}
                         <div style={{display: 'flex', gap: 6, flexWrap: 'wrap'}}>
                           {REACTION_OPTIONS.map((emoji) => {
                             const users = msgReactions[emoji] || [];
@@ -1293,30 +1316,29 @@ const TeamChatView = () => {
                           </button>
                         </div>
 
+                        {/* Reply / Edit / Delete – only on hover / editing */}
                         <div
                           style={{
-                            display: 'flex',
+                            display: isHovered ? 'flex' : 'none',
                             gap: 8,
                             fontSize: 12,
                             flexShrink: 0,
                           }}
                         >
-                          {!m.deleted && (
-                            <button
-                              type="button"
-                              onClick={() => startReply(m)}
-                              style={{
-                                border: 'none',
-                                background: 'transparent',
-                                color: '#9CA3AF',
-                                cursor: 'pointer',
-                              }}
-                            >
-                              Reply
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => startReply(m)}
+                            style={{
+                              border: 'none',
+                              background: 'transparent',
+                              color: '#9CA3AF',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Reply
+                          </button>
 
-                          {isMe && !m.deleted && (
+                          {isMe && (
                             <>
                               {editingId === m.id ? (
                                 <>
@@ -1380,7 +1402,6 @@ const TeamChatView = () => {
                         </div>
                       </div>
 
-                      {/* Full emoji picker for this message */}
                       {emojiPickerFor === m.id && (
                         <div style={emojiPickerStyle}>
                           {EMOJI_PICKER.map((emoji) => (
@@ -1409,38 +1430,7 @@ const TeamChatView = () => {
         </div>
       </div>
 
-      {/* Undo toast */}
-      {pendingUndo && (
-        <div
-          style={{
-            maxWidth: 1024,
-            margin: '0 auto 4px auto',
-            padding: '6px 10px',
-            fontSize: 12,
-            color: '#FBBF24',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <span>Message deleted. Undo?</span>
-          <button
-            type="button"
-            onClick={undoDelete}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              color: '#FDE68A',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
-          >
-            Undo
-          </button>
-        </div>
-      )}
-
-      {/* Typing + reply banner + input */}
+      {/* Footer */}
       <div style={footerOuterStyle}>
         <div style={footerInnerStyle}>
           {typingStr && <div style={typingStyle}>{typingStr}</div>}
@@ -1494,6 +1484,17 @@ const TeamChatView = () => {
             >
               Attach
             </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setComposerEmojiOpen((prev) => !prev)
+              }
+              style={emojiToggleButtonStyle}
+            >
+              😊
+            </button>
+
             <input
               ref={inputRef}
               type="text"
@@ -1502,6 +1503,7 @@ const TeamChatView = () => {
               onChange={handleInputChange}
               style={textInputStyle}
             />
+
             <button
               type="submit"
               disabled={sending || !input.trim()}
@@ -1510,6 +1512,21 @@ const TeamChatView = () => {
               Send
             </button>
           </form>
+
+          {composerEmojiOpen && (
+            <div style={composerEmojiPickerStyle}>
+              {EMOJI_PICKER.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => insertEmojiIntoComposer(emoji)}
+                  style={emojiPickerButtonStyle}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
