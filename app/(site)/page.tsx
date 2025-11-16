@@ -129,7 +129,7 @@ export default async function HomePage() {
   );
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen overflow-x-hidden">
       {/* Full-screen background */}
       <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-emerald-300 via-emerald-100 to-sky-200" />
 

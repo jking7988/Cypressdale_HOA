@@ -30,8 +30,9 @@ type PageProps = {
 };
 
 export default async function YardWinnerDetailPage({ params }: PageProps) {
+  // ✅ This is the ONLY place yardWinnerByIdQuery should be used
   const winner = await client.fetch<YardWinner | null>(yardWinnerByIdQuery, {
-    id: params.id, // ✅ this satisfies $id
+    id: params.id,
   });
 
   if (!winner) {
