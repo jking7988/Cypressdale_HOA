@@ -24,22 +24,71 @@ const ROOM_ID = 'global:board-chat';
 const CHANNEL_NAME = 'team-chat';
 const REACTION_OPTIONS = ['👍', '❤️', '🎉'];
 
+// Quote line styling
+const quoteLineStyle: React.CSSProperties = {
+  borderLeft: '2px solid rgba(148,163,184,0.6)',
+  paddingLeft: 8,
+  marginBottom: 2,
+  color: '#9CA3AF',
+  fontSize: 12,
+};
+
 function nowIso() {
   return new Date().toISOString();
 }
 
-// Simple @mention highlighting
+// Render text with @mentions + quote blocks (lines starting with ">")
 function renderWithMentions(text: string): React.ReactNode {
-  const parts = text.split(/(\s+)/); // keep spaces
-  return parts.map((part, idx) => {
-    if (part.startsWith('@') && part.length > 1 && !part.includes('\n')) {
+  const lines = text.split('\n');
+
+  return lines.map((line, lineIndex) => {
+    const trimmed = line.trim();
+    const isQuote = trimmed.startsWith('>');
+    const content = isQuote ? line.replace(/^\s*>\s?/, '') : line;
+
+    const parts = content.split(/(\s+)/); // keep spaces
+    const children = parts.map((part, idx) => {
+      if (part.startsWith('@') && part.length > 1 && !part.includes('\n')) {
+        return (
+          <span key={idx} style={{color: '#A5B4FC', fontWeight: 500}}>
+            {part}
+          </span>
+        );
+      }
+      return <React.Fragment key={idx}>{part}</React.Fragment>;
+    });
+
+    if (isQuote) {
       return (
-        <span key={idx} style={{color: '#A5B4FC', fontWeight: 500}}>
-          {part}
-        </span>
+        <div key={lineIndex} style={quoteLineStyle}>
+          {children}
+        </div>
       );
     }
-    return <React.Fragment key={idx}>{part}</React.Fragment>;
+
+    return <div key={lineIndex}>{children}</div>;
+  });
+}
+
+// Day label helper: Today / Yesterday / date
+function formatDayLabel(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+
+  const today = new Date();
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  const dayIndex = Math.floor(d.setHours(0, 0, 0, 0) / oneDay);
+  const todayIndex = Math.floor(today.setHours(0, 0, 0, 0) / oneDay);
+  const diff = dayIndex - todayIndex;
+
+  if (diff === 0) return 'Today';
+  if (diff === -1) return 'Yesterday';
+
+  return d.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   });
 }
 
@@ -120,11 +169,14 @@ const TeamChatView = () => {
     original: Message;
   } | null>(null);
 
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const channelRef = useRef<any>(null);
   const lastTypingSentRef = useRef<number>(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const deleteTimerRef = useRef<any>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const [isWindowFocused, setIsWindowFocused] = useState(
     typeof document !== 'undefined' ? !document.hidden : true,
@@ -133,18 +185,11 @@ const TeamChatView = () => {
     typeof document !== 'undefined' ? document.title : 'Team Chat',
   );
 
-  // Auto-scroll to bottom on new messages
-  useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({behavior: 'smooth', block: 'end'});
-    }
-  }, [messages.length]);
-
   // Focus / blur / visibility -> unread & focus state
   useEffect(() => {
     function handleFocus() {
       setIsWindowFocused(true);
-      setUnreadCount(0); // you came back, so clear unread
+      setUnreadCount(0);
     }
 
     function handleBlur() {
@@ -181,6 +226,20 @@ const TeamChatView = () => {
     }
   }, [unreadCount, isWindowFocused, originalTitle]);
 
+  // Helpers: scroll
+  function scrollToBottomInstant() {
+    if (!bottomRef.current) return;
+    bottomRef.current.scrollIntoView({behavior: 'auto', block: 'end'});
+  }
+
+  function scrollToBottomSmooth() {
+    if (!bottomRef.current) return;
+    // Let React paint first
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({behavior: 'smooth', block: 'end'});
+    }, 0);
+  }
+
   // Load history + setup broadcast channel
   useEffect(() => {
     let active = true;
@@ -196,6 +255,7 @@ const TeamChatView = () => {
       if (!active) return;
       if (!error && data) {
         setMessages(data as Message[]);
+        scrollToBottomInstant(); // initial scroll, no flicker
       }
       setLoading(false);
     }
@@ -208,8 +268,12 @@ const TeamChatView = () => {
         const msg = payload.payload as Message;
         setMessages((prev) => [...prev, msg]);
 
-        // Only count as unread if this window/tab is *not* focused
-        setUnreadCount((prev) => (isWindowFocused ? prev : prev + 1));
+        // Only count as unread if this window/tab is not focused
+        if (!isWindowFocused) {
+          setUnreadCount((prev) => prev + 1);
+        }
+
+        // IMPORTANT: do NOT auto-scroll here, so we don't fight the user
       })
       .on('broadcast', {event: 'typing'}, (payload) => {
         const {userId: typingId, name} = payload.payload as {
@@ -435,10 +499,28 @@ const TeamChatView = () => {
     setPendingUndo(null);
   }
 
+  // Start a reply to a message
+  function startReply(message: Message) {
+    if (message.deleted) return;
+    setReplyTo(message);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }
+
+  // Send message (with optional quoted reply)
   async function handleSend(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    const text = input.trim();
+    let text = input.trim();
     if (!text) return;
+
+    if (replyTo) {
+      const base = (replyTo.text || '').replace(/\s+/g, ' ').trim();
+      const snippet =
+        base.length > 160 ? base.slice(0, 157).trimEnd() + '…' : base;
+      const quoteBlock = snippet ? `> ${snippet}\n\n` : '';
+      text = quoteBlock + text;
+    }
 
     const createdAt = nowIso();
     const localId =
@@ -457,7 +539,9 @@ const TeamChatView = () => {
     // optimistic
     setMessages((prev) => [...prev, msg]);
     setInput('');
+    setReplyTo(null);
     setSending(true);
+    scrollToBottomSmooth();
 
     // broadcast
     if (channelRef.current) {
@@ -509,7 +593,7 @@ const TeamChatView = () => {
       const localId =
         (typeof crypto !== 'undefined' && crypto.randomUUID
           ? crypto.randomUUID()
-          : `file-${Date.now()}`);
+          : `file-${Date.now()}`)
 
       const msg: Message = {
         id: localId,
@@ -524,6 +608,8 @@ const TeamChatView = () => {
 
       // optimistic + broadcast
       setMessages((prev) => [...prev, msg]);
+      scrollToBottomSmooth();
+
       if (channelRef.current) {
         channelRef.current.send({
           type: 'broadcast',
@@ -705,7 +791,6 @@ const TeamChatView = () => {
   const bubbleText: React.CSSProperties = {
     fontSize: 12,
     color: '#E5E7EB',
-    whiteSpace: 'pre-wrap',
   };
 
   const reactionsRowStyle: React.CSSProperties = {
@@ -794,12 +879,25 @@ const TeamChatView = () => {
     paddingTop: 2,
   };
 
+  const replyBannerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    padding: '4px 8px',
+    borderRadius: 8,
+    background: 'rgba(15,23,42,0.9)',
+    border: '1px solid rgba(55,65,81,0.8)',
+    fontSize: 11,
+    color: '#D1D5DB',
+  };
+
   const typingStr =
-  typingList.length === 0
-    ? ''
-    : typingList.length === 1
-      ? `${typingList[0]} is typing…`
-      : 'Several people are typing…';
+    typingList.length === 0
+      ? ''
+      : typingList.length === 1
+        ? `${typingList[0]} is typing…`
+        : 'Several people are typing…';
 
   return (
     <div style={containerStyle}>
@@ -880,7 +978,7 @@ const TeamChatView = () => {
               No messages yet. Start the conversation!
             </div>
           ) : (
-            messages.map((m) => {
+            messages.map((m, index) => {
               const isMe = m.author_name === displayName;
               const alignmentStyle: React.CSSProperties = {
                 display: 'flex',
@@ -889,161 +987,196 @@ const TeamChatView = () => {
               const bubbleStyle = isMe ? bubbleMe : bubbleBase;
               const msgReactions = reactions[m.id] || {};
 
+              // Day separator
+              const currentDay = formatDayLabel(m.created_at);
+              const prev = index > 0 ? messages[index - 1] : null;
+              const prevDay = prev ? formatDayLabel(prev.created_at) : null;
+              const showDaySeparator = currentDay && currentDay !== prevDay;
+
+              const showHeader = true; // always show name + time
+
               return (
-                <div key={m.id} style={alignmentStyle}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: isMe ? 'flex-end' : 'flex-start',
-                      gap: 3,
-                    }}
-                  >
-                    <div style={bubbleStyle}>
-                      <div style={bubbleMetaRow}>
-                        <div style={bubbleAuthor}>{m.author_name}</div>
-                        <div style={bubbleTimeRow}>
-                          <div style={bubbleTime}>
-                            {new Date(
-                              m.created_at,
-                            ).toLocaleTimeString(undefined, {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
-                          </div>
-                          {m.edited_at && !m.deleted && (
-                            <span
-                              style={{fontSize: 10, color: '#9CA3AF'}}
-                            >
-                              (edited)
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* message text / deleted placeholder */}
-                      {m.deleted ? (
-                        <div
-                          style={{
-                            ...bubbleText,
-                            fontStyle: 'italic',
-                            color: '#6B7280',
-                          }}
-                        >
-                          Message deleted
-                        </div>
-                      ) : m.text ? (
-                        <div style={bubbleText}>
-                          {renderWithMentions(m.text)}
-                        </div>
-                      ) : null}
-
-                      {/* inline edit input */}
-                      {editingId === m.id && !m.deleted && (
-                        <div style={{marginTop: 6}}>
-                          <input
-                            type="text"
-                            value={editingText}
-                            onChange={(e) =>
-                              setEditingText(e.target.value)
-                            }
-                            style={{
-                              width: '100%',
-                              borderRadius: 8,
-                              border:
-                                '1px solid rgba(75,85,99,0.9)',
-                              background: 'rgba(15,23,42,0.9)',
-                              color: '#E5E7EB',
-                              fontSize: 12,
-                              padding: '4px 8px',
-                              outline: 'none',
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {/* Attachment */}
-                      {m.file_url && (
-                        <div style={{marginTop: 4}}>
-                          {m.file_type?.startsWith('image/') ? (
-                            <a
-                              href={m.file_url}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              <img
-                                src={m.file_url}
-                                alt={m.file_name || 'Attachment'}
-                                style={{
-                                  maxHeight: 180,
-                                  borderRadius: 8,
-                                  border:
-                                    '1px solid rgba(75,85,99,0.8)',
-                                }}
-                              />
-                            </a>
-                          ) : (
-                            <a
-                              href={m.file_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={{
-                                fontSize: 12,
-                                color: '#6EE7B7',
-                                textDecoration: 'underline',
-                              }}
-                            >
-                              {m.file_name || 'Download file'}
-                            </a>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Reactions display */}
-                      {Object.keys(msgReactions).length > 0 && (
-                        <div style={reactionsRowStyle}>
-                          {Object.entries(msgReactions).map(
-                            ([emoji, count]) => (
-                              <span
-                                key={emoji}
-                                style={reactionBadgeStyle}
-                              >
-                                <span>{emoji}</span>
-                                <span style={{color: '#9CA3AF'}}>
-                                  {count}
-                                </span>
-                              </span>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Reactions + edit/delete controls */}
+                <React.Fragment key={m.id}>
+                  {showDaySeparator && (
                     <div
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        marginTop: 2,
+                        justifyContent: 'center',
+                        margin: '8px 0',
                       }}
                     >
-                      <div style={{display: 'flex', gap: 4}}>
-                        {REACTION_OPTIONS.map((emoji) => (
-                          <button
-                            key={emoji}
-                            type="button"
-                            onClick={() =>
-                              handleReaction(m.id, emoji)
-                            }
-                            style={reactionButtonStyle}
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: '#9CA3AF',
+                          padding: '2px 8px',
+                          borderRadius: 999,
+                          background: 'rgba(15,23,42,0.9)',
+                          border: '1px solid rgba(55,65,81,0.8)',
+                        }}
+                      >
+                        {currentDay}
+                      </span>
+                    </div>
+                  )}
+
+                  <div style={alignmentStyle}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: isMe ? 'flex-end' : 'flex-start',
+                        gap: 3,
+                      }}
+                    >
+                      <div style={bubbleStyle}>
+                        {showHeader && (
+                          <div style={bubbleMetaRow}>
+                            <div style={bubbleAuthor}>{m.author_name}</div>
+                            <div style={bubbleTimeRow}>
+                              <div style={bubbleTime}>
+                                {new Date(
+                                  m.created_at,
+                                ).toLocaleTimeString(undefined, {
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                })}
+                              </div>
+                              {m.edited_at && !m.deleted && (
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    color: '#9CA3AF',
+                                  }}
+                                >
+                                  (edited)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* message text / deleted placeholder */}
+                        {m.deleted ? (
+                          <div
+                            style={{
+                              ...bubbleText,
+                              fontStyle: 'italic',
+                              color: '#6B7280',
+                            }}
                           >
-                            {emoji}
-                          </button>
-                        ))}
+                            Message deleted
+                          </div>
+                        ) : m.text ? (
+                          <div style={bubbleText}>
+                            {renderWithMentions(m.text)}
+                          </div>
+                        ) : null}
+
+                        {/* inline edit input */}
+                        {editingId === m.id && !m.deleted && (
+                          <div style={{marginTop: 6}}>
+                            <input
+                              type="text"
+                              value={editingText}
+                              onChange={(e) =>
+                                setEditingText(e.target.value)
+                              }
+                              style={{
+                                width: '100%',
+                                borderRadius: 8,
+                                border: '1px solid rgba(75,85,99,0.9)',
+                                background: 'rgba(15,23,42,0.9)',
+                                color: '#E5E7EB',
+                                fontSize: 12,
+                                padding: '4px 8px',
+                                outline: 'none',
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Attachment */}
+                        {m.file_url && (
+                          <div style={{marginTop: 4}}>
+                            {m.file_type?.startsWith('image/') ? (
+                              <a
+                                href={m.file_url}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <img
+                                  src={m.file_url}
+                                  alt={m.file_name || 'Attachment'}
+                                  style={{
+                                    maxHeight: 180,
+                                    borderRadius: 8,
+                                    border:
+                                      '1px solid rgba(75,85,99,0.8)',
+                                  }}
+                                />
+                              </a>
+                            ) : (
+                              <a
+                                href={m.file_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  fontSize: 12,
+                                  color: '#6EE7B7',
+                                  textDecoration: 'underline',
+                                }}
+                              >
+                                {m.file_name || 'Download file'}
+                              </a>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Reactions display */}
+                        {Object.keys(msgReactions).length > 0 && (
+                          <div style={reactionsRowStyle}>
+                            {Object.entries(msgReactions).map(
+                              ([emoji, count]) => (
+                                <span
+                                  key={emoji}
+                                  style={reactionBadgeStyle}
+                                >
+                                  <span>{emoji}</span>
+                                  <span style={{color: '#9CA3AF'}}>
+                                    {count}
+                                  </span>
+                                </span>
+                              ),
+                            )}
+                          </div>
+                        )}
                       </div>
 
-                      {isMe && !m.deleted && (
+                      {/* Reactions + reply + edit/delete controls */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          marginTop: 2,
+                        }}
+                      >
+                        <div style={{display: 'flex', gap: 4}}>
+                          {REACTION_OPTIONS.map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() =>
+                                handleReaction(m.id, emoji)
+                              }
+                              style={reactionButtonStyle}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+
                         <div
                           style={{
                             display: 'flex',
@@ -1051,71 +1184,91 @@ const TeamChatView = () => {
                             fontSize: 11,
                           }}
                         >
-                          {editingId === m.id ? (
+                          {!m.deleted && (
+                            <button
+                              type="button"
+                              onClick={() => startReply(m)}
+                              style={{
+                                border: 'none',
+                                background: 'transparent',
+                                color: '#9CA3AF',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Reply
+                            </button>
+                          )}
+
+                          {isMe && !m.deleted && (
                             <>
-                              <button
-                                type="button"
-                                onClick={() => saveEdit(m)}
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  color: '#10B981',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                Save
-                              </button>
-                              <button
-                                type="button"
-                                onClick={cancelEdit}
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  color: '#9CA3AF',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => startEdit(m)}
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  color: '#9CA3AF',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  deleteMessage(m)
-                                }
-                                style={{
-                                  border: 'none',
-                                  background: 'transparent',
-                                  color: '#F97373',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                Delete
-                              </button>
+                              {editingId === m.id ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => saveEdit(m)}
+                                    style={{
+                                      border: 'none',
+                                      background: 'transparent',
+                                      color: '#10B981',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={cancelEdit}
+                                    style={{
+                                      border: 'none',
+                                      background: 'transparent',
+                                      color: '#9CA3AF',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => startEdit(m)}
+                                    style={{
+                                      border: 'none',
+                                      background: 'transparent',
+                                      color: '#9CA3AF',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      deleteMessage(m)
+                                    }
+                                    style={{
+                                      border: 'none',
+                                      background: 'transparent',
+                                      color: '#F97373',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
                             </>
                           )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </React.Fragment>
               );
             })
           )}
+
           <div ref={bottomRef} />
         </div>
       </div>
@@ -1151,10 +1304,44 @@ const TeamChatView = () => {
         </div>
       )}
 
-      {/* Typing + input */}
+      {/* Typing + reply banner + input */}
       <div style={footerOuterStyle}>
         <div style={footerInnerStyle}>
           {typingStr && <div style={typingStyle}>{typingStr}</div>}
+
+          {replyTo && (
+            <div style={replyBannerStyle}>
+              <div>
+                <span style={{color: '#9CA3AF', marginRight: 4}}>
+                  Replying to
+                </span>
+                <span style={{fontWeight: 600}}>
+                  {replyTo.author_name}
+                </span>
+                {replyTo.text && (
+                  <span style={{marginLeft: 6, opacity: 0.8}}>
+                    ·{' '}
+                    {replyTo.text.length > 60
+                      ? replyTo.text.slice(0, 57).trimEnd() + '…'
+                      : replyTo.text}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setReplyTo(null)}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#9CA3AF',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSend} style={inputRowStyle}>
             <input
@@ -1172,6 +1359,7 @@ const TeamChatView = () => {
               Attach
             </button>
             <input
+              ref={inputRef}
               type="text"
               placeholder="Type a message for the team…"
               value={input}
