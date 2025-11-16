@@ -102,6 +102,15 @@ export default function Nav() {
               🌿 <span>Yard of the Month</span>
             </Link>
 
+            {/* NEW: Holiday Decorating */}
+            <Link
+              href="/holiday-decorating"
+              onClick={() => setOpen(false)}
+              className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
+            >
+              🎄 <span>Holiday Decorating</span>
+            </Link>
+
             {/* About now uses ℹ️ */}
             <Link
               href="/about"
