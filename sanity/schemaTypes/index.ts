@@ -5,6 +5,7 @@ import documentFolder from './documentFolder';
 import documentFile from './documentFile';
 import rsvpResponse from './rsvpResponse';
 import yardWinner from './yardWinner';
+import holidayWinner from './holidayWinner'
 
 const schemaTypes = [
   post,
@@ -13,6 +14,7 @@ const schemaTypes = [
   documentFile,    // 🔹 file type that references documentFolder
   rsvpResponse,
   yardWinner,
+  holidayWinner,
 ];
 
 export default schemaTypes;

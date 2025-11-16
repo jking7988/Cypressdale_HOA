@@ -39,6 +39,14 @@ export const deskStructure = (S) =>
       S.listItem()
         .title('Yard of the Month Winners')
         .child(S.documentTypeList('yardWinner').title('Yard of the Month Winners')),
+      
+      // Holiday Decorating Winners
+      S.listItem()
+        .title('Holiday Winners')
+        .child(
+          S.documentTypeList('holidayWinner')
+            .title('Holiday Winners')
+        ),
 
       // Everything else
       ...S.documentTypeListItems().filter((item) => {
@@ -49,6 +57,7 @@ export const deskStructure = (S) =>
           'event',
           'post',
           'yardWinner',
+          'holidayWinner',
         ].includes(id);
       }),
     ]);

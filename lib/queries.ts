@@ -104,5 +104,18 @@ export const yardWinnersQuery = groq`*[_type == "yardWinner"] | order(month desc
   "photoUrls": photos[].asset->url
 }`;
 
+export const holidayWinnersQuery = groq`*[_type == "holidayWinner"] 
+  | order(year desc, holiday asc, place asc){
+    _id,
+    title,
+    holiday,
+    year,
+    place,
+    streetOrBlock,
+    description,
+    "photoUrl": photo.asset->url,
+    "photoUrls": photos[].asset->url
+  }`;
+
 
 
