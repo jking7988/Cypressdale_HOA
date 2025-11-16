@@ -14,7 +14,6 @@ type Message = {
   file_name?: string | null;
   file_type?: string | null;
 
-  // edit/delete support
   edited_at?: string | null;
   deleted?: boolean | null;
   deleted_at?: string | null;
@@ -22,22 +21,35 @@ type Message = {
 
 const ROOM_ID = 'global:board-chat';
 const CHANNEL_NAME = 'team-chat';
-const REACTION_OPTIONS = ['👍', '❤️', '🎉'];
+
+// Quick reaction row
+const REACTION_OPTIONS = ['👍', '❤️', '🎉', '👀', '🤔', '✅'];
+
+// Full emoji picker (you can expand / tweak this as you like)
+const EMOJI_PICKER = [
+  '👍', '👎', '❤️', '💚', '💛', '💙', '💜', '🤍',
+  '😂', '🤣', '😊', '😅', '😇', '🙃', '😉', '😍',
+  '🤔', '🤨', '😐', '😴', '🥱', '🤯', '😬', '😮',
+  '🎉', '✨', '💥', '✅', '❌', '⚠️', '🚀', '📌',
+  '🙏', '👏', '🙌', '🤝', '🤙', '🤘', '☕', '🍕',
+];
+
+type ReactionsState = Record<string, Record<string, string[]>>;
 
 // Quote line styling
 const quoteLineStyle: React.CSSProperties = {
   borderLeft: '2px solid rgba(148,163,184,0.6)',
   paddingLeft: 8,
-  marginBottom: 2,
+  marginBottom: 4,
   color: '#9CA3AF',
-  fontSize: 12,
+  fontSize: 13,
 };
 
 function nowIso() {
   return new Date().toISOString();
 }
 
-// Render text with @mentions + quote blocks (lines starting with ">")
+// Render text with @mentions + quote ("> ")
 function renderWithMentions(text: string): React.ReactNode {
   const lines = text.split('\n');
 
@@ -66,11 +78,15 @@ function renderWithMentions(text: string): React.ReactNode {
       );
     }
 
-    return <div key={lineIndex}>{children}</div>;
+    return (
+      <div key={lineIndex} style={{marginBottom: 2}}>
+        {children}
+      </div>
+    );
   });
 }
 
-// Day label helper: Today / Yesterday / date
+// Day label helper
 function formatDayLabel(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -97,11 +113,11 @@ const TeamChatView = () => {
 
   if (!supabase) {
     return (
-      <div style={{padding: 12, fontSize: 13, color: '#9CA3AF'}}>
-        <div style={{fontWeight: 600, marginBottom: 4}}>
+      <div style={{padding: 16, fontSize: 14, color: '#9CA3AF'}}>
+        <div style={{fontWeight: 600, marginBottom: 6}}>
           Team chat not configured
         </div>
-        <div style={{marginBottom: 4}}>
+        <div style={{marginBottom: 6}}>
           Supabase credentials are missing in the Studio environment.
         </div>
         <div>
@@ -109,9 +125,9 @@ const TeamChatView = () => {
           <code
             style={{
               fontFamily: 'monospace',
-              fontSize: 11,
+              fontSize: 12,
               background: '#111827',
-              padding: '1px 4px',
+              padding: '2px 6px',
               borderRadius: 4,
             }}
           >
@@ -121,9 +137,9 @@ const TeamChatView = () => {
           <code
             style={{
               fontFamily: 'monospace',
-              fontSize: 11,
+              fontSize: 12,
               background: '#111827',
-              padding: '1px 4px',
+              padding: '2px 6px',
               borderRadius: 4,
             }}
           >
@@ -158,9 +174,7 @@ const TeamChatView = () => {
   const [onlineUsers, setOnlineUsers] = useState<
     Record<string, {name: string; last: number}>
   >({});
-  const [reactions, setReactions] = useState<
-    Record<string, Record<string, number>>
-  >({});
+  const [reactions, setReactions] = useState<ReactionsState>({});
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
@@ -170,6 +184,9 @@ const TeamChatView = () => {
   } | null>(null);
 
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+
+  // which message currently has the emoji picker open
+  const [emojiPickerFor, setEmojiPickerFor] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const channelRef = useRef<any>(null);
@@ -226,7 +243,7 @@ const TeamChatView = () => {
     }
   }, [unreadCount, isWindowFocused, originalTitle]);
 
-  // Helpers: scroll
+  // scroll helpers
   function scrollToBottomInstant() {
     if (!bottomRef.current) return;
     bottomRef.current.scrollIntoView({behavior: 'auto', block: 'end'});
@@ -234,7 +251,6 @@ const TeamChatView = () => {
 
   function scrollToBottomSmooth() {
     if (!bottomRef.current) return;
-    // Let React paint first
     setTimeout(() => {
       bottomRef.current?.scrollIntoView({behavior: 'smooth', block: 'end'});
     }, 0);
@@ -255,7 +271,7 @@ const TeamChatView = () => {
       if (!active) return;
       if (!error && data) {
         setMessages(data as Message[]);
-        scrollToBottomInstant(); // initial scroll, no flicker
+        scrollToBottomInstant();
       }
       setLoading(false);
     }
@@ -268,12 +284,10 @@ const TeamChatView = () => {
         const msg = payload.payload as Message;
         setMessages((prev) => [...prev, msg]);
 
-        // Only count as unread if this window/tab is not focused
         if (!isWindowFocused) {
           setUnreadCount((prev) => prev + 1);
         }
-
-        // IMPORTANT: do NOT auto-scroll here, so we don't fight the user
+        // no auto scroll on incoming messages
       })
       .on('broadcast', {event: 'typing'}, (payload) => {
         const {userId: typingId, name} = payload.payload as {
@@ -298,16 +312,38 @@ const TeamChatView = () => {
         }));
       })
       .on('broadcast', {event: 'reaction'}, (payload) => {
-        const {messageId, emoji} = payload.payload as {
+        const {messageId, emoji, userId: reactor} = payload.payload as {
           messageId: string;
           emoji: string;
+          userId: string;
         };
+
+        // Toggle reaction for this user
         setReactions((prev) => {
-          const current = {...prev};
-          const forMsg = {...(current[messageId] || {})};
-          forMsg[emoji] = (forMsg[emoji] || 0) + 1;
-          current[messageId] = forMsg;
-          return current;
+          const next: ReactionsState = {...prev};
+          const msgReacts = {...(next[messageId] || {})};
+          const currentUsers = msgReacts[emoji] ? [...msgReacts[emoji]] : [];
+          const idx = currentUsers.indexOf(reactor);
+
+          if (idx === -1) {
+            currentUsers.push(reactor);
+          } else {
+            currentUsers.splice(idx, 1);
+          }
+
+          if (currentUsers.length === 0) {
+            delete msgReacts[emoji];
+          } else {
+            msgReacts[emoji] = currentUsers;
+          }
+
+          if (Object.keys(msgReacts).length === 0) {
+            delete next[messageId];
+          } else {
+            next[messageId] = msgReacts;
+          }
+
+          return next;
         });
       })
       .on('broadcast', {event: 'edit'}, (payload) => {
@@ -392,7 +428,7 @@ const TeamChatView = () => {
     });
   }
 
-  // Start / cancel / save edit
+  // Edit handlers
   function startEdit(message: Message) {
     if (message.deleted) return;
     setEditingId(message.id);
@@ -417,13 +453,11 @@ const TeamChatView = () => {
       edited_at: nowIso(),
     };
 
-    // optimistic
     setMessages((prev) =>
       prev.map((m) => (m.id === message.id ? updated : m)),
     );
     cancelEdit();
 
-    // broadcast
     if (channelRef.current) {
       channelRef.current.send({
         type: 'broadcast',
@@ -432,7 +466,6 @@ const TeamChatView = () => {
       });
     }
 
-    // persist
     const {error} = await supabase
       .from('messages')
       .update({
@@ -453,14 +486,12 @@ const TeamChatView = () => {
     const original = {...message};
     const id = message.id;
 
-    // optimistic mark deleted
     setMessages((prev) =>
       prev.map((m) =>
         m.id === id ? {...m, deleted: true, text: '', file_url: null} : m,
       ),
     );
 
-    // allow undo for 5s
     setPendingUndo({id, original});
 
     if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
@@ -499,16 +530,14 @@ const TeamChatView = () => {
     setPendingUndo(null);
   }
 
-  // Start a reply to a message
+  // Reply
   function startReply(message: Message) {
     if (message.deleted) return;
     setReplyTo(message);
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (inputRef.current) inputRef.current.focus();
   }
 
-  // Send message (with optional quoted reply)
+  // Send message
   async function handleSend(e?: React.FormEvent) {
     if (e) e.preventDefault();
     let text = input.trim();
@@ -536,14 +565,12 @@ const TeamChatView = () => {
       created_at: createdAt,
     };
 
-    // optimistic
     setMessages((prev) => [...prev, msg]);
     setInput('');
     setReplyTo(null);
     setSending(true);
     scrollToBottomSmooth();
 
-    // broadcast
     if (channelRef.current) {
       channelRef.current.send({
         type: 'broadcast',
@@ -552,7 +579,6 @@ const TeamChatView = () => {
       });
     }
 
-    // persist
     const {error} = await supabase.from('messages').insert({
       room_id: ROOM_ID,
       author_name: displayName,
@@ -568,6 +594,7 @@ const TeamChatView = () => {
     }
   }
 
+  // File upload
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -606,7 +633,6 @@ const TeamChatView = () => {
         file_type: file.type,
       };
 
-      // optimistic + broadcast
       setMessages((prev) => [...prev, msg]);
       scrollToBottomSmooth();
 
@@ -618,7 +644,6 @@ const TeamChatView = () => {
         });
       }
 
-      // persist
       const {error: insertError} = await supabase.from('messages').insert({
         room_id: ROOM_ID,
         author_name: displayName,
@@ -639,20 +664,40 @@ const TeamChatView = () => {
     }
   }
 
+  // Reaction toggle + broadcast
   function handleReaction(messageId: string, emoji: string) {
     setReactions((prev) => {
-      const current = {...prev};
-      const forMsg = {...(current[messageId] || {})};
-      forMsg[emoji] = (forMsg[emoji] || 0) + 1;
-      current[messageId] = forMsg;
-      return current;
+      const next: ReactionsState = {...prev};
+      const msgReacts = {...(next[messageId] || {})};
+      const currentUsers = msgReacts[emoji] ? [...msgReacts[emoji]] : [];
+      const myIndex = currentUsers.indexOf(userId);
+
+      if (myIndex === -1) {
+        currentUsers.push(userId);
+      } else {
+        currentUsers.splice(myIndex, 1);
+      }
+
+      if (currentUsers.length === 0) {
+        delete msgReacts[emoji];
+      } else {
+        msgReacts[emoji] = currentUsers;
+      }
+
+      if (Object.keys(msgReacts).length === 0) {
+        delete next[messageId];
+      } else {
+        next[messageId] = msgReacts;
+      }
+
+      return next;
     });
 
     if (channelRef.current) {
       channelRef.current.send({
         type: 'broadcast',
         event: 'reaction',
-        payload: {messageId, emoji},
+        payload: {messageId, emoji, userId},
       });
     }
   }
@@ -665,20 +710,20 @@ const TeamChatView = () => {
     ([id]) => id !== userId,
   );
 
-  // ---------- Styles ----------
+  // ---------- Styles (bigger chat boxes) ----------
   const containerStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
     background: '#030712',
     color: '#E5E7EB',
-    fontSize: 13,
+    fontSize: 14,
     fontFamily:
       'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   };
 
   const headerOuterStyle: React.CSSProperties = {
-    padding: '8px 12px',
+    padding: '10px 16px',
     borderBottom: '1px solid rgba(148, 163, 184, 0.3)',
   };
 
@@ -688,7 +733,7 @@ const TeamChatView = () => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 16,
   };
 
   const headerLeftStyle: React.CSSProperties = {
@@ -698,12 +743,12 @@ const TeamChatView = () => {
   };
 
   const avatarStyle: React.CSSProperties = {
-    width: 26,
-    height: 26,
+    width: 30,
+    height: 30,
     borderRadius: '999px',
     background: '#10B981',
     color: '#022C22',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 600,
     display: 'flex',
     alignItems: 'center',
@@ -716,7 +761,7 @@ const TeamChatView = () => {
   };
 
   const subTextStyle: React.CSSProperties = {
-    fontSize: 11,
+    fontSize: 12,
     color: '#9CA3AF',
   };
 
@@ -724,21 +769,21 @@ const TeamChatView = () => {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 4,
-    padding: '2px 8px',
+    padding: '3px 10px',
     borderRadius: 999,
     background: 'rgba(31, 41, 55, 0.85)',
     border: '1px solid rgba(55, 65, 81, 0.9)',
-    fontSize: 11,
+    fontSize: 12,
     color: '#D1D5DB',
   };
 
   const messagesContainerStyle: React.CSSProperties = {
     flex: 1,
     overflowY: 'auto',
-    padding: '8px 12px 4px 12px',
+    padding: '10px 16px 6px 16px',
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
+    gap: 10,
   };
 
   const messagesInnerStyle: React.CSSProperties = {
@@ -746,58 +791,58 @@ const TeamChatView = () => {
     margin: '0 auto',
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
+    gap: 10,
   };
 
   const bubbleBase: React.CSSProperties = {
     maxWidth: '100%',
-    borderRadius: 14,
-    padding: '8px 12px',
+    borderRadius: 18,
+    padding: '12px 16px',
     border: '1px solid rgba(55,65,81,0.9)',
     background: 'rgba(31, 41, 55, 0.9)',
   };
 
   const bubbleMe: React.CSSProperties = {
     ...bubbleBase,
-    background: 'rgba(5, 150, 105, 0.18)',
-    borderColor: 'rgba(16,185,129,0.7)',
+    background: 'rgba(5, 150, 105, 0.2)',
+    borderColor: 'rgba(16,185,129,0.8)',
   };
 
   const bubbleMetaRow: React.CSSProperties = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    gap: 4,
-    marginBottom: 2,
+    gap: 6,
+    marginBottom: 4,
   };
 
   const bubbleAuthor: React.CSSProperties = {
     fontWeight: 600,
-    fontSize: 12,
+    fontSize: 13,
     color: '#E5E7EB',
   };
 
   const bubbleTimeRow: React.CSSProperties = {
     display: 'flex',
     alignItems: 'baseline',
-    gap: 6,
+    gap: 8,
   };
 
   const bubbleTime: React.CSSProperties = {
-    fontSize: 11,
+    fontSize: 12,
     color: '#9CA3AF',
   };
 
   const bubbleText: React.CSSProperties = {
-    fontSize: 12,
+    fontSize: 14,
     color: '#E5E7EB',
   };
 
   const reactionsRowStyle: React.CSSProperties = {
-    marginTop: 4,
+    marginTop: 6,
     display: 'flex',
     flexWrap: 'nowrap',
-    gap: 4,
+    gap: 6,
   };
 
   const reactionBadgeStyle: React.CSSProperties = {
@@ -805,8 +850,8 @@ const TeamChatView = () => {
     alignItems: 'center',
     gap: 4,
     borderRadius: 999,
-    padding: '1px 6px',
-    fontSize: 11,
+    padding: '2px 8px',
+    fontSize: 12,
     background: 'rgba(15, 23, 42, 0.9)',
     border: '1px solid rgba(55,65,81,0.9)',
   };
@@ -814,16 +859,21 @@ const TeamChatView = () => {
   const reactionButtonStyle: React.CSSProperties = {
     borderRadius: 999,
     border: '1px solid rgba(55,65,81,0.7)',
-    background: 'rgba(15,23,42,0.9)',
+    background: 'rgba(15,23,42,0.95)',
     color: '#E5E7EB',
-    fontSize: 11,
-    padding: '2px 7px',
+    fontSize: 13,
+    padding: '4px 9px',
     cursor: 'pointer',
+  };
+
+  const reactionButtonActiveStyle: React.CSSProperties = {
+    background: 'rgba(16,185,129,0.2)',
+    borderColor: 'rgba(16,185,129,0.9)',
   };
 
   const footerOuterStyle: React.CSSProperties = {
     borderTop: '1px solid rgba(148, 163, 184, 0.3)',
-    padding: '6px 12px 8px 12px',
+    padding: '8px 16px 10px 16px',
   };
 
   const footerInnerStyle: React.CSSProperties = {
@@ -831,22 +881,22 @@ const TeamChatView = () => {
     margin: '0 auto',
     display: 'flex',
     flexDirection: 'column',
-    gap: 4,
+    gap: 6,
   };
 
   const inputRowStyle: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   };
 
   const attachButtonStyle: React.CSSProperties = {
     borderRadius: 999,
     border: '1px solid rgba(75,85,99,0.9)',
-    background: 'rgba(15,23,42,0.9)',
+    background: 'rgba(15,23,42,0.95)',
     color: '#E5E7EB',
-    fontSize: 11,
-    padding: '4px 12px',
+    fontSize: 13,
+    padding: '6px 14px',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   };
@@ -855,10 +905,10 @@ const TeamChatView = () => {
     flex: 1,
     borderRadius: 999,
     border: '1px solid rgba(75,85,99,0.9)',
-    background: 'rgba(15,23,42,0.9)',
+    background: 'rgba(15,23,42,0.95)',
     color: '#E5E7EB',
-    fontSize: 13,
-    padding: '6px 12px',
+    fontSize: 14,
+    padding: '8px 16px',
     outline: 'none',
   };
 
@@ -867,14 +917,14 @@ const TeamChatView = () => {
     border: 'none',
     background: sending ? 'rgba(16,185,129,0.3)' : '#10B981',
     color: '#022C22',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 600,
-    padding: '5px 14px',
+    padding: '7px 18px',
     cursor: sending ? 'default' : 'pointer',
   };
 
   const typingStyle: React.CSSProperties = {
-    fontSize: 11,
+    fontSize: 12,
     color: '#9CA3AF',
     paddingTop: 2,
   };
@@ -883,13 +933,33 @@ const TeamChatView = () => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
-    padding: '4px 8px',
-    borderRadius: 8,
+    gap: 10,
+    padding: '6px 10px',
+    borderRadius: 10,
     background: 'rgba(15,23,42,0.9)',
     border: '1px solid rgba(55,65,81,0.8)',
-    fontSize: 11,
+    fontSize: 12,
     color: '#D1D5DB',
+  };
+
+  const emojiPickerStyle: React.CSSProperties = {
+    marginTop: 6,
+    padding: 8,
+    borderRadius: 12,
+    background: 'rgba(15,23,42,0.97)',
+    border: '1px solid rgba(55,65,81,0.9)',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 4,
+    maxWidth: 260,
+  };
+
+  const emojiPickerButtonStyle: React.CSSProperties = {
+    border: 'none',
+    background: 'transparent',
+    padding: '4px 5px',
+    cursor: 'pointer',
+    fontSize: 18,
   };
 
   const typingStr =
@@ -907,7 +977,7 @@ const TeamChatView = () => {
           <div style={headerLeftStyle}>
             <div style={avatarStyle}>{initials}</div>
             <div style={headerTextStyle}>
-              <div style={{fontSize: 14, fontWeight: 600}}>
+              <div style={{fontSize: 15, fontWeight: 600}}>
                 Board / Team chat
               </div>
               <div style={subTextStyle}>Online as {displayName}</div>
@@ -924,15 +994,15 @@ const TeamChatView = () => {
                     <span key={id} style={onlinePillStyle}>
                       <span
                         style={{
-                          width: 6,
-                          height: 6,
+                          width: 7,
+                          height: 7,
                           borderRadius: 999,
                           background: '#22C55E',
                         }}
                       />
                       <span
                         style={{
-                          maxWidth: 120,
+                          maxWidth: 140,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                         }}
@@ -946,14 +1016,14 @@ const TeamChatView = () => {
             </div>
           </div>
           <div style={{textAlign: 'right'}}>
-            <div style={{fontSize: 11, color: '#9CA3AF'}}>
+            <div style={{fontSize: 12, color: '#9CA3AF'}}>
               Room:{' '}
               <span style={{fontFamily: 'monospace'}}>{ROOM_ID}</span>
             </div>
             {unreadCount > 0 && (
               <div
                 style={{
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 600,
                   color: '#22C55E',
                   marginTop: 2,
@@ -970,11 +1040,11 @@ const TeamChatView = () => {
       <div style={messagesContainerStyle}>
         <div style={messagesInnerStyle}>
           {loading ? (
-            <div style={{fontSize: 12, color: '#9CA3AF'}}>
+            <div style={{fontSize: 13, color: '#9CA3AF'}}>
               Loading messages…
             </div>
           ) : messages.length === 0 ? (
-            <div style={{fontSize: 12, color: '#9CA3AF'}}>
+            <div style={{fontSize: 13, color: '#9CA3AF'}}>
               No messages yet. Start the conversation!
             </div>
           ) : (
@@ -993,7 +1063,7 @@ const TeamChatView = () => {
               const prevDay = prev ? formatDayLabel(prev.created_at) : null;
               const showDaySeparator = currentDay && currentDay !== prevDay;
 
-              const showHeader = true; // always show name + time
+              const showHeader = true;
 
               return (
                 <React.Fragment key={m.id}>
@@ -1002,17 +1072,17 @@ const TeamChatView = () => {
                       style={{
                         display: 'flex',
                         justifyContent: 'center',
-                        margin: '8px 0',
+                        margin: '10px 0 4px',
                       }}
                     >
                       <span
                         style={{
-                          fontSize: 11,
+                          fontSize: 12,
                           color: '#9CA3AF',
-                          padding: '2px 8px',
+                          padding: '3px 10px',
                           borderRadius: 999,
-                          background: 'rgba(15,23,42,0.9)',
-                          border: '1px solid rgba(55,65,81,0.8)',
+                          background: 'rgba(15,23,42,0.95)',
+                          border: '1px solid rgba(55,65,81,0.9)',
                         }}
                       >
                         {currentDay}
@@ -1026,7 +1096,8 @@ const TeamChatView = () => {
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: isMe ? 'flex-end' : 'flex-start',
-                        gap: 3,
+                        gap: 4,
+                        width: '100%',
                       }}
                     >
                       <div style={bubbleStyle}>
@@ -1045,7 +1116,7 @@ const TeamChatView = () => {
                               {m.edited_at && !m.deleted && (
                                 <span
                                   style={{
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     color: '#9CA3AF',
                                   }}
                                 >
@@ -1073,9 +1144,9 @@ const TeamChatView = () => {
                           </div>
                         ) : null}
 
-                        {/* inline edit input */}
+                        {/* inline edit */}
                         {editingId === m.id && !m.deleted && (
-                          <div style={{marginTop: 6}}>
+                          <div style={{marginTop: 8}}>
                             <input
                               type="text"
                               value={editingText}
@@ -1084,12 +1155,12 @@ const TeamChatView = () => {
                               }
                               style={{
                                 width: '100%',
-                                borderRadius: 8,
+                                borderRadius: 10,
                                 border: '1px solid rgba(75,85,99,0.9)',
-                                background: 'rgba(15,23,42,0.9)',
+                                background: 'rgba(15,23,42,0.95)',
                                 color: '#E5E7EB',
-                                fontSize: 12,
-                                padding: '4px 8px',
+                                fontSize: 13,
+                                padding: '6px 10px',
                                 outline: 'none',
                               }}
                             />
@@ -1098,7 +1169,7 @@ const TeamChatView = () => {
 
                         {/* Attachment */}
                         {m.file_url && (
-                          <div style={{marginTop: 4}}>
+                          <div style={{marginTop: 6}}>
                             {m.file_type?.startsWith('image/') ? (
                               <a
                                 href={m.file_url}
@@ -1109,8 +1180,8 @@ const TeamChatView = () => {
                                   src={m.file_url}
                                   alt={m.file_name || 'Attachment'}
                                   style={{
-                                    maxHeight: 180,
-                                    borderRadius: 8,
+                                    maxHeight: 220,
+                                    borderRadius: 10,
                                     border:
                                       '1px solid rgba(75,85,99,0.8)',
                                   }}
@@ -1122,7 +1193,7 @@ const TeamChatView = () => {
                                 target="_blank"
                                 rel="noreferrer"
                                 style={{
-                                  fontSize: 12,
+                                  fontSize: 13,
                                   color: '#6EE7B7',
                                   textDecoration: 'underline',
                                 }}
@@ -1137,51 +1208,97 @@ const TeamChatView = () => {
                         {Object.keys(msgReactions).length > 0 && (
                           <div style={reactionsRowStyle}>
                             {Object.entries(msgReactions).map(
-                              ([emoji, count]) => (
-                                <span
-                                  key={emoji}
-                                  style={reactionBadgeStyle}
-                                >
-                                  <span>{emoji}</span>
-                                  <span style={{color: '#9CA3AF'}}>
-                                    {count}
+                              ([emoji, users]) => {
+                                const arr = users || [];
+                                const count = arr.length;
+                                const iReacted = arr.includes(userId);
+                                if (count === 0) return null;
+                                return (
+                                  <span
+                                    key={emoji}
+                                    style={{
+                                      ...reactionBadgeStyle,
+                                      ...(iReacted
+                                        ? {
+                                            borderColor:
+                                              'rgba(16,185,129,0.9)',
+                                            background:
+                                              'rgba(16,185,129,0.18)',
+                                          }
+                                        : {}),
+                                    }}
+                                  >
+                                    <span>{emoji}</span>
+                                    <span style={{color: '#9CA3AF'}}>
+                                      {count}
+                                    </span>
                                   </span>
-                                </span>
-                              ),
+                                );
+                              },
                             )}
                           </div>
                         )}
                       </div>
 
-                      {/* Reactions + reply + edit/delete controls */}
+                      {/* Controls: reactions + reply + edit/delete */}
                       <div
                         style={{
                           display: 'flex',
                           alignItems: 'center',
+                          justifyContent: 'space-between',
                           gap: 8,
                           marginTop: 2,
+                          flexWrap: 'wrap',
                         }}
                       >
-                        <div style={{display: 'flex', gap: 4}}>
-                          {REACTION_OPTIONS.map((emoji) => (
-                            <button
-                              key={emoji}
-                              type="button"
-                              onClick={() =>
-                                handleReaction(m.id, emoji)
-                              }
-                              style={reactionButtonStyle}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
+                        <div style={{display: 'flex', gap: 6, flexWrap: 'wrap'}}>
+                          {REACTION_OPTIONS.map((emoji) => {
+                            const users = msgReactions[emoji] || [];
+                            const iReacted = users.includes(userId);
+                            return (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() =>
+                                  handleReaction(m.id, emoji)
+                                }
+                                style={{
+                                  ...reactionButtonStyle,
+                                  ...(iReacted
+                                    ? reactionButtonActiveStyle
+                                    : {}),
+                                }}
+                              >
+                                {emoji}
+                              </button>
+                            );
+                          })}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEmojiPickerFor(
+                                emojiPickerFor === m.id ? null : m.id,
+                              )
+                            }
+                            style={{
+                              ...reactionButtonStyle,
+                              padding: '4px 10px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            <span>😀</span>
+                            <span style={{fontSize: 11}}>More</span>
+                          </button>
                         </div>
 
                         <div
                           style={{
                             display: 'flex',
-                            gap: 6,
-                            fontSize: 11,
+                            gap: 8,
+                            fontSize: 12,
+                            flexShrink: 0,
                           }}
                         >
                           {!m.deleted && (
@@ -1262,6 +1379,25 @@ const TeamChatView = () => {
                           )}
                         </div>
                       </div>
+
+                      {/* Full emoji picker for this message */}
+                      {emojiPickerFor === m.id && (
+                        <div style={emojiPickerStyle}>
+                          {EMOJI_PICKER.map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => {
+                                handleReaction(m.id, emoji);
+                                setEmojiPickerFor(null);
+                              }}
+                              style={emojiPickerButtonStyle}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </React.Fragment>
@@ -1279,8 +1415,8 @@ const TeamChatView = () => {
           style={{
             maxWidth: 1024,
             margin: '0 auto 4px auto',
-            padding: '4px 8px',
-            fontSize: 11,
+            padding: '6px 10px',
+            fontSize: 12,
             color: '#FBBF24',
             display: 'flex',
             justifyContent: 'space-between',
@@ -1321,8 +1457,8 @@ const TeamChatView = () => {
                 {replyTo.text && (
                   <span style={{marginLeft: 6, opacity: 0.8}}>
                     ·{' '}
-                    {replyTo.text.length > 60
-                      ? replyTo.text.slice(0, 57).trimEnd() + '…'
+                    {replyTo.text.length > 80
+                      ? replyTo.text.slice(0, 77).trimEnd() + '…'
                       : replyTo.text}
                   </span>
                 )}
@@ -1335,7 +1471,7 @@ const TeamChatView = () => {
                   background: 'transparent',
                   color: '#9CA3AF',
                   cursor: 'pointer',
-                  fontSize: 11,
+                  fontSize: 12,
                 }}
               >
                 Cancel
