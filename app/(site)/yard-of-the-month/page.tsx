@@ -26,7 +26,9 @@ function formatMonth(month?: string) {
 }
 
 export default async function YardOfTheMonthPage() {
+  // ✅ NOTE: this uses yardWinnersQuery, which has NO $id
   const winners = await client.fetch<YardWinner[]>(yardWinnersQuery);
+
   const currentWinner = winners[0] ?? null;
   const pastWinners = winners.slice(1);
 
@@ -173,7 +175,7 @@ export default async function YardOfTheMonthPage() {
                 href={`/yard-of-the-month/${currentWinner._id}`}
                 className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline mt-2"
               >
-                View details & past winners →
+                View details &amp; past winners →
               </Link>
             </div>
           </article>

@@ -11,14 +11,14 @@ type DocFile = {
   description?: string;
   category?: string;
   fileUrl: string;
-  uploadedAt?: string; // from coalesce(uploadedAt, _updatedAt)
-  fileName?: string;   // original filename
+  uploadedAt?: string;
+  fileName?: string;
 };
 
 export default async function DocumentsPage() {
   const docs = await client.fetch<DocFile[]>(documentsQuery);
 
-  // group docs by category (folder)
+  // Group docs by category
   const grouped: Record<string, DocFile[]> = docs.reduce(
     (acc, doc) => {
       const key = doc.category || 'Other';
@@ -29,17 +29,18 @@ export default async function DocumentsPage() {
     {} as Record<string, DocFile[]>,
   );
 
-  // sort categories alphabetically so folder order is stable
   const categories = Object.entries(grouped).sort(([a], [b]) =>
     a.localeCompare(b),
   );
 
   return (
-    <div className="space-y-6">
-      {/* Big “folder” wrapper */}
-      <div className="relative max-w-5xl mx-auto">
+    // 🔥 Full-bleed wrapper: escapes the parent .container so the background
+    // spans the entire viewport width
+    <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-gradient-to-b from-amber-200 via-amber-100 to-amber-200 py-12 px-3 sm:px-6">
+      {/* We re-center content inside the full-bleed area */}
+      <div className="max-w-5xl mx-auto relative">
         {/* Folder tab */}
-        <div className="absolute -top-6 left-4 sm:left-8">
+        <div className="absolute -top-6 left-6 sm:left-10">
           <div className="inline-flex items-center rounded-t-2xl rounded-b-lg bg-amber-100 border border-amber-200 px-4 py-1.5 shadow-sm">
             <span className="text-xs font-semibold tracking-wide text-amber-900 uppercase">
               Documents
@@ -48,8 +49,9 @@ export default async function DocumentsPage() {
         </div>
 
         {/* Folder body */}
-        <div className="rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-50 via-amber-50 to-amber-100/70 shadow-[0_18px_40px_rgba(15,23,42,0.12)] px-4 py-6 sm:px-8 sm:py-8">
-          <header className="space-y-1 mb-6">
+        <div className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-amber-50 to-amber-100/70 shadow-[0_18px_40px_rgba(15,23,42,0.14)] px-5 py-8 sm:px-10 sm:py-10">
+          {/* Header */}
+          <header className="space-y-1 mb-8">
             <h1 className="h1 text-brand-900">Community Documents</h1>
             <p className="muted max-w-2xl text-brand-800/80">
               View downloadable HOA documents such as plat maps, pool
@@ -57,6 +59,7 @@ export default async function DocumentsPage() {
             </p>
           </header>
 
+          {/* Categories */}
           {categories.length === 0 && (
             <p className="muted">No documents available yet.</p>
           )}
@@ -65,10 +68,9 @@ export default async function DocumentsPage() {
             <ul className="space-y-4">
               {categories.map(([category, files]) => (
                 <li key={category} className="space-y-2">
-                  {/* Subfolder-style collapsible */}
                   <details className="group border border-amber-200/80 rounded-2xl bg-amber-50/70 shadow-sm">
-                    <summary className="cursor-pointer flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
-                      <div className="flex items-center gap-2 sm:gap-3">
+                    <summary className="cursor-pointer flex items-center justify-between gap-3 px-5 py-4">
+                      <div className="flex items-center gap-3">
                         <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 border border-amber-200/80">
                           <FolderClosed className="w-4 h-4 text-amber-800 group-open:hidden" />
                           <FolderOpen className="w-4 h-4 text-amber-800 hidden group-open:inline-block" />
@@ -82,9 +84,12 @@ export default async function DocumentsPage() {
                       </span>
                     </summary>
 
-                    {/* Files inside this “folder” */}
-                    <div className="border-t border-amber-200/80 px-4 py-3 sm:px-5 sm:py-4 space-y-2">
+                    <div className="border-t border-amber-200/80 px-5 py-4 space-y-2">
                       {files.map((file) => {
+                        const ext =
+                          file.fileName?.split('.').pop()?.toUpperCase() ||
+                          'FILE';
+
                         const updatedLabel = file.uploadedAt
                           ? new Date(file.uploadedAt).toLocaleDateString(
                               undefined,
@@ -95,10 +100,6 @@ export default async function DocumentsPage() {
                               },
                             )
                           : null;
-
-                        const ext =
-                          file.fileName?.split('.').pop()?.toUpperCase() ||
-                          'FILE';
 
                         return (
                           <a
@@ -111,6 +112,7 @@ export default async function DocumentsPage() {
                             <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 border border-amber-200/80">
                               <FileText className="w-4 h-4 text-amber-900" />
                             </span>
+
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <div className="text-sm font-medium text-amber-950">
@@ -148,8 +150,8 @@ export default async function DocumentsPage() {
             </ul>
           )}
 
-          {/* Spectrum / management portal note – looks like a note inside the folder */}
-          <section className="mt-5 rounded-2xl border border-amber-300 bg-amber-100/80 px-4 py-3 text-sm text-amber-950 flex gap-3 items-start shadow-inner">
+          {/* Spectrum note */}
+          <section className="mt-6 rounded-2xl border border-amber-300 bg-amber-100/80 px-5 py-4 text-sm text-amber-950 flex gap-3 items-start shadow-inner">
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-200 border border-amber-300 text-amber-900 text-sm mt-0.5">
               i
             </span>
@@ -157,8 +159,7 @@ export default async function DocumentsPage() {
               <p className="font-semibold">Additional documents</p>
               <p className="mt-1">
                 Not all community documents are listed on this page. For more
-                documents, please log in to the neighborhood management
-                portal:{' '}
+                documents, please log in to the neighborhood management portal:{' '}
                 <a
                   href="https://spectrum.cincwebaxis.com/account/loginmodernthemes"
                   target="_blank"
