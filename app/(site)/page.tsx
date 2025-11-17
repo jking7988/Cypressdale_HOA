@@ -319,15 +319,15 @@ export default async function HomePage() {
           </section>
 
           {/* Neighborhood Weather */}
-          <section className="px-4 py-5 md:px-6 md:py-6 space-y-3 flex flex-col items-center text-center">
+          <section className="px-3 sm:px-4 py-5 md:px-6 md:py-6 space-y-3 flex flex-col items-center text-center">
             <h2 className="h2">Neighborhood weather</h2>
             <p className="muted text-sm">
               5-day forecast for Cypressdale (powered by AccuWeather).
             </p>
 
             {forecast.length > 0 ? (
-              <div className="flex w-full justify-center">
-                <div className="flex gap-3 overflow-x-auto pb-2 px-2 md:px-0 justify-center">
+              <div className="w-full">
+                <div className="flex gap-3 overflow-x-auto pb-3 px-1 sm:px-2 -mx-4 sm:mx-0">
                   {forecast.map((day, idx) => {
                     const meta = getWeatherMeta(day.phrase);
                     const Icon = meta.Icon;
@@ -335,7 +335,7 @@ export default async function HomePage() {
                     return (
                       <div
                         key={day.date}
-                        className={`card group min-w-[130px] text-center flex-shrink-0 py-3 transition-transform duration-150 hover:-translate-y-1 hover:shadow-md ${meta.cardBg} ring-1 ${meta.ringClass}`}
+                        className={`card group min-w-[135px] text-center flex-shrink-0 py-3 transition-transform duration-150 hover:-translate-y-1 hover:shadow-md ${meta.cardBg} ring-1 ${meta.ringClass}`}
                       >
                         <p className="text-xs font-semibold text-brand-700 mb-1">
                           {formatWeatherDayLabel(day.date, idx)}
@@ -377,7 +377,7 @@ export default async function HomePage() {
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="h2 flex items-center gap-2">
                 <span>Upcoming events</span>
-                <span className="text-xs rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5">
+                <span className="text-[10px] md:text-xs rounded-full bg-emerald-100 text-emerald-800 px-1.5 py-[2px] md:px-2 md:py-0.5">
                   {upcomingEvents.length || 0} scheduled
                 </span>
               </h2>
@@ -476,9 +476,10 @@ export default async function HomePage() {
               <h2 className="h2 flex items-center gap-2">
                 <span>Latest news</span>
                 {latestPosts?.length > 0 && (
-                  <span className="text-[11px] rounded-full bg-sky-100 text-sky-800 px-2 py-0.5">
+                  <span className="text-[9px] md:text-[11px] rounded-full bg-sky-100 text-sky-800 px-1.5 py-[2px] md:px-2 md:py-0.5">
                     Updated recently
                   </span>
+
                 )}
               </h2>
               <Link

@@ -182,6 +182,13 @@ const TeamChatView = () => {
   const [pendingDelete, setPendingDelete] = useState<Message | null>(null);
   const deleteTimerRef = useRef<number | null>(null);
 
+  // Search
+  const [search, setSearch] = useState('');
+
+  // Upload status / error
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   // Show controls only on hover
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
@@ -626,16 +633,21 @@ const TeamChatView = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setUploadError(null);
+
     try {
-      setSending(true);
+      setUploadingFile(true);
+
       const path = `${userId}/${Date.now()}-${file.name}`;
-      const {error: uploadError} = await supabase.storage
+      const {error: uploadErrorRaw} = await supabase.storage
         .from('chat-uploads')
         .upload(path, file);
 
-      if (uploadError) {
-        console.error(uploadError);
-        setSending(false);
+      if (uploadErrorRaw) {
+        console.error(uploadErrorRaw);
+        setUploadError(
+          `Upload failed: ${uploadErrorRaw.message ?? 'Unknown error'}`,
+        );
         return;
       }
 
@@ -685,9 +697,12 @@ const TeamChatView = () => {
       if (insertError) {
         setMessages((prev) => prev.filter((m) => m.id !== messageId));
         console.error(insertError);
+        setUploadError(
+          `Upload saved to storage but DB insert failed: ${insertError.message}`,
+        );
       }
     } finally {
-      setSending(false);
+      setUploadingFile(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }
@@ -766,6 +781,17 @@ const TeamChatView = () => {
     ([id]) => id !== userId,
   );
 
+  // Search-filtered messages
+  const lowerSearch = search.trim().toLowerCase();
+  const filteredMessages =
+    !lowerSearch
+      ? messages
+      : messages.filter((m) => {
+          const text = (m.text || '').toLowerCase();
+          const author = (m.author_name || '').toLowerCase();
+          return text.includes(lowerSearch) || author.includes(lowerSearch);
+        });
+
   // --- styles ---
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -831,6 +857,18 @@ const TeamChatView = () => {
     border: '1px solid rgba(55, 65, 81, 0.9)',
     fontSize: 12,
     color: '#D1D5DB',
+  };
+
+  const searchInputStyle: React.CSSProperties = {
+    width: 220,
+    borderRadius: 999,
+    border: '1px solid rgba(75,85,99,0.9)',
+    background: 'rgba(15,23,42,0.95)',
+    color: '#E5E7EB',
+    fontSize: 12,
+    padding: '6px 10px',
+    outline: 'none',
+    marginTop: 6,
   };
 
   const messagesContainerStyle: React.CSSProperties = {
@@ -1056,6 +1094,19 @@ const TeamChatView = () => {
     color: '#E5E7EB',
   };
 
+  const errorBannerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    padding: '6px 10px',
+    borderRadius: 8,
+    background: 'rgba(127,29,29,0.9)',
+    border: '1px solid rgba(248,113,113,0.8)',
+    fontSize: 12,
+    color: '#FEE2E2',
+  };
+
   const typingStr =
     typingList.length === 0
       ? ''
@@ -1126,6 +1177,13 @@ const TeamChatView = () => {
                 • {unreadCount} new message{unreadCount > 1 ? 's' : ''}
               </div>
             )}
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search messages…"
+              style={searchInputStyle}
+            />
           </div>
         </div>
       </div>
@@ -1141,8 +1199,12 @@ const TeamChatView = () => {
             <div style={{fontSize: 13, color: '#9CA3AF'}}>
               No messages yet. Start the conversation!
             </div>
+          ) : filteredMessages.length === 0 ? (
+            <div style={{fontSize: 13, color: '#9CA3AF'}}>
+              No messages match your search.
+            </div>
           ) : (
-            messages.map((m, index) => {
+            filteredMessages.map((m, index) => {
               const isMe = m.author_name === displayName;
               const alignmentStyle: React.CSSProperties = {
                 display: 'flex',
@@ -1152,7 +1214,8 @@ const TeamChatView = () => {
               const msgReactions = reactions[m.id] || {};
 
               const currentDay = formatDayLabel(m.created_at);
-              const prev = index > 0 ? messages[index - 1] : null;
+              const prev =
+                index > 0 ? filteredMessages[index - 1] : null;
               const prevDay = prev ? formatDayLabel(prev.created_at) : null;
               const showDaySeparator = currentDay && currentDay !== prevDay;
 
@@ -1501,6 +1564,26 @@ const TeamChatView = () => {
       {/* Footer */}
       <div style={footerOuterStyle}>
         <div style={footerInnerStyle}>
+          {uploadError && (
+            <div style={errorBannerStyle}>
+              <span>{uploadError}</span>
+              <button
+                type="button"
+                onClick={() => setUploadError(null)}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#FCA5A5',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
           {typingStr && <div style={typingStyle}>{typingStr}</div>}
 
           {replyTo && (
@@ -1568,9 +1651,9 @@ const TeamChatView = () => {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               style={attachButtonStyle}
-              disabled={sending}
+              disabled={sending || uploadingFile}
             >
-              Attach
+              {uploadingFile ? 'Uploading…' : 'Attach'}
             </button>
 
             <button
