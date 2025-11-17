@@ -198,6 +198,10 @@ const TeamChatView = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  // Scroll container ref + "jump to latest"
+  const messagesScrollRef = useRef<HTMLDivElement | null>(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+
   const [isWindowFocused, setIsWindowFocused] = useState(
     typeof document !== 'undefined' ? !document.hidden : true,
   );
@@ -257,6 +261,28 @@ const TeamChatView = () => {
       bottomRef.current?.scrollIntoView({behavior: 'smooth', block: 'end'});
     }, 0);
   }
+
+  // Track scroll to show "jump to latest" button
+  useEffect(() => {
+    const el = messagesScrollRef.current;
+    if (!el) return;
+
+    function handleScroll() {
+      const threshold = 80;
+      const distanceFromBottom =
+        el.scrollHeight - el.scrollTop - el.clientHeight;
+      const atBottom = distanceFromBottom < threshold;
+      setShowScrollToBottom(!atBottom);
+    }
+
+    el.addEventListener('scroll', handleScroll);
+    // Initialize state
+    handleScroll();
+
+    return () => {
+      el.removeEventListener('scroll', handleScroll);
+    };
+  }, [messages.length]);
 
   // load history + realtime channel
   useEffect(() => {
@@ -418,7 +444,7 @@ const TeamChatView = () => {
     const now = Date.now();
     if (!channelRef.current) return;
     if (now - lastTypingSentRef.current < 800) return;
-    lastTypingSentRef.current = now;
+    lastTypingSentRefRef.current = now;
 
     channelRef.current.send({
       type: 'broadcast',
@@ -878,6 +904,7 @@ const TeamChatView = () => {
     display: 'flex',
     flexDirection: 'column',
     gap: 10,
+    position: 'relative',
   };
 
   const messagesInnerStyle: React.CSSProperties = {
@@ -900,6 +927,12 @@ const TeamChatView = () => {
     ...bubbleBase,
     background: 'rgba(5, 150, 105, 0.2)',
     borderColor: 'rgba(16,185,129,0.8)',
+  };
+
+  const bubbleMention: React.CSSProperties = {
+    ...bubbleBase,
+    borderColor: 'rgba(129,140,248,0.9)',
+    boxShadow: '0 0 0 1px rgba(129,140,248,0.4)',
   };
 
   const bubbleMetaRow: React.CSSProperties = {
@@ -930,6 +963,18 @@ const TeamChatView = () => {
   const bubbleText: React.CSSProperties = {
     fontSize: 14,
     color: '#E5E7EB',
+  };
+
+  const mentionPillStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
+    padding: '2px 8px',
+    borderRadius: 999,
+    fontSize: 11,
+    background: 'rgba(30,64,175,0.7)',
+    color: '#E0ECFF',
   };
 
   const reactionsRowStyle: React.CSSProperties = {
@@ -1107,6 +1152,23 @@ const TeamChatView = () => {
     color: '#FEE2E2',
   };
 
+  const scrollToBottomButtonStyle: React.CSSProperties = {
+    position: 'absolute',
+    right: 24,
+    bottom: 16,
+    border: '1px solid rgba(55,65,81,0.9)',
+    background: 'rgba(15,23,42,0.95)',
+    borderRadius: 999,
+    padding: '6px 12px',
+    fontSize: 12,
+    color: '#E5E7EB',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    boxShadow: '0 8px 18px rgba(0,0,0,0.35)',
+  };
+
   const typingStr =
     typingList.length === 0
       ? ''
@@ -1189,7 +1251,7 @@ const TeamChatView = () => {
       </div>
 
       {/* Messages */}
-      <div style={messagesContainerStyle}>
+      <div style={messagesContainerStyle} ref={messagesScrollRef}>
         <div style={messagesInnerStyle}>
           {loading ? (
             <div style={{fontSize: 13, color: '#9CA3AF'}}>
@@ -1206,11 +1268,24 @@ const TeamChatView = () => {
           ) : (
             filteredMessages.map((m, index) => {
               const isMe = m.author_name === displayName;
+
+              const mentionsYou =
+                !isMe &&
+                m.text &&
+                displayName &&
+                m.text.toLowerCase().includes(
+                  '@' + displayName.toLowerCase(),
+                );
+
               const alignmentStyle: React.CSSProperties = {
                 display: 'flex',
                 justifyContent: isMe ? 'flex-end' : 'flex-start',
               };
-              const bubbleStyle = isMe ? bubbleMe : bubbleBase;
+              const bubbleStyle = isMe
+                ? bubbleMe
+                : mentionsYou
+                  ? bubbleMention
+                  : bubbleBase;
               const msgReactions = reactions[m.id] || {};
 
               const currentDay = formatDayLabel(m.created_at);
@@ -1290,6 +1365,12 @@ const TeamChatView = () => {
                                 </span>
                               )}
                             </div>
+                          </div>
+                        )}
+
+                        {mentionsYou && (
+                          <div style={mentionPillStyle}>
+                            <span>Mentions you</span>
                           </div>
                         )}
 
@@ -1559,6 +1640,16 @@ const TeamChatView = () => {
 
           <div ref={bottomRef} />
         </div>
+
+        {showScrollToBottom && (
+          <button
+            type="button"
+            onClick={scrollToBottomSmooth}
+            style={scrollToBottomButtonStyle}
+          >
+            <span>Jump to latest</span>
+          </button>
+        )}
       </div>
 
       {/* Footer */}
