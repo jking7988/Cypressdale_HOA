@@ -1,4 +1,4 @@
-// TeamChatView.tsx
+// TeamChatView.tsx 
 // @ts-nocheck
 import React, {useEffect, useState, useRef} from 'react';
 import {useCurrentUser} from 'sanity';
@@ -178,6 +178,10 @@ const TeamChatView = () => {
   const [emojiPickerFor, setEmojiPickerFor] = useState<string | null>(null);
   const [composerEmojiOpen, setComposerEmojiOpen] = useState(false);
 
+  // Soft delete + undo
+  const [pendingDelete, setPendingDelete] = useState<Message | null>(null);
+  const deleteTimerRef = useRef<number | null>(null);
+
   // Show controls only on hover
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
@@ -346,7 +350,7 @@ const TeamChatView = () => {
       })
       .on('broadcast', {event: 'delete'}, (payload) => {
         const {id} = payload.payload as {id: string};
-        // ✅ completely remove from local list
+        // Remove from local list when a final delete is broadcast
         setMessages((prev) => prev.filter((m) => m.id !== id));
       })
       .subscribe();
@@ -393,6 +397,10 @@ const TeamChatView = () => {
       }
       clearInterval(presenceInterval);
       clearInterval(pruneInterval);
+
+      if (deleteTimerRef.current !== null) {
+        clearTimeout(deleteTimerRef.current);
+      }
     };
   }, [isWindowFocused, userId, displayName]);
 
@@ -461,11 +469,9 @@ const TeamChatView = () => {
     }
   }
 
-  async function deleteMessage(message: Message) {
+  // Finalize delete after undo window expires
+  async function finalizeDelete(message: Message) {
     const id = message.id;
-
-    // 🔥 Immediately remove from UI
-    setMessages((prev) => prev.filter((m) => m.id !== id));
 
     // Notify other clients to remove
     if (channelRef.current) {
@@ -492,6 +498,56 @@ const TeamChatView = () => {
         console.error('soft delete also failed:', softError.message);
       }
     }
+  }
+
+  // Start soft delete with undo window
+  function deleteMessage(message: Message) {
+    const id = message.id;
+
+    // If there's already a pending delete, cancel it (no finalize) and overwrite
+    if (deleteTimerRef.current !== null) {
+      clearTimeout(deleteTimerRef.current);
+      deleteTimerRef.current = null;
+    }
+
+    // Remove from local UI immediately
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+    setPendingDelete(message);
+
+    // Start timer to finalize delete in 5s
+    deleteTimerRef.current = window.setTimeout(() => {
+      deleteTimerRef.current = null;
+      if (pendingDelete && pendingDelete.id === id) {
+        finalizeDelete(pendingDelete).catch((err) =>
+          console.error('finalizeDelete error', err),
+        );
+        setPendingDelete(null);
+      }
+    }, 5000);
+  }
+
+  // Undo soft delete – restore message locally and cancel finalize
+  function undoDelete() {
+    if (!pendingDelete) return;
+
+    if (deleteTimerRef.current !== null) {
+      clearTimeout(deleteTimerRef.current);
+      deleteTimerRef.current = null;
+    }
+
+    const messageToRestore = pendingDelete;
+    setPendingDelete(null);
+
+    // Insert back and keep chronological order
+    setMessages((prev) => {
+      const next = [...prev, messageToRestore];
+      next.sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() -
+          new Date(b.created_at).getTime(),
+      );
+      return next;
+    });
   }
 
   function startReply(message: Message) {
@@ -565,7 +621,6 @@ const TeamChatView = () => {
       console.error('Supabase insert error:', error.message);
     }
   }
-
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -986,6 +1041,19 @@ const TeamChatView = () => {
     flexWrap: 'wrap',
     gap: 4,
     maxWidth: 320,
+  };
+
+  const undoBannerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    padding: '6px 10px',
+    borderRadius: 8,
+    background: 'rgba(30,64,75,0.9)',
+    border: '1px solid rgba(148,163,184,0.7)',
+    fontSize: 12,
+    color: '#E5E7EB',
   };
 
   const typingStr =
@@ -1465,6 +1533,26 @@ const TeamChatView = () => {
                 }}
               >
                 Cancel
+              </button>
+            </div>
+          )}
+
+          {pendingDelete && (
+            <div style={undoBannerStyle}>
+              <span>Message deleted.</span>
+              <button
+                type="button"
+                onClick={undoDelete}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#6EE7B7',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                Undo
               </button>
             </div>
           )}

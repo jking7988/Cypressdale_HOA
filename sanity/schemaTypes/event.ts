@@ -55,5 +55,47 @@ export default defineType({
       type: 'number',
       initialValue: 0,
     }),
+
+    // 👇 RSVPs now live *inside* the event
+    defineField({
+      name: 'rsvps',
+      title: 'RSVP Responses',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          name: 'rsvp',
+          fields: [
+            {
+              name: 'status',
+              title: 'Status',
+              type: 'string',
+              options: {
+                list: [
+                  {title: 'Yes', value: 'yes'},
+                  {title: 'Maybe', value: 'maybe'},
+                ],
+                layout: 'radio',
+              },
+            },
+            {
+              name: 'name',
+              title: 'Name',
+              type: 'string',
+            },
+            {
+              name: 'email',
+              title: 'Email',
+              type: 'string',
+            },
+            {
+              name: 'createdAt',
+              title: 'Created At',
+              type: 'datetime',
+            },
+          ],
+        },
+      ],
+    }),
   ],
 });

@@ -93,7 +93,7 @@ export function YardLightbox({ photos, title }: Props) {
 
       {/* Lightbox overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
           {/* Click background to close */}
           <button
             type="button"
@@ -106,9 +106,7 @@ export function YardLightbox({ photos, title }: Props) {
           <div className="relative z-10 max-w-5xl w-full px-4">
             {/* Top bar */}
             <div className="flex items-center justify-between mb-3 text-white text-xs">
-              <span className="truncate max-w-[70%]">
-                {title}
-              </span>
+              <span className="truncate max-w-[70%]">{title}</span>
               <span>
                 {activeIndex + 1} / {photos.length}
               </span>

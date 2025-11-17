@@ -38,14 +38,17 @@ export const deskStructure = (S) =>
       // Yard of the Month
       S.listItem()
         .title('Yard of the Month Winners')
-        .child(S.documentTypeList('yardWinner').title('Yard of the Month Winners')),
-      
+        .child(
+          S.documentTypeList('yardWinner')
+            .title('Yard of the Month Winners'),
+        ),
+
       // Holiday Decorating Winners
       S.listItem()
         .title('Holiday Winners')
         .child(
           S.documentTypeList('holidayWinner')
-            .title('Holiday Winners')
+            .title('Holiday Winners'),
         ),
 
       // Everything else
@@ -58,6 +61,7 @@ export const deskStructure = (S) =>
           'post',
           'yardWinner',
           'holidayWinner',
+          'rsvpResponse', // 👈 make sure RSVPs are NOT their own section
         ].includes(id);
       }),
     ]);

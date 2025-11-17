@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ContactLink } from '@/components/ContactLink';
 import { client } from '@/lib/sanity.client';
 import { holidayWinnersQuery } from '@/lib/queries';
+import { YardLightbox } from '@/components/YardLightbox';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,9 +54,7 @@ function placeRank(place?: string) {
 export default async function HolidayDecoratingPage() {
   const winners = await client.fetch<HolidayWinner[]>(holidayWinnersQuery);
 
-  const christmasWinners = winners.filter(
-    (w) => w.holiday === 'christmas'
-  );
+  const christmasWinners = winners.filter((w) => w.holiday === 'christmas');
 
   let currentChristmas: HolidayWinner[] = [];
   let currentYearLabel: string | null = null;
@@ -77,18 +76,18 @@ export default async function HolidayDecoratingPage() {
   return (
     // full-width background (break out of container)
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-900 via-emerald-800 to-rose-900 text-emerald-50">
-      {/* Festive glow */}
-      <div className="pointer-events-none fixed inset-0 opacity-50 mix-blend-screen">
+      {/* Festive glow - keep under everything */}
+      <div className="pointer-events-none fixed inset-0 opacity-50 mix-blend-screen z-0">
         <div className="absolute -top-10 -left-16 h-56 w-56 rounded-full bg-emerald-400/40 blur-3xl" />
         <div className="absolute top-24 -right-10 h-40 w-40 rounded-full bg-rose-400/40 blur-3xl" />
         <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-amber-300/35 blur-3xl" />
       </div>
 
-      {/* Light “snow” texture */}
-      <div className="pointer-events-none fixed inset-0 opacity-25 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.28),transparent_55%),radial-gradient(circle_at_bottom,_rgba(255,255,255,0.18),transparent_55%)]" />
+      {/* Light “snow” texture - also under content */}
+      <div className="pointer-events-none fixed inset-0 opacity-25 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.28),transparent_55%),radial-gradient(circle_at_bottom,_rgba(255,255,255,0.18),transparent_55%)] z-0" />
 
-      {/* Main content */}
-      <div className="relative mx-auto max-w-5xl px-4 py-10 space-y-8">
+      {/* Main content on top */}
+      <div className="relative z-10 mx-auto max-w-5xl px-4 py-10 space-y-8">
         {/* Header */}
         <header className="space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-950/80 px-4 py-1 text-xs font-medium text-emerald-50 shadow-lg shadow-black/30">
@@ -138,8 +137,12 @@ export default async function HolidayDecoratingPage() {
           {currentChristmas.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-3">
               {currentChristmas.map((winner) => {
-                const photo =
-                  winner.photoUrl || winner.photoUrls?.[0] || null;
+                const photos =
+                  winner.photoUrls && winner.photoUrls.length > 0
+                    ? winner.photoUrls
+                    : winner.photoUrl
+                    ? [winner.photoUrl]
+                    : [];
 
                 return (
                   <article
@@ -172,14 +175,10 @@ export default async function HolidayDecoratingPage() {
                       </p>
                     )}
 
-                    {photo && (
-                      <div className="mt-1 rounded-2xl overflow-hidden border border-emerald-200/40 bg-black/20">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={photo}
-                          alt={winner.title}
-                          className="h-28 w-full object-cover"
-                        />
+                    {/* React picture viewer / lightbox - same behavior as garden page */}
+                    {photos.length > 0 && (
+                      <div className="mt-2 rounded-2xl border border-emerald-200/40 bg-black/20 p-2">
+                        <YardLightbox photos={photos} title={winner.title} />
                       </div>
                     )}
 
@@ -203,72 +202,6 @@ export default async function HolidayDecoratingPage() {
               </p>
             </div>
           )}
-        </section>
-
-        {/* Overview + How it works */}
-        <section className="grid gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)] items-start">
-          {/* Overview */}
-          <div className="rounded-3xl border border-emerald-200/40 bg-emerald-950/40 backdrop-blur-md shadow-lg shadow-black/30 p-5 space-y-3">
-            <div className="flex items-center gap-2 text-emerald-50">
-              <span className="text-lg">✨</span>
-              <h2 className="text-lg font-semibold">Program overview</h2>
-            </div>
-            <p className="text-sm text-emerald-50/90">
-              The holiday decorating contests are designed to celebrate the
-              season, encourage neighborhood spirit, and recognize residents
-              who put extra effort into creating memorable decorations.
-            </p>
-            <ul className="list-disc pl-5 text-sm text-emerald-50/90 space-y-1">
-              <li>Open to occupied homes in good standing within Cypressdale.</li>
-              <li>
-                Displays are judged from the street (front yards and fronts of
-                homes only).
-              </li>
-              <li>No entry fee. Participation is completely voluntary.</li>
-              <li>
-                Winners and photos may be shared on the HOA website and social
-                media.
-              </li>
-            </ul>
-            <p className="text-xs text-emerald-100/80">
-              Specific judging dates, times, and any additional rules or prize
-              details will be announced in the News section each year.
-            </p>
-          </div>
-
-          {/* Awards & recognition */}
-          <div className="rounded-3xl border border-rose-200/50 bg-rose-900/40 backdrop-blur-md shadow-lg shadow-black/30 p-5 space-y-3">
-            <div className="flex items-center gap-2 text-rose-50">
-              <span className="text-lg">🏆</span>
-              <h2 className="text-lg font-semibold">Awards &amp; recognition</h2>
-            </div>
-            <p className="text-sm text-rose-50/95">
-              Each holiday contest recognizes the top three homes:
-            </p>
-            <ul className="space-y-1.5 text-sm text-rose-50/95">
-              <li>
-                <span className="font-semibold">1st Place</span> – Best overall
-                display
-              </li>
-              <li>
-                <span className="font-semibold">2nd Place</span> – Outstanding
-                display
-              </li>
-              <li>
-                <span className="font-semibold">3rd Place</span> – Honorable
-                mention
-              </li>
-            </ul>
-            <p className="text-sm text-rose-50/90">
-              Prizes are still being determined and may vary by year. All
-              winners will be announced in the News section and featured on the
-              HOA website and/or social media.
-            </p>
-            <p className="text-xs text-rose-100/85">
-              Once prize details are finalized, they will be added here and
-              included in the annual News announcement.
-            </p>
-          </div>
         </section>
 
         {/* Two-column: Christmas (primary) & Halloween (coming next year) */}
