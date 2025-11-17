@@ -444,7 +444,7 @@ const TeamChatView = () => {
     const now = Date.now();
     if (!channelRef.current) return;
     if (now - lastTypingSentRef.current < 800) return;
-    lastTypingSentRefRef.current = now;
+    lastTypingSentRef.current = now; // ✅ correct
 
     channelRef.current.send({
       type: 'broadcast',
@@ -534,46 +534,88 @@ const TeamChatView = () => {
   }
 
   // Start soft delete with undo window
-  function deleteMessage(message: Message) {
-    const id = message.id;
+function deleteMessage(message: Message) {
+  const id = message.id;
 
-    // If there's already a pending delete, cancel it (no finalize) and overwrite
-    if (deleteTimerRef.current !== null) {
-      clearTimeout(deleteTimerRef.current);
-      deleteTimerRef.current = null;
-    }
-
-    // Remove from local UI immediately
-    setMessages((prev) => prev.filter((m) => m.id !== id));
-    setPendingDelete(message);
-
-    // Start timer to finalize delete in 5s
-    deleteTimerRef.current = window.setTimeout(() => {
-      deleteTimerRef.current = null;
-      if (pendingDelete && pendingDelete.id === id) {
-        finalizeDelete(pendingDelete).catch((err) =>
-          console.error('finalizeDelete error', err),
-        );
-        setPendingDelete(null);
-      }
-    }, 5000);
+  // If there's already a pending delete, cancel it
+  if (deleteTimerRef.current !== null) {
+    clearTimeout(deleteTimerRef.current);
+    deleteTimerRef.current = null;
   }
 
-  // Undo soft delete – restore message locally and cancel finalize
+  // Remove from local UI immediately and track for undo
+  setMessages((prev) => prev.filter((m) => m.id !== id));
+  setPendingDelete(message);
+
+  const deletedAt = nowIso();
+
+  // Immediately soft-delete in DB so it does NOT come back on reload
+  supabase
+    .from('messages')
+    .update({deleted: true, deleted_at: deletedAt})
+    .eq('id', id)
+    .then(({error}) => {
+      if (error) {
+        console.error('soft delete failed:', error.message);
+      }
+    });
+
+  // Tell other clients to drop it from their list
+  if (channelRef.current) {
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'delete',
+      payload: {id},
+    });
+  }
+
+  // After 5s, hard delete if not undone
+  deleteTimerRef.current = window.setTimeout(() => {
+    deleteTimerRef.current = null;
+    setPendingDelete((current) => {
+      // If user already undid, current will be null
+      if (!current || current.id !== id) {
+        return current;
+      }
+
+      supabase
+        .from('messages')
+        .delete()
+        .eq('id', id)
+        .then(({error}) => {
+          if (error) {
+            console.error('hard delete failed:', error.message);
+          }
+        });
+
+      return null;
+    });
+  }, 5000);
+}
+
+  // Undo soft delete – restore message locally and clear deleted flag in DB
   function undoDelete() {
     if (!pendingDelete) return;
 
+    const original = pendingDelete;
+
+    // Clear timer and pending state
     if (deleteTimerRef.current !== null) {
       clearTimeout(deleteTimerRef.current);
       deleteTimerRef.current = null;
     }
-
-    const messageToRestore = pendingDelete;
     setPendingDelete(null);
 
-    // Insert back and keep chronological order
+    // Build a "restored" version with deleted flags cleared
+    const restored: Message = {
+      ...original,
+      deleted: false,
+      deleted_at: null,
+    };
+
+    // Restore in local UI
     setMessages((prev) => {
-      const next = [...prev, messageToRestore];
+      const next = [...prev, restored];
       next.sort(
         (a, b) =>
           new Date(a.created_at).getTime() -
@@ -581,6 +623,29 @@ const TeamChatView = () => {
       );
       return next;
     });
+
+    // Clear deleted flag in DB
+    supabase
+      .from('messages')
+      .update({deleted: false, deleted_at: null})
+      .eq('id', restored.id)
+      .then(({error}) => {
+        if (error) {
+          console.error('undo delete failed:', error.message);
+        }
+      });
+
+    // Rebroadcast as a normal message so any other open Studio tabs update
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'message',
+        payload: restored,
+      });
+    }
+
+    // Nice UX: scroll down to where the restored message is
+    scrollToBottomSmooth();
   }
 
   function startReply(message: Message) {
