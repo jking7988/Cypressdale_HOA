@@ -1,6 +1,7 @@
 // app/trash/page.tsx
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -16,73 +17,76 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export default function TrashInfoPage() {
+function TrashInfoPageContent() {
   const searchParams = useSearchParams();
   const signupStatus = searchParams.get('signup');
   const unsubscribeStatus = searchParams.get('unsubscribe');
+
   return (
-  <div className="relative min-h-[calc(100vh-5rem)]">
-    {/* FULL-SCREEN BACKGROUND */}
-    <div className="fixed inset-0 -z-10">
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-50"
-        style={{ backgroundImage: "url('/images/bin-background.png')" }}
-      />
-      <div className="absolute inset-0 bg-emerald-50/60 backdrop-blur-[5px]" />
-    </div>
-    
-    {/* CONTENT */}
-    <div className="relative mx-auto max-w-5xl px-4 py-10 space-y-8">
-      {/* Signup status banner */}
-      {signupStatus === 'ok' && (
-        <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-md shadow-emerald-900/10">
-          You’re signed up for <span className="font-semibold">trash day reminders</span>.
-          You’ll get an email the day before collection.
-        </div>
-      )}
+    <div className="relative min-h-[calc(100vh-5rem)]">
+      {/* FULL-SCREEN BACKGROUND */}
+      <div className="fixed inset-0 -z-10">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-50"
+          style={{ backgroundImage: "url('/images/bin-background.png')" }}
+        />
+        <div className="absolute inset-0 bg-emerald-50/60 backdrop-blur-[5px]" />
+      </div>
 
-      {signupStatus === 'error' && (
-        <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-md shadow-red-900/10">
-          Something went wrong signing you up. Please check your email address and try again.
-        </div>
-      )}
-
-      {/* Unsubscribe status banner */}
-      {unsubscribeStatus === 'ok' && (
-        <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-md shadow-emerald-900/10">
-          You’ve been <span className="font-semibold">unsubscribed</span> from trash day reminders.
-        </div>
-      )}
-
-      {unsubscribeStatus === 'error' && (
-        <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-md shadow-red-900/10">
-          We couldn’t unsubscribe this address. Please contact the HOA if the problem continues.
-        </div>
-      )}
-
-      {/* Header */}
-      <header className="space-y-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/90 px-4 py-1 text-xs font-medium text-emerald-50 shadow-md shadow-emerald-900/20">
-          <Trash2 className="h-3.5 w-3.5" />
-          <span className="tracking-[0.18em] uppercase">
-            Trash &amp; Recycling
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          {/* Left: title + intro */}
-          <div className="space-y-2">
-            <h1 className="h1 text-2xl md:text-3xl text-emerald-950">
-              Trash, Recycling &amp; Heavy Trash Information
-            </h1>
-            <p className="muted max-w-2xl text-sm md:text-base text-emerald-900/80">
-              Collection in Cypressdale is provided by{' '}
-              <span className="font-semibold">Texas Pride Disposal</span>.
-              This page covers container rules, pickup days, heavy trash
-              limits, yard waste guidelines, recycling, and helpful links for
-              new accounts and questions.
-            </p>
+      {/* CONTENT */}
+      <div className="relative mx-auto max-w-5xl px-4 py-10 space-y-8">
+        {/* Signup status banner */}
+        {signupStatus === 'ok' && (
+          <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-md shadow-emerald-900/10">
+            You’re signed up for <span className="font-semibold">trash day reminders</span>.
+            You’ll get an email the day before collection.
           </div>
+        )}
+
+        {signupStatus === 'error' && (
+          <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-md shadow-red-900/10">
+            Something went wrong signing you up. Please check your email address and try again.
+          </div>
+        )}
+
+        {/* Unsubscribe status banner */}
+        {unsubscribeStatus === 'ok' && (
+          <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-md shadow-emerald-900/10">
+            You’ve been <span className="font-semibold">unsubscribed</span> from trash day
+            reminders.
+          </div>
+        )}
+
+        {unsubscribeStatus === 'error' && (
+          <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-md shadow-red-900/10">
+            We couldn’t unsubscribe this address. Please contact the HOA if the problem
+            continues.
+          </div>
+        )}
+
+        {/* Header */}
+        <header className="space-y-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/90 px-4 py-1 text-xs font-medium text-emerald-50 shadow-md shadow-emerald-900/20">
+            <Trash2 className="h-3.5 w-3.5" />
+            <span className="tracking-[0.18em] uppercase">
+              Trash &amp; Recycling
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            {/* Left: title + intro */}
+            <div className="space-y-2">
+              <h1 className="h1 text-2xl md:text-3xl text-emerald-950">
+                Trash, Recycling &amp; Heavy Trash Information
+              </h1>
+              <p className="muted max-w-2xl text-sm md:text-base text-emerald-900/80">
+                Collection in Cypressdale is provided by{' '}
+                <span className="font-semibold">Texas Pride Disposal</span>.
+                This page covers container rules, pickup days, heavy trash
+                limits, yard waste guidelines, recycling, and helpful links for
+                new accounts and questions.
+              </p>
+            </div>
 
             {/* Right: Texas Pride logo */}
             <div className="mt-1 md:mt-0">
@@ -427,7 +431,7 @@ export default function TrashInfoPage() {
               <form
                 className="space-y-2"
                 method="POST"
-                action="/api/trash-reminders"  // TODO: implement this API route
+                action="/api/trash-reminders"
               >
                 <div className="space-y-1">
                   <label className="block text-xs font-medium text-emerald-900/90">
@@ -563,5 +567,13 @@ export default function TrashInfoPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TrashInfoPage() {
+  return (
+    <Suspense fallback={null}>
+      <TrashInfoPageContent />
+    </Suspense>
   );
 }
