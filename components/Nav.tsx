@@ -95,12 +95,12 @@ export default function Nav() {
             </Link>
 
             <Link
-              href="/trash"
-              onClick={() => setOpen(false)}
-              className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
-            >
-              🗑️ <span>Trash &amp; Recycling</span>
-            </Link>
+            href="/trash"
+            onClick={() => setOpen(false)}
+            className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
+          >
+            🗑️ <span>Trash &amp; Recycling</span>
+          </Link>
 
             <Link
               href="/documents"
@@ -118,7 +118,7 @@ export default function Nav() {
               🌿 <span>Yard of the Month</span>
             </Link>
 
-            {/* Holiday Decorating */}
+            {/* NEW: Holiday Decorating */}
             <Link
               href="/holiday-decorating"
               onClick={() => setOpen(false)}
@@ -127,7 +127,7 @@ export default function Nav() {
               🎄 <span>Holiday Decorating</span>
             </Link>
 
-            {/* About */}
+            {/* About now uses ℹ️ */}
             <Link
               href="/about"
               onClick={() => setOpen(false)}
@@ -136,26 +136,15 @@ export default function Nav() {
               ℹ️ <span>About</span>
             </Link>
 
-            {/* Admin links */}
-            <div className="mt-2 pt-2 border-t border-brand-100 space-y-1">
-              <Link
-                href="/admin"
-                onClick={() => setOpen(false)}
-                className="py-2 px-1 text-emerald-800 hover:bg-emerald-50 rounded font-medium flex items-center gap-2"
-              >
-                🔐 <span>Site Admin</span>
-              </Link>
-
-              <a
-                href="https://cypressdale-admin.sanity.studio/"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => setOpen(false)}
-                className="py-2 px-1 text-accent-600 hover:bg-accent-50 rounded font-medium flex items-center gap-2"
-              >
-                🧩 <span>Content Admin</span>
-              </a>
-            </div>
+            <a
+              href="https://cypressdale-admin.sanity.studio/"
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setOpen(false)}
+              className="py-2 px-1 text-accent-600 hover:bg-accent-50 rounded font-medium flex items-center gap-2"
+            >
+              🔐 <span>Admin</span>
+            </a>
           </nav>
         </div>
       )}
