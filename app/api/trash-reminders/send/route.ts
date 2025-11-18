@@ -41,13 +41,16 @@ export async function GET(req: Request) {
 
   const isSaturday = type === 'saturday';
 
+  // Correct schedule:
+  // - Wednesday: trash + heavy trash (no recycling)
+  // - Saturday: trash + recycling + heavy trash
   const subject = isSaturday
-    ? 'Cypressdale Reminder: Heavy Trash Tomorrow (Saturday)'
-    : 'Cypressdale Reminder: Trash & Recycling Tomorrow (Wednesday)';
+    ? 'Cypressdale Reminder: Trash, Recycling & Heavy Trash Tomorrow (Saturday)'
+    : 'Cypressdale Reminder: Trash & Heavy Trash Tomorrow (Wednesday)';
 
   const baseBody = isSaturday
-    ? `This is your Cypressdale reminder: Heavy trash and bulk items will be collected tomorrow (Saturday). Please have items at the curb by 5:00 AM.`
-    : `This is your Cypressdale reminder: Household garbage, recycling, and heavy trash will be collected tomorrow (Wednesday). Please have everything at the curb by 5:00 AM.`;
+    ? `This is your Cypressdale reminder: Household garbage, recycling, and heavy trash will be collected tomorrow (Saturday). Please have everything at the curb by 5:00 AM.`
+    : `This is your Cypressdale reminder: Household garbage and heavy trash will be collected tomorrow (Wednesday). Recycling is collected on Saturdays only. Please have everything at the curb by 5:00 AM.`;
 
   await Promise.all(
     subs.map((s) => {
@@ -70,7 +73,11 @@ export async function GET(req: Request) {
             </div>
 
             <h1 style="font-size:20px;margin:0 0 8px;color:#064e3b;">
-              ${isSaturday ? 'Heavy Trash Tomorrow (Saturday)' : 'Trash & Recycling Tomorrow (Wednesday)'}
+              ${
+                isSaturday
+                  ? 'Trash, Recycling & Heavy Trash Tomorrow (Saturday)'
+                  : 'Trash & Heavy Trash Tomorrow (Wednesday)'
+              }
             </h1>
 
             <p style="font-size:14px;line-height:1.5;margin:0 0 12px;color:#064e3b;">
@@ -80,8 +87,8 @@ export async function GET(req: Request) {
             <p style="font-size:14px;line-height:1.6;margin:0 0 12px;color:#064e3b;">
               ${
                 isSaturday
-                  ? 'This is your reminder that heavy trash and bulk items will be collected <strong>tomorrow (Saturday)</strong>.'
-                  : 'This is your reminder that household garbage, recycling, and heavy trash will be collected <strong>tomorrow (Wednesday)</strong>.'
+                  ? 'This is your reminder that household garbage, recycling, and heavy trash will be collected <strong>tomorrow (Saturday)</strong>.'
+                  : 'This is your reminder that household garbage and heavy trash will be collected <strong>tomorrow (Wednesday)</strong>. Recycling is collected on <strong>Saturdays only</strong>.'
               }
             </p>
 
@@ -94,8 +101,9 @@ export async function GET(req: Request) {
 
             <p style="font-size:13px;line-height:1.5;margin:0 0 16px;color:#065f46;">
               • Regular household garbage should be bagged and placed in containers under 95 gallons and 50 pounds.<br />
-              • Up to two heavy/bulk items are collected on ${isSaturday ? 'Saturdays (and also Wednesdays).' : 'both Wednesdays and Saturdays.'}<br />
-              • Yard waste and branches should follow the guidelines on the Cypressdale Trash & Recycling page.
+              • Up to two heavy/bulk items are collected on both Wednesdays and Saturdays.<br />
+              • Recycling is collected on <strong>Saturdays only</strong>. Please only place recycling at the curb on Saturdays.<br />
+              • Yard waste and branches should follow the guidelines on the Cypressdale Trash &amp; Recycling page.
             </p>
 
             <p style="font-size:13px;line-height:1.5;margin:0 0 18px;color:#064e3b;">

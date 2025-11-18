@@ -7,17 +7,35 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(req: Request) {
-  const { email, action } = await req.json();
+type ManageAction = 'unsubscribe' | 'resubscribe';
 
-  if (!email || !action) {
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => null);
+
+  if (!body || !body.email || !body.action) {
     return NextResponse.json(
       { error: 'Missing email or action.' },
       { status: 400 }
     );
   }
 
-  const lowerEmail = String(email).toLowerCase();
+  const rawEmail = String(body.email);
+  const action = String(body.action) as ManageAction;
+  const lowerEmail = rawEmail.trim().toLowerCase();
+
+  if (!lowerEmail) {
+    return NextResponse.json(
+      { error: 'Email is required.' },
+      { status: 400 }
+    );
+  }
+
+  if (action !== 'unsubscribe' && action !== 'resubscribe') {
+    return NextResponse.json(
+      { error: 'Unknown action.' },
+      { status: 400 }
+    );
+  }
 
   // Look up subscriber
   const { data: existing, error: fetchError } = await supabase
@@ -132,7 +150,7 @@ export async function POST(req: Request) {
     });
   }
 
-  // Unknown action
+  // Fallback (shouldn’t be hit because of earlier action check)
   return NextResponse.json(
     { error: 'Unknown action.' },
     { status: 400 }
