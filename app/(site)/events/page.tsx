@@ -29,14 +29,14 @@ export default async function EventsPage() {
         </div>
       </header>
 
-      {/* Main layout: left = calendar + upcoming, right = newsletter */}
+      {/* Main layout: left = calendar+upcoming, right = newsletter */}
       <section className="grid gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)] items-start">
-        {/* LEFT: always show the calendar (with its built-in upcoming list) */}
+        {/* LEFT: Events calendar (includes upcoming events) */}
         <div>
           <EventsCalendar events={events} />
         </div>
 
-        {/* RIGHT: newsletter signup, like on the News page */}
+        {/* RIGHT: Newsletter sign up */}
         <div className="space-y-4">
           <NewsLetterSignup />
         </div>
