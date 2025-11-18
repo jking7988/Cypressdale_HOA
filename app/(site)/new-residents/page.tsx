@@ -1,13 +1,38 @@
-// app/new-residents/page.tsx
-
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
 export default function NewResidentsPage() {
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-50 via-sky-50 to-emerald-50">
+    <div className="relative min-h-screen">
+      {/* Fullscreen background image */}
+      <div
+        className="fixed inset-0 -z-20 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/images/new-resident.png')" }}
+      />
+
+      {/* Gradient overlay for readability */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-emerald-50/50 via-sky-50/90 to-emerald-50/50" />
+
+      {/* Page content */}
       <div className="relative mx-auto max-w-5xl px-4 py-10 space-y-8">
+        {/* Celebrated welcome banner */}
+        <section className="rounded-3xl border border-amber-100 bg-amber-50/90 shadow-sm px-4 py-4 flex gap-3 items-start">
+          <span className="text-2xl" aria-hidden="true">
+            🎉
+          </span>
+          <div className="space-y-1">
+            <p className="text-sm md:text-base font-semibold text-amber-900">
+              Welcome to the neighborhood!
+            </p>
+            <p className="text-xs md:text-sm text-amber-900/85">
+              We&apos;re glad you chose Cypressdale. This guide will walk you through
+              the first things to set up so you can settle in quickly and enjoy
+              your new home.
+            </p>
+          </div>
+        </section>
+
         {/* Header */}
         <header className="space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/90 px-4 py-1 text-xs font-medium text-emerald-50 shadow-sm">
@@ -91,13 +116,13 @@ export default function NewResidentsPage() {
               href="https://www.inframark.com/utility-district/cypresswood-utility-district-3/"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-sky-800 hover:text-sky-900 hover:underline"
+              className="inline-flex items-center gap-1 text-sky-900 hover:text-sky-950 hover:underline"
             >
               <span>Visit Cypresswood Utility District page</span>
               <span>↗</span>
             </a>
           </p>
-          <p className="text-xs text-sky-950/75">
+          <p className="text-xs text-sky-950/85">
             If you’re unsure which forms you need, you can contact Cypresswood
             Utility District directly or reach out to the HOA for guidance.
           </p>
@@ -105,55 +130,54 @@ export default function NewResidentsPage() {
 
         {/* Trash & Recycling */}
         <section className="card border border-emerald-100/80 bg-emerald-50/90 backdrop-blur-sm space-y-3">
-        <h2 className="h2 text-lg text-emerald-950 flex items-center gap-2">
+          <h2 className="h2 text-lg text-emerald-950 flex items-center gap-2">
             <span>🗑️</span>
             <span>Trash &amp; recycling – Texas Pride Disposal</span>
-        </h2>
+          </h2>
 
-        <p className="text-sm text-emerald-900/90">
+          <p className="text-sm text-emerald-900/90">
             Household trash and recycling collection in Cypressdale is provided
             by <span className="font-semibold">Texas Pride Disposal</span>.  
             Service days and specific guidelines may vary, but generally include:
-        </p>
+          </p>
 
-        <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-1">
+          <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-1">
             <li>Regular trash pickup on designated days.</li>
             <li>Separate recycling collection for approved materials.</li>
             <li>Information on bulk pickup and holiday schedules.</li>
-        </ul>
+          </ul>
 
-        {/* Links */}
-        <div className="space-y-1">
+          <div className="space-y-1">
             <p className="text-sm">
-            <a
+              <a
                 href="https://www.texaspridedisposal.com/"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-emerald-800 hover:text-emerald-900 hover:underline"
-            >
+                className="inline-flex items-center gap-1 text-emerald-900 hover:text-emerald-950 hover:underline"
+              >
                 <span>Visit Texas Pride Disposal website</span>
                 <span>↗</span>
-            </a>
+              </a>
             </p>
 
             <p className="text-sm">
-            <a
+              <a
                 href="https://www.texaspridedisposal.com/contact#new-account-new-move-in"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-emerald-800 hover:text-emerald-900 hover:underline"
-            >
+                className="inline-flex items-center gap-1 text-emerald-900 hover:text-emerald-950 hover:underline"
+              >
                 <span>New Account / Move-In Setup Form</span>
                 <span>↗</span>
-            </a>
+              </a>
             </p>
-        </div>
+          </div>
 
-        <p className="text-xs text-emerald-900/80">
-            Please refer to Texas Pride Disposal's service guide for Cypressdale for
+          <p className="text-xs text-emerald-950/85">
+            Please refer to Texas Pride Disposal&apos;s service guide for Cypressdale for
             the official schedule, list of accepted materials, and how to request new
             carts or report missed pickups.
-        </p>
+          </p>
         </section>
 
         {/* HOA & documents */}
@@ -172,7 +196,7 @@ export default function NewResidentsPage() {
               Visit the{' '}
               <Link
                 href="/documents"
-                className="text-emerald-800 underline-offset-2 hover:underline"
+                className="text-emerald-900 underline-offset-2 hover:underline"
               >
                 Documents
               </Link>{' '}
@@ -182,7 +206,7 @@ export default function NewResidentsPage() {
               Check the{' '}
               <Link
                 href="/pool"
-                className="text-emerald-800 underline-offset-2 hover:underline"
+                className="text-emerald-900 underline-offset-2 hover:underline"
               >
                 Pool
               </Link>{' '}
@@ -192,14 +216,14 @@ export default function NewResidentsPage() {
               Watch the{' '}
               <Link
                 href="/news"
-                className="text-emerald-800 underline-offset-2 hover:underline"
+                className="text-emerald-900 underline-offset-2 hover:underline"
               >
                 News
               </Link>{' '}
               and{' '}
               <Link
                 href="/events"
-                className="text-emerald-800 underline-offset-2 hover:underline"
+                className="text-emerald-900 underline-offset-2 hover:underline"
               >
                 Events
               </Link>{' '}
@@ -208,29 +232,31 @@ export default function NewResidentsPage() {
           </ul>
         </section>
 
-        {/* Stay connected */}
-        <section className="card border border-emerald-100/80 bg-emerald-900/95 text-emerald-50 space-y-3">
-          <h2 className="h2 text-lg flex items-center gap-2">
+        {/* Stay connected – light, high-contrast card */}
+        <section className="card border border-emerald-100/80 bg-white/95 backdrop-blur-sm space-y-3">
+          <h2 className="h2 text-lg flex items-center gap-2 text-emerald-950">
             <span>🌐</span>
             <span>Stay connected</span>
           </h2>
-          <p className="text-sm text-emerald-50/90">
+
+          <p className="text-sm text-emerald-900/95">
             We encourage new residents to stay plugged in so you don&apos;t miss
             important updates or fun community happenings.
           </p>
-          <ul className="list-disc pl-5 text-sm text-emerald-50/90 space-y-1">
+
+          <ul className="list-disc pl-5 text-sm text-emerald-900/95 space-y-1">
             <li>
               Bookmark this website and check{' '}
               <Link
                 href="/news"
-                className="underline underline-offset-2 hover:text-emerald-100"
+                className="font-semibold text-emerald-900 underline underline-offset-2 hover:text-emerald-950"
               >
                 News
               </Link>{' '}
               and{' '}
               <Link
                 href="/events"
-                className="underline underline-offset-2 hover:text-emerald-100"
+                className="font-semibold text-emerald-900 underline underline-offset-2 hover:text-emerald-950"
               >
                 Events
               </Link>{' '}
