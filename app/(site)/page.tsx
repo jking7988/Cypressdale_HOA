@@ -396,7 +396,7 @@ export default async function HomePage() {
                     <div
                       className={`card group w-full text-center py-4 px-4 transition-transform duration-150 hover:-translate-y-1 hover:shadow-md ${meta.cardBg} ring-1 ${meta.ringClass}`}
                     >
-                      <p className="text-xs font-semibold text-brand-700 mb-1">
+                      <p className="text-xs font-semibold text-emerald-950 mb-1">
                         {formatWeatherDayLabel(today.date, 0)}
                       </p>
 
@@ -407,43 +407,43 @@ export default async function HomePage() {
                         />
                       </div>
 
-                      <p className="text-lg font-semibold text-brand-900">
+                      <p className="text-lg font-semibold text-emerald-950">
                         {Math.round(today.max)}°
-                        <span className="text-xs text-gray-500 font-normal">
+                        <span className="text-xs text-slate-800 font-normal">
                           {' '}
                           / {Math.round(today.min)}°
                         </span>
                       </p>
 
-                      <p className="text-[11px] text-gray-600 mt-1">
+                      <p className="text-[11px] text-slate-900 mt-1">
                         {today.phrase}
                       </p>
 
                       {/* 12-hour forecast inside TODAY */}
                       {hourlyForecast.length > 0 && (
-                        <div className="mt-3 border-t border-emerald-100 pt-2 text-center">
-                          <p className="text-[11px] font-semibold text-brand-700 mb-1">
-                            Next 12 hours
-                          </p>
-                          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
-                            {hourlyForecast.map((h) => (
-                              <div
-                                key={h.dateTime}
-                                className="min-w-[70px] rounded-lg bg-white/85 border border-brand-100 px-1.5 py-1"
-                              >
-                                <p className="text-[10px] font-medium text-brand-700">
-                                  {formatHourLabel(h.dateTime)}
-                                </p>
-                                <p className="text-xs font-semibold text-brand-900">
-                                  {Math.round(h.temp)}°
-                                </p>
-                                <p className="text-[10px] text-gray-600 line-clamp-2">
-                                  {h.phrase}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
+                        <div className="mt-3 border-t border-emerald-200 pt-2 text-center">
+                        <p className="text-[11px] font-semibold text-emerald-950 mb-1">
+                          Next 12 hours
+                        </p>
+                        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+                          {hourlyForecast.map((h) => (
+                            <div
+                              key={h.dateTime}
+                              className="min-w-[70px] rounded-lg bg-white/90 border border-slate-200 px-1.5 py-1"
+                            >
+                              <p className="text-[10px] font-medium text-slate-900">
+                                {formatHourLabel(h.dateTime)}
+                              </p>
+                              <p className="text-xs font-semibold text-slate-900">
+                                {Math.round(h.temp)}°
+                              </p>
+                              <p className="text-[10px] text-slate-800 line-clamp-2">
+                                {h.phrase}
+                              </p>
+                            </div>
+                          ))}
                         </div>
+                      </div>
                       )}
                     </div>
                   );
@@ -463,7 +463,7 @@ export default async function HomePage() {
                             key={day.date}
                             className={`card group min-w-[120px] text-center flex-shrink-0 py-3 transition-transform duration-150 hover:-translate-y-1 hover:shadow-md ${meta.cardBg} ring-1 ${meta.ringClass}`}
                           >
-                            <p className="text-xs font-semibold text-brand-700 mb-1">
+                            <p className="text-xs font-semibold text-emerald-950 mb-1">
                               {formatWeatherDayLabel(day.date, indexForLabel)}
                             </p>
 
@@ -474,15 +474,15 @@ export default async function HomePage() {
                               />
                             </div>
 
-                            <p className="text-sm font-semibold text-brand-900">
+                            <p className="text-sm font-semibold text-emerald-950">
                               {Math.round(day.max)}°
-                              <span className="text-xs text-gray-500 font-normal">
+                              <span className="text-xs text-slate-800 font-normal">
                                 {' '}
                                 / {Math.round(day.min)}°
                               </span>
                             </p>
 
-                            <p className="text-[11px] text-gray-600 mt-1 line-clamp-2">
+                            <p className="text-[11px] text-slate-900 mt-1 line-clamp-2">
                               {day.phrase}
                             </p>
                           </div>
@@ -736,57 +736,68 @@ function formatWeatherDayLabel(dateStr: string, index: number) {
 function getWeatherMeta(phrase: string) {
   const p = phrase.toLowerCase();
 
+  // Stormy / thunder
   if (p.includes('storm') || p.includes('thunder')) {
     return {
       Icon: CloudLightning,
-      iconClass: 'text-yellow-600',
-      cardBg: 'bg-amber-50',
-      ringClass: 'ring-amber-100',
+      iconClass: 'text-yellow-700',
+      cardBg:
+        'bg-white/90 bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.18),_transparent)]',
+      ringClass: 'ring-amber-200/70',
     };
   }
 
+  // Rainy
   if (p.includes('rain') || p.includes('shower') || p.includes('drizzle')) {
     return {
       Icon: CloudRain,
       iconClass: 'text-sky-700',
-      cardBg: 'bg-sky-50',
-      ringClass: 'ring-sky-100',
+      cardBg:
+        'bg-white/90 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),_transparent)]',
+      ringClass: 'ring-sky-200/70',
     };
   }
 
+  // Snow
   if (p.includes('snow') || p.includes('flurries')) {
     return {
       Icon: Snowflake,
-      iconClass: 'text-blue-500',
-      cardBg: 'bg-slate-50',
-      ringClass: 'ring-slate-100',
+      iconClass: 'text-blue-600',
+      cardBg:
+        'bg-white/90 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.20),_transparent)]',
+      ringClass: 'ring-slate-200/70',
     };
   }
 
+  // Cloudy / overcast
   if (p.includes('cloud') || p.includes('overcast')) {
     return {
       Icon: Cloud,
-      iconClass: 'text-slate-600',
-      cardBg: 'bg-slate-50',
-      ringClass: 'ring-slate-100',
+      iconClass: 'text-slate-700',
+      cardBg:
+        'bg-white/90 bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.18),_transparent)]',
+      ringClass: 'ring-slate-200/70',
     };
   }
 
+  // Sunny / clear
   if (p.includes('sun') || p.includes('clear')) {
     return {
       Icon: Sun,
       iconClass: 'text-amber-500',
-      cardBg: 'bg-amber-50',
-      ringClass: 'ring-amber-100',
+      cardBg:
+        'bg-white/90 bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.20),_transparent)]',
+      ringClass: 'ring-amber-200/70',
     };
   }
 
-  // default partly-cloudy
+  // Default: partly cloudy
   return {
     Icon: CloudSun,
     iconClass: 'text-emerald-700',
-    cardBg: 'bg-emerald-50',
-    ringClass: 'ring-emerald-100',
+    cardBg:
+      'bg-white/90 bg-[radial-gradient(circle_at_top,_rgba(52,211,153,0.18),_transparent)]',
+    ringClass: 'ring-emerald-200/70',
   };
 }
 
