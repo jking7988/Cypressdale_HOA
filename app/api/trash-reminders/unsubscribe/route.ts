@@ -1,7 +1,6 @@
+// app/api/trash-reminders/unsubscribe/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-
-export const runtime = 'nodejs';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,28 +8,47 @@ const supabase = createClient(
 );
 
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const emailParam = url.searchParams.get('email');
-  const origin = url.origin;
+  const { searchParams } = new URL(req.url);
+  const email = searchParams.get('email');
 
-  const okUrl = `${origin}/trash?unsubscribe=ok`;
-  const errorUrl = `${origin}/trash?unsubscribe=error`;
-
-  if (!emailParam) {
-    return NextResponse.redirect(errorUrl);
+  if (!email) {
+    return NextResponse.redirect('/trash?unsubscribe=error');
   }
 
-  const email = emailParam.trim().toLowerCase();
+  const lowerEmail = email.toLowerCase();
 
-  const { error } = await supabase
+  // Look up subscriber
+  const { data: existing, error: fetchError } = await supabase
+    .from('trash_reminders')
+    .select('email, active')
+    .eq('email', lowerEmail)
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error('Supabase fetch error (unsubscribe):', fetchError);
+    return NextResponse.redirect('/trash?unsubscribe=error');
+  }
+
+  // No record at all → treat as already unsubscribed
+  if (!existing) {
+    return NextResponse.redirect('/trash?unsubscribe=already');
+  }
+
+  // Already inactive → already unsubscribed
+  if (existing.active === false) {
+    return NextResponse.redirect('/trash?unsubscribe=already');
+  }
+
+  // Set active = false
+  const { error: updateError } = await supabase
     .from('trash_reminders')
     .update({ active: false })
-    .eq('email', email);
+    .eq('email', lowerEmail);
 
-  if (error) {
-    console.error('Supabase unsubscribe error:', error);
-    return NextResponse.redirect(errorUrl);
+  if (updateError) {
+    console.error('Supabase update error (unsubscribe):', updateError);
+    return NextResponse.redirect('/trash?unsubscribe=error');
   }
 
-  return NextResponse.redirect(okUrl);
+  return NextResponse.redirect('/trash?unsubscribe=ok');
 }

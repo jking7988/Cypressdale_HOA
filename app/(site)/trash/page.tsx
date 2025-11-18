@@ -60,15 +60,11 @@ function TrashInfoPageContent() {
 
   useEffect(() => {
     if (unsubscribeStatus === 'ok') {
-      addToast(
-        'success',
-        'You have been unsubscribed from trash day reminders.'
-      );
+      addToast('success', 'You have been unsubscribed from trash day reminders.');
+    } else if (unsubscribeStatus === 'already') {
+      addToast('success', 'You were already unsubscribed.');
     } else if (unsubscribeStatus === 'error') {
-      addToast(
-        'error',
-        "We couldn't unsubscribe this address. Please contact the HOA if the problem continues."
-      );
+      addToast('error', 'Unable to unsubscribe. Please contact the HOA.');
     }
   }, [unsubscribeStatus]);
 

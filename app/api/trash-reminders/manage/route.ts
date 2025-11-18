@@ -1,8 +1,6 @@
 // app/api/trash-reminders/manage/route.ts
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-export const runtime = 'nodejs';
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,68 +8,116 @@ const supabase = createClient(
 );
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json().catch(() => null);
+  const { email, action } = await req.json();
 
-    const email = body?.email;
-    const action = body?.action as 'unsubscribe' | 'resubscribe' | undefined;
-
-    if (!email || (action !== 'unsubscribe' && action !== 'resubscribe')) {
-      return NextResponse.json(
-        { error: 'Invalid request.' },
-        { status: 400 }
-      );
-    }
-
-    const normalizedEmail = String(email).trim().toLowerCase();
-
-    if (action === 'unsubscribe') {
-      // Mark as inactive if it exists
-      const { error } = await supabase
-        .from('trash_reminders')
-        .update({ active: false })
-        .eq('email', normalizedEmail);
-
-      if (error) {
-        console.error('Supabase unsubscribe manage error:', error);
-        return NextResponse.json(
-          { error: 'Unable to update subscription right now.' },
-          { status: 500 }
-        );
-      }
-
-      // Don’t leak whether the email existed; just say it’s unsubscribed
-      return NextResponse.json({
-        ok: true,
-        message: 'You have been unsubscribed from trash day reminders (if this email was subscribed).',
-      });
-    } else {
-      // resubscribe: upsert to ensure record exists + active
-      const { error } = await supabase
-        .from('trash_reminders')
-        .upsert(
-          { email: normalizedEmail, active: true },
-          { onConflict: 'email' }
-        );
-
-      if (error) {
-        console.error('Supabase resubscribe manage error:', error);
-        return NextResponse.json(
-          { error: 'Unable to update subscription right now.' },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({
-        ok: true,
-        message: 'Your trash day reminders have been turned back on.',
-      });
-    }
-  } catch (err) {
-    console.error('POST /api/trash-reminders/manage error:', err);
+  if (!email || !action) {
     return NextResponse.json(
-      { error: 'Something went wrong. Please try again.' },
+      { error: "Missing email or action." },
+      { status: 400 }
+    );
+  }
+
+  // 1. Look up the subscriber
+  const { data: existing, error: fetchError } = await supabase
+    .from("trash_reminders")
+    .select("email, active")
+    .eq("email", email.toLowerCase())
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error("Supabase fetch error:", fetchError);
+    return NextResponse.json(
+      { error: "Database error." },
       { status: 500 }
     );
   }
+
+  // -----------------------------------------------
+  // ACTION: UNSUBSCRIBE
+  // -----------------------------------------------
+  if (action === "unsubscribe") {
+    // If no record exists → treat as already unsubscribed
+    if (!existing) {
+      return NextResponse.json({
+        message: "You were already unsubscribed.",
+        status: "already-unsubscribed"
+      });
+    }
+
+    // Already inactive
+    if (existing.active === false) {
+      return NextResponse.json({
+        message: "You were already unsubscribed.",
+        status: "already-unsubscribed"
+      });
+    }
+
+    // Update to inactive
+    const { error: updateError } = await supabase
+      .from("trash_reminders")
+      .update({ active: false })
+      .eq("email", email.toLowerCase());
+
+    if (updateError) {
+      console.error(updateError);
+      return NextResponse.json(
+        { error: "Unable to unsubscribe." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "You have been unsubscribed from trash day reminders.",
+      status: "unsubscribed"
+    });
+  }
+
+  // -----------------------------------------------
+  // ACTION: RESUBSCRIBE
+  // -----------------------------------------------
+  if (action === "resubscribe") {
+    // If no record exists → create one fresh
+    if (!existing) {
+      await supabase.from("trash_reminders").insert([
+        { email: email.toLowerCase(), active: true }
+      ]);
+
+      return NextResponse.json({
+        message: "You have been resubscribed!",
+        status: "resubscribed"
+      });
+    }
+
+    // Already active
+    if (existing.active === true) {
+      return NextResponse.json({
+        message: "You are already subscribed.",
+        status: "already-subscribed"
+      });
+    }
+
+    // Update to active
+    const { error: updateError } = await supabase
+      .from("trash_reminders")
+      .update({ active: true })
+      .eq("email", email.toLowerCase());
+
+    if (updateError) {
+      console.error(updateError);
+      return NextResponse.json(
+        { error: "Unable to resubscribe." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "You have been resubscribed!",
+      status: "resubscribed"
+    });
+  }
+
+  return NextResponse.json(
+    { error: "Unknown action." },
+    { status: 400 }
+  );
 }
