@@ -1,7 +1,7 @@
 // app/trash/page.tsx
 'use client';
 
-import { Suspense, useState, FormEvent } from 'react';
+import { Suspense, useState, useEffect, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -17,10 +17,60 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+type ToastKind = 'success' | 'error';
+
+type Toast = {
+  id: number;
+  kind: ToastKind;
+  message: string;
+};
+
 function TrashInfoPageContent() {
   const searchParams = useSearchParams();
   const signupStatus = searchParams.get('signup');
   const unsubscribeStatus = searchParams.get('unsubscribe');
+
+  // Toast state
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const addToast = (kind: ToastKind, message: string) => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, kind, message }]);
+
+    // Auto-dismiss after 5s
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  };
+
+  // Create toasts based on URL params (signup/unsubscribe)
+  useEffect(() => {
+    if (signupStatus === 'ok') {
+      addToast(
+        'success',
+        "You're signed up for trash day reminders. You'll get an email the day before collection."
+      );
+    } else if (signupStatus === 'error') {
+      addToast(
+        'error',
+        'Something went wrong signing you up. Please check your email address and try again.'
+      );
+    }
+  }, [signupStatus]);
+
+  useEffect(() => {
+    if (unsubscribeStatus === 'ok') {
+      addToast(
+        'success',
+        'You have been unsubscribed from trash day reminders.'
+      );
+    } else if (unsubscribeStatus === 'error') {
+      addToast(
+        'error',
+        "We couldn't unsubscribe this address. Please contact the HOA if the problem continues."
+      );
+    }
+  }, [unsubscribeStatus]);
 
   // Manage subscription modal state
   const [isManageOpen, setIsManageOpen] = useState(false);
@@ -75,6 +125,24 @@ function TrashInfoPageContent() {
         />
         <div className="absolute inset-0 bg-emerald-50/60 backdrop-blur-[5px]" />
       </div>
+
+      {/* TOAST CONTAINER */}
+      {toasts.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-40 space-y-2">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`max-w-sm rounded-md border px-3 py-2 text-xs md:text-sm shadow-lg ${
+                toast.kind === 'success'
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-900 shadow-emerald-900/20'
+                  : 'border-red-300 bg-red-50 text-red-900 shadow-red-900/20'
+              }`}
+            >
+              {toast.message}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* MANAGE SUBSCRIPTION MODAL */}
       {isManageOpen && (
@@ -190,35 +258,6 @@ function TrashInfoPageContent() {
 
       {/* CONTENT */}
       <div className="relative mx-auto max-w-5xl px-4 py-10 space-y-8">
-        {/* Signup status banner */}
-        {signupStatus === 'ok' && (
-          <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-md shadow-emerald-900/10">
-            You’re signed up for <span className="font-semibold">trash day reminders</span>.
-            You’ll get an email the day before collection.
-          </div>
-        )}
-
-        {signupStatus === 'error' && (
-          <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-md shadow-red-900/10">
-            Something went wrong signing you up. Please check your email address and try again.
-          </div>
-        )}
-
-        {/* Unsubscribe status banner (for link-based unsubscribes) */}
-        {unsubscribeStatus === 'ok' && (
-          <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-md shadow-emerald-900/10">
-            You’ve been <span className="font-semibold">unsubscribed</span> from trash day
-            reminders.
-          </div>
-        )}
-
-        {unsubscribeStatus === 'error' && (
-          <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-md shadow-red-900/10">
-            We couldn’t unsubscribe this address. Please contact the HOA if the problem
-            continues.
-          </div>
-        )}
-
         {/* Header */}
         <header className="space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/90 px-4 py-1 text-xs font-medium text-emerald-50 shadow-md shadow-emerald-900/20">
