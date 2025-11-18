@@ -53,6 +53,18 @@ type AccuWeatherResponse = {
   }[];
 };
 
+type HourlyForecast = {
+  dateTime: string;
+  temp: number;
+  phrase: string;
+};
+
+type AccuWeatherHourlyResponse = {
+  DateTime: string;
+  Temperature: { Value: number; Unit: string };
+  IconPhrase: string;
+}[];
+
 async function getSevenDayForecast(): Promise<DailyForecast[]> {
   const apiKey = process.env.ACCUWEATHER_API_KEY;
   const locationKey = process.env.ACCUWEATHER_LOCATION_KEY; // set this in .env.local
@@ -100,11 +112,58 @@ async function getSevenDayForecast(): Promise<DailyForecast[]> {
   }
 }
 
+async function getTwelveHourForecast(): Promise<HourlyForecast[]> {
+  const apiKey = process.env.ACCUWEATHER_API_KEY;
+  const locationKey = process.env.ACCUWEATHER_LOCATION_KEY;
+
+  if (!apiKey || !locationKey) {
+    console.warn(
+      'Weather (12hr): missing ACCUWEATHER_API_KEY or ACCUWEATHER_LOCATION_KEY. apiKey?',
+      !!apiKey,
+      'locationKey?',
+      !!locationKey,
+    );
+    return [];
+  }
+
+  // 12-hour hourly forecast, Fahrenheit
+  const url = `https://dataservice.accuweather.com/forecasts/v1/hourly/12hour/${locationKey}?apikey=${apiKey}&metric=false`;
+
+  try {
+    const res = await fetch(url, {
+      // cache for 15 minutes
+      next: { revalidate: 60 * 15 },
+    });
+
+    if (!res.ok) {
+      console.warn('Weather (12hr): failed to fetch forecast', res.status, res.statusText);
+      return [];
+    }
+
+    const data = (await res.json()) as AccuWeatherHourlyResponse;
+
+    if (!data?.length) {
+      console.warn('Weather (12hr): no data returned from API');
+      return [];
+    }
+
+    return data.map((h) => ({
+      dateTime: h.DateTime,
+      temp: h.Temperature.Value,
+      phrase: h.IconPhrase,
+    }));
+  } catch (err) {
+    console.error('Weather (12hr): error calling AccuWeather', err);
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const [posts, events, forecast] = await Promise.all([
+  const [posts, events, dailyForecast, hourlyForecast] = await Promise.all([
     client.fetch<Post[]>(postsQuery),
     client.fetch<Event[]>(eventsQuery),
     getSevenDayForecast(),
+    getTwelveHourForecast(),
   ]);
 
   // Sort events
@@ -322,13 +381,13 @@ export default async function HomePage() {
           <section className="px-3 sm:px-4 py-5 md:px-6 md:py-6 space-y-3 flex flex-col items-center text-center">
             <h2 className="h2">Neighborhood weather</h2>
             <p className="muted text-sm">
-              5-day forecast for Cypressdale (powered by AccuWeather).
+              5-day and 12-hour forecast for Cypressdale (powered by AccuWeather).
             </p>
 
-            {forecast.length > 0 ? (
+            {dailyForecast.length > 0 ? (
               <div className="w-full">
                 <div className="flex gap-3 overflow-x-auto pb-3 px-1 sm:px-2 -mx-4 sm:mx-0">
-                  {forecast.map((day, idx) => {
+                  {dailyForecast.map((day, idx) => {
                     const meta = getWeatherMeta(day.phrase);
                     const Icon = meta.Icon;
 
@@ -363,6 +422,33 @@ export default async function HomePage() {
                     );
                   })}
                 </div>
+
+                {/* NEW: 12-hour strip under the daily cards */}
+                {hourlyForecast.length > 0 && (
+                  <div className="w-full mt-4">
+                    <p className="text-xs font-semibold text-brand-700 mb-2 text-left sm:text-center">
+                      Next 12 hours
+                    </p>
+                    <div className="flex gap-2 overflow-x-auto pb-3 px-1 sm:px-2 -mx-4 sm:mx-0">
+                      {hourlyForecast.map((h) => (
+                        <div
+                          key={h.dateTime}
+                          className="card min-w-[90px] flex-shrink-0 py-2 px-3 text-center border border-brand-100 bg-white/80 shadow-sm"
+                        >
+                          <p className="text-[11px] font-medium text-brand-700">
+                            {formatHourLabel(h.dateTime)}
+                          </p>
+                          <p className="text-sm font-semibold text-brand-900 mt-1">
+                            {Math.round(h.temp)}°
+                          </p>
+                          <p className="text-[11px] text-gray-600 mt-0.5 line-clamp-2">
+                            {h.phrase}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="muted text-sm">
@@ -659,4 +745,12 @@ function getWeatherMeta(phrase: string) {
     cardBg: 'bg-emerald-50',
     ringClass: 'ring-emerald-100',
   };
+}
+
+function formatHourLabel(dateTimeStr: string) {
+  const d = new Date(dateTimeStr);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+  });
 }
