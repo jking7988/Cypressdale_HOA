@@ -9,16 +9,16 @@ const supabase = createClient(
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const emailParam = url.searchParams.get('email');
+  const email = url.searchParams.get('email');
 
-  if (!emailParam) {
+  if (!email) {
     return new NextResponse(
-      'Missing email. Please use the unsubscribe link from your newsletter email.',
+      'Missing email. Please use the link from your email.',
       { status: 400 }
     );
   }
 
-  const lowerEmail = emailParam.trim().toLowerCase();
+  const lowerEmail = email.trim().toLowerCase();
 
   const { error } = await supabase
     .from('newsletter_subscribers')
@@ -27,13 +27,12 @@ export async function GET(req: Request) {
 
   if (error) {
     console.error('Supabase error (newsletter unsubscribe):', error);
-    return new NextResponse(
-      'We were unable to process your unsubscribe request. Please try again later.',
-      { status: 500 }
-    );
+    return new NextResponse('Unable to unsubscribe at this time.', {
+      status: 500,
+    });
   }
 
-  // Simple HTML confirmation
+  // Simple HTML confirmation page
   return new NextResponse(
     `<!doctype html>
 <html lang="en">
@@ -44,23 +43,19 @@ export async function GET(req: Request) {
   </head>
   <body style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9fafb;color:#111827;padding:32px;">
     <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e5e7eb;padding:24px;box-shadow:0 10px 25px rgba(15,23,42,0.08);">
-      <h1 style="font-size:20px;margin:0 0 8px;color:#065f46;">You have been unsubscribed</h1>
+      <h1 style="font-size:20px;margin:0 0 8px;color:#b91c1c;">You&apos;re unsubscribed</h1>
       <p style="font-size:14px;line-height:1.6;margin:0 0 12px;color:#374151;">
-        You will no longer receive the Cypressdale HOA newsletter at
-        <strong>${lowerEmail}</strong>.
+        Your email has been removed from the Cypressdale newsletter list.
       </p>
       <p style="font-size:13px;line-height:1.5;margin:0;color:#6b7280;">
-        If this was a mistake, you can resubscribe anytime from the
-        newsletter signup form on the Cypressdale website.
+        If this was a mistake, you can re-subscribe anytime from the News or Events page.
       </p>
     </div>
   </body>
 </html>`,
     {
       status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-      },
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
     }
   );
 }
