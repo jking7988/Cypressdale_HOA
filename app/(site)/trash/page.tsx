@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
 export default function TrashInfoPage() {
   const searchParams = useSearchParams();
   const signupStatus = searchParams.get('signup');
-
+  const unsubscribeStatus = searchParams.get('unsubscribe');
   return (
   <div className="relative min-h-[calc(100vh-5rem)]">
     {/* FULL-SCREEN BACKGROUND */}
@@ -43,8 +43,20 @@ export default function TrashInfoPage() {
 
       {signupStatus === 'error' && (
         <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-md shadow-red-900/10">
-          Something went wrong signing you up. Please check your email address and try
-          again.
+          Something went wrong signing you up. Please check your email address and try again.
+        </div>
+      )}
+
+      {/* Unsubscribe status banner */}
+      {unsubscribeStatus === 'ok' && (
+        <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-md shadow-emerald-900/10">
+          You’ve been <span className="font-semibold">unsubscribed</span> from trash day reminders.
+        </div>
+      )}
+
+      {unsubscribeStatus === 'error' && (
+        <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-md shadow-red-900/10">
+          We couldn’t unsubscribe this address. Please contact the HOA if the problem continues.
         </div>
       )}
 
