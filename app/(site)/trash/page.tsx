@@ -313,13 +313,17 @@ function TrashInfoPageContent() {
                   <span>Collection days &amp; time</span>
                 </h3>
                 <p className="text-sm text-emerald-900/90">
-                  Texas Pride Disposal collects garbage and recycling in
-                  Cypressdale on <span className="font-semibold">Wednesdays</span>{' '}
-                  and <span className="font-semibold">Saturdays</span>.
-                  Household garbage and recycling are collected on{' '}
-                  <span className="font-semibold">Wednesdays</span>, and heavy
+                  Texas Pride Disposal collects household garbage in
+                  Cypressdale on{' '}
+                  <span className="font-semibold">Wednesdays</span>{' '}
+                  and <span className="font-semibold">Saturdays</span>, and
+                  recycling on{' '}
+                  <span className="font-semibold">Saturdays only</span>. Heavy
                   trash and bulk items are collected on{' '}
-                  <span className="font-semibold">both Wednesdays and Saturdays</span>.
+                  <span className="font-semibold">
+                    both Wednesdays and Saturdays
+                  </span>
+                  .
                 </p>
                 <p className="text-sm text-emerald-900/90">
                   Residents should place all waste at the curb no later than{' '}
@@ -614,8 +618,10 @@ function TrashInfoPageContent() {
                 Get trash day reminders
               </h2>
               <p className="text-xs md:text-sm text-emerald-900/85">
-                Sign up to receive an email reminder the <span className="font-semibold">day before</span>{' '}
-                Cypressdale trash and recycling collection.
+                Sign up to receive an email reminder the{' '}
+                <span className="font-semibold">day before</span>{' '}
+                Cypressdale trash collection (Wednesday &amp; Saturday) and
+                recycling collection (Saturday).
               </p>
 
               <form
@@ -659,10 +665,10 @@ function TrashInfoPageContent() {
                   Sign me up
                 </button>
 
-                <p className="text-[0.7rem] text-emerald-900/70">
-                  Reminders are sent the afternoon before scheduled collection days
-                  (Wednesday and Saturday). You can unsubscribe anytime using the link in
-                  the email.
+                {/* CONTRAST-FIXED TEXT */}
+                <p className="text-[0.7rem] text-emerald-900">
+                  Reminders are sent the afternoon before scheduled collection
+                  days. You can unsubscribe anytime using the link in the email.
                 </p>
               </form>
 
