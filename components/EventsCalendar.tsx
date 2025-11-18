@@ -271,8 +271,8 @@ export default function EventsCalendar({ events }: Props) {
 
   return (
     <>
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)] items-start">
-        {/* LEFT: Calendar + selected-day events */}
+      <div className="space-y-6">
+        {/* Calendar + selected-day events */}
         <div className="space-y-4">
           {/* Calendar card */}
           <div className="card shadow-sm border border-emerald-100">
@@ -284,7 +284,7 @@ export default function EventsCalendar({ events }: Props) {
               >
                 ‹
               </button>
-              <div className="text-sm font-semibold text-emerald-900 flex items-center gap-2">
+              <div className="text-sm font-semibold text-emerald-900 flex items_center gap-2">
                 <span>{monthLabel}</span>
                 <span className="text-[10px] rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5">
                   Calendar
@@ -510,12 +510,12 @@ export default function EventsCalendar({ events }: Props) {
           )}
         </div>
 
-        {/* RIGHT: All upcoming events list */}
+        {/* Upcoming events UNDER the calendar */}
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h2 className="h2 flex items-center gap-2">
               <span>Upcoming Events</span>
-              <span className="text-[11px] rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5">
+              <span className="text-[11px] rounded_full bg-emerald-100 text-emerald-800 px-2 py-0.5">
                 {events.length} total
               </span>
             </h2>
@@ -578,7 +578,7 @@ export default function EventsCalendar({ events }: Props) {
                     </div>
 
                     {e.description && (
-                      <p className="text-sm mt-1 text-gray-800">
+                      <p className="text_sm mt-1 text-gray-800">
                         {e.description}
                       </p>
                     )}
@@ -617,7 +617,7 @@ export default function EventsCalendar({ events }: Props) {
                     </div>
 
                     {/* Icon-only calendar export buttons */}
-                    <div className="flex flex-wrap gap-2 mt-3">
+                    <div className="flex flex_wrap gap-2 mt-3">
                       <a
                         href={buildGoogleCalendarUrl(e)}
                         target="_blank"

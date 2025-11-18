@@ -5,6 +5,7 @@ import { client } from '@/lib/sanity.client';
 import { postsQuery } from '@/lib/queries';
 import { PortableText } from '@portabletext/react';
 import { NewsCalendar } from '@/components/NewsCalendar';
+import { NewsLetterSignup } from '@/components/NewsLetterSignup';
 
 type Post = {
   _id: string;
@@ -152,12 +153,16 @@ export default async function NewsPage() {
               })}
           </div>
 
-          {/* RIGHT: fancy calendar */}
-          <NewsCalendar
-            baseDateIso={baseDateIso}
-            dateKeysWithPosts={dateKeysWithPosts}
-            postsForDate={postsForDate}
-          />
+          {/* RIGHT: calendar + newsletter signup */}
+          <div className="space-y-4">
+            <NewsCalendar
+              baseDateIso={baseDateIso}
+              dateKeysWithPosts={dateKeysWithPosts}
+              postsForDate={postsForDate}
+            />
+
+            <NewsLetterSignup />
+          </div>
         </section>
       )}
     </div>
