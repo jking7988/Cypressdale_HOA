@@ -166,6 +166,8 @@ export default async function HomePage() {
     getTwelveHourForecast(),
   ]);
 
+  const [today, ...otherDays] = dailyForecast;
+
   // Sort events
   const sortedEvents = events
     .filter((e) => e.startDate)
@@ -386,66 +388,106 @@ export default async function HomePage() {
 
             {dailyForecast.length > 0 ? (
               <div className="w-full">
-                <div className="flex gap-3 overflow-x-auto pb-3 px-1 sm:px-2 -mx-4 sm:mx-0">
-                  {dailyForecast.map((day, idx) => {
-                    const meta = getWeatherMeta(day.phrase);
-                    const Icon = meta.Icon;
+                {/* TODAY card (big, with 12-hour forecast inside) */}
+                {today && (() => {
+                  const meta = getWeatherMeta(today.phrase);
+                  const Icon = meta.Icon;
+                  return (
+                    <div
+                      className={`card group w-full text-center py-4 px-4 transition-transform duration-150 hover:-translate-y-1 hover:shadow-md ${meta.cardBg} ring-1 ${meta.ringClass}`}
+                    >
+                      <p className="text-xs font-semibold text-brand-700 mb-1">
+                        {formatWeatherDayLabel(today.date, 0)}
+                      </p>
 
-                    return (
-                      <div
-                        key={day.date}
-                        className={`card group min-w-[135px] text-center flex-shrink-0 py-3 transition-transform duration-150 hover:-translate-y-1 hover:shadow-md ${meta.cardBg} ring-1 ${meta.ringClass}`}
-                      >
-                        <p className="text-xs font-semibold text-brand-700 mb-1">
-                          {formatWeatherDayLabel(day.date, idx)}
-                        </p>
-
-                        <div className="flex justify-center mb-2">
-                          <Icon
-                            className={`h-8 w-8 ${meta.iconClass} transition-transform duration-150 group-hover:scale-110`}
-                            strokeWidth={1.5}
-                          />
-                        </div>
-
-                        <p className="text-base font-semibold text-brand-900">
-                          {Math.round(day.max)}°
-                          <span className="text-xs text-gray-500 font-normal">
-                            {' '}
-                            / {Math.round(day.min)}°
-                          </span>
-                        </p>
-
-                        <p className="text-[11px] text-gray-600 mt-1 line-clamp-2">
-                          {day.phrase}
-                        </p>
+                      <div className="flex justify-center mb-2">
+                        <Icon
+                          className={`h-9 w-9 ${meta.iconClass} transition-transform duration-150 group-hover:scale-110`}
+                          strokeWidth={1.5}
+                        />
                       </div>
-                    );
-                  })}
-                </div>
 
-                {/* NEW: 12-hour strip under the daily cards */}
-                {hourlyForecast.length > 0 && (
-                  <div className="w-full mt-4">
-                    <p className="text-xs font-semibold text-brand-700 mb-2 text-left sm:text-center">
-                      Next 12 hours
-                    </p>
-                    <div className="flex gap-2 overflow-x-auto pb-3 px-1 sm:px-2 -mx-4 sm:mx-0">
-                      {hourlyForecast.map((h) => (
-                        <div
-                          key={h.dateTime}
-                          className="card min-w-[90px] flex-shrink-0 py-2 px-3 text-center border border-brand-100 bg-white/80 shadow-sm"
-                        >
-                          <p className="text-[11px] font-medium text-brand-700">
-                            {formatHourLabel(h.dateTime)}
+                      <p className="text-lg font-semibold text-brand-900">
+                        {Math.round(today.max)}°
+                        <span className="text-xs text-gray-500 font-normal">
+                          {' '}
+                          / {Math.round(today.min)}°
+                        </span>
+                      </p>
+
+                      <p className="text-[11px] text-gray-600 mt-1">
+                        {today.phrase}
+                      </p>
+
+                      {/* 12-hour forecast inside TODAY */}
+                      {hourlyForecast.length > 0 && (
+                        <div className="mt-3 border-t border-emerald-100 pt-2 text-center">
+                          <p className="text-[11px] font-semibold text-brand-700 mb-1">
+                            Next 12 hours
                           </p>
-                          <p className="text-sm font-semibold text-brand-900 mt-1">
-                            {Math.round(h.temp)}°
-                          </p>
-                          <p className="text-[11px] text-gray-600 mt-0.5 line-clamp-2">
-                            {h.phrase}
-                          </p>
+                          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+                            {hourlyForecast.map((h) => (
+                              <div
+                                key={h.dateTime}
+                                className="min-w-[70px] rounded-lg bg-white/85 border border-brand-100 px-1.5 py-1"
+                              >
+                                <p className="text-[10px] font-medium text-brand-700">
+                                  {formatHourLabel(h.dateTime)}
+                                </p>
+                                <p className="text-xs font-semibold text-brand-900">
+                                  {Math.round(h.temp)}°
+                                </p>
+                                <p className="text-[10px] text-gray-600 line-clamp-2">
+                                  {h.phrase}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Remaining 4 days under Today */}
+                {otherDays.length > 0 && (
+                  <div className="mt-3 overflow-x-auto pb-2 px-1 sm:px-2">
+                    <div className="flex gap-3 justify-center w-max mx-auto">
+                      {otherDays.map((day, idx) => {
+                        const meta = getWeatherMeta(day.phrase);
+                        const Icon = meta.Icon;
+                        const indexForLabel = idx + 1; // so Tomorrow label still works
+
+                        return (
+                          <div
+                            key={day.date}
+                            className={`card group min-w-[120px] text-center flex-shrink-0 py-3 transition-transform duration-150 hover:-translate-y-1 hover:shadow-md ${meta.cardBg} ring-1 ${meta.ringClass}`}
+                          >
+                            <p className="text-xs font-semibold text-brand-700 mb-1">
+                              {formatWeatherDayLabel(day.date, indexForLabel)}
+                            </p>
+
+                            <div className="flex justify-center mb-2">
+                              <Icon
+                                className={`h-7 w-7 ${meta.iconClass} transition-transform duration-150 group-hover:scale-110`}
+                                strokeWidth={1.5}
+                              />
+                            </div>
+
+                            <p className="text-sm font-semibold text-brand-900">
+                              {Math.round(day.max)}°
+                              <span className="text-xs text-gray-500 font-normal">
+                                {' '}
+                                / {Math.round(day.min)}°
+                              </span>
+                            </p>
+
+                            <p className="text-[11px] text-gray-600 mt-1 line-clamp-2">
+                              {day.phrase}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -456,6 +498,7 @@ export default async function HomePage() {
                 provider.
               </p>
             )}
+
           </section>
 
           {/* Upcoming Events Preview */}

@@ -60,7 +60,7 @@ export default function NewResidentsPage() {
             <span>First steps after moving in</span>
           </h2>
           <p className="text-sm text-emerald-900/90">
-            Within your first week or two, we recommend taking care of the
+            Before you move in, we recommend taking care of the
             following:
           </p>
           <ol className="list-decimal pl-5 text-sm text-emerald-900/90 space-y-1.5">
