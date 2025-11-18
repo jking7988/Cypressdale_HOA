@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Node runtime (not edge)
+// Ensure Node runtime for Supabase
 export const runtime = 'nodejs';
 
 const supabase = createClient(
@@ -10,6 +10,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Simple GET handler to verify the route is live on Vercel
+export async function GET() {
+  return NextResponse.json({ status: 'ok', route: '/api/trash-reminders' });
+}
+
+// Form submit handler
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
