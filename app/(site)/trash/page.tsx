@@ -1,7 +1,7 @@
 // app/trash/page.tsx
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -22,6 +22,49 @@ function TrashInfoPageContent() {
   const signupStatus = searchParams.get('signup');
   const unsubscribeStatus = searchParams.get('unsubscribe');
 
+  // Manage subscription modal state
+  const [isManageOpen, setIsManageOpen] = useState(false);
+  const [manageEmail, setManageEmail] = useState('');
+  const [manageAction, setManageAction] = useState<'unsubscribe' | 'resubscribe'>(
+    'unsubscribe'
+  );
+  const [manageLoading, setManageLoading] = useState(false);
+  const [manageMessage, setManageMessage] = useState<string | null>(null);
+  const [manageError, setManageError] = useState<string | null>(null);
+
+  const handleManageSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setManageLoading(true);
+    setManageMessage(null);
+    setManageError(null);
+
+    try {
+      const res = await fetch('/api/trash-reminders/manage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: manageEmail,
+          action: manageAction,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setManageError(data.error || 'Something went wrong. Please try again.');
+      } else {
+        setManageMessage(data.message || 'Updated your subscription.');
+      }
+    } catch (err) {
+      console.error(err);
+      setManageError('Network error. Please try again.');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-[calc(100vh-5rem)]">
       {/* FULL-SCREEN BACKGROUND */}
@@ -32,6 +75,118 @@ function TrashInfoPageContent() {
         />
         <div className="absolute inset-0 bg-emerald-50/60 backdrop-blur-[5px]" />
       </div>
+
+      {/* MANAGE SUBSCRIPTION MODAL */}
+      {isManageOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-emerald-200 bg-white/95 p-5 shadow-2xl shadow-emerald-900/30 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base md:text-lg font-semibold text-emerald-950 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-700" />
+                <span>Manage trash day reminders</span>
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsManageOpen(false);
+                  setManageMessage(null);
+                  setManageError(null);
+                }}
+                className="text-xs text-emerald-900/70 hover:text-emerald-900"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs md:text-sm text-emerald-900/85 mb-3">
+              Enter the email address you used to sign up and choose whether you want to
+              unsubscribe or turn reminders back on.
+            </p>
+
+            <form className="space-y-3" onSubmit={handleManageSubmit}>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-emerald-900/90">
+                  Email address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={manageEmail}
+                  onChange={(e) => setManageEmail(e.target.value)}
+                  className="w-full rounded-md border border-emerald-200 bg-emerald-50/60 px-2.5 py-1.5 text-sm text-emerald-900 shadow-inner shadow-emerald-900/5 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <span className="block text-xs font-medium text-emerald-900/90">
+                  Action
+                </span>
+                <div className="flex gap-3 text-xs">
+                  <label className="inline-flex items-center gap-1.5">
+                    <input
+                      type="radio"
+                      name="manageAction"
+                      value="unsubscribe"
+                      checked={manageAction === 'unsubscribe'}
+                      onChange={() => setManageAction('unsubscribe')}
+                    />
+                    <span>Unsubscribe from reminders</span>
+                  </label>
+                  <label className="inline-flex items-center gap-1.5">
+                    <input
+                      type="radio"
+                      name="manageAction"
+                      value="resubscribe"
+                      checked={manageAction === 'resubscribe'}
+                      onChange={() => setManageAction('resubscribe')}
+                    />
+                    <span>Turn reminders back on</span>
+                  </label>
+                </div>
+              </div>
+
+              {manageMessage && (
+                <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                  {manageMessage}
+                </div>
+              )}
+
+              {manageError && (
+                <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">
+                  {manageError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsManageOpen(false);
+                    setManageMessage(null);
+                    setManageError(null);
+                  }}
+                  className="text-xs text-emerald-900/75 hover:text-emerald-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={manageLoading}
+                  className="inline-flex items-center justify-center rounded-md bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-emerald-50 shadow-md shadow-emerald-900/20 hover:bg-emerald-800 disabled:opacity-60"
+                >
+                  {manageLoading ? 'Saving…' : 'Update subscription'}
+                </button>
+              </div>
+
+              <p className="text-[0.7rem] text-emerald-900/70">
+                You can also unsubscribe directly from any reminder email using the link at
+                the bottom of the message.
+              </p>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* CONTENT */}
       <div className="relative mx-auto max-w-5xl px-4 py-10 space-y-8">
@@ -49,7 +204,7 @@ function TrashInfoPageContent() {
           </div>
         )}
 
-        {/* Unsubscribe status banner */}
+        {/* Unsubscribe status banner (for link-based unsubscribes) */}
         {unsubscribeStatus === 'ok' && (
           <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-md shadow-emerald-900/10">
             You’ve been <span className="font-semibold">unsubscribed</span> from trash day
@@ -475,6 +630,18 @@ function TrashInfoPageContent() {
                   the email.
                 </p>
               </form>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsManageOpen(true);
+                  setManageMessage(null);
+                  setManageError(null);
+                }}
+                className="mt-2 inline-flex w-full items-center justify-center rounded-md border border-emerald-300 bg-emerald-50/80 px-3 py-1.5 text-[0.7rem] font-medium text-emerald-900 hover:bg-emerald-100"
+              >
+                Manage my reminders
+              </button>
             </section>
 
             {/* Texas Pride links */}
