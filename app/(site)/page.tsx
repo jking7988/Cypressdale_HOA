@@ -375,11 +375,8 @@ export default async function HomePage() {
           {/* Upcoming Events Preview */}
           <section className="rounded-3xl bg-white/95 border border-emerald-50 shadow-[0_18px_50px_rgba(15,118,110,0.22)] backdrop-blur px-4 py-5 md:px-6 md:py-6 space-y-3">
             <div className="flex items-baseline justify-between gap-2">
-              <h2 className="h2 flex items-center gap-2">
-                <span>Upcoming events</span>
-                <span className="text-[10px] md:text-xs rounded-full bg-emerald-100 text-emerald-800 px-1.5 py-[2px] md:px-2 md:py-0.5">
-                  {upcomingEvents.length || 0} scheduled
-                </span>
+              <h2 className="h2">
+                Upcoming events
               </h2>
               <Link
                 href="/events"
@@ -473,14 +470,8 @@ export default async function HomePage() {
           {/* Latest News */}
           <section className="rounded-3xl bg-white/95 border border-emerald-50 shadow-[0_18px_50px_rgba(15,118,110,0.22)] backdrop-blur px-4 py-5 md:px-6 md:py-6 space-y-3">
             <div className="flex items-baseline justify-between gap-2">
-              <h2 className="h2 flex items-center gap-2">
-                <span>Latest news</span>
-                {latestPosts?.length > 0 && (
-                  <span className="text-[9px] md:text-[11px] rounded-full bg-sky-100 text-sky-800 px-1.5 py-[2px] md:px-2 md:py-0.5">
-                    Updated recently
-                  </span>
-
-                )}
+              <h2 className="h2">
+                Latest news
               </h2>
               <Link
                 href="/news"

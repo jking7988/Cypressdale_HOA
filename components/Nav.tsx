@@ -87,6 +87,22 @@ export default function Nav() {
             </Link>
 
             <Link
+              href="/new-residents"
+              onClick={() => setOpen(false)}
+              className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
+            >
+              🧭 <span>New Residents</span>
+            </Link>
+
+            <Link
+              href="/trash"
+              onClick={() => setOpen(false)}
+              className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"
+            >
+              🗑️ <span>Trash &amp; Recycling</span>
+            </Link>
+
+            <Link
               href="/documents"
               onClick={() => setOpen(false)}
               className="py-2 px-1 text-brand-700 hover:bg-brand-100 rounded flex items-center gap-2"

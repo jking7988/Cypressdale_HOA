@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/trash-reminders/send?type=wednesday",
+      "schedule": "0 23 * * 2"
+    },
+    {
+      "path": "/api/trash-reminders/send?type=saturday",
+      "schedule": "0 23 * * 5"
+    }
+  ]
+}
