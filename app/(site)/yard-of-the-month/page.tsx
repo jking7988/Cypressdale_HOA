@@ -32,20 +32,39 @@ export default async function YardOfTheMonthPage() {
 
   return (
     <div className="relative min-h-[calc(100vh-5rem)]">
-      {/* FULL-SCREEN BACKGROUND IMAGE */}
+      {/* Full-screen garden image */}
       <div
-        className="fixed inset-0 -z-20 bg-cover bg-center bg-no-repeat"
+        className="fixed inset-0 -z-30 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/images/flower-path.png')",
-          // optional: keep the image “fixed” for a subtle parallax feel
           backgroundAttachment: 'fixed',
         }}
       />
 
-      {/* SOFT OVERLAY FOR READABILITY */}
-      <div className="fixed inset-0 -z-10 bg-emerald-50/70 backdrop-blur-[2px]" />
+      {/* TIGHTER radial spotlight overlay */}
+      <div
+        className="fixed inset-0 -z-20 pointer-events-none"
+        style={{
+          backgroundImage: `
+            radial-gradient(
+              circle at center,
+              rgba(98, 136, 103, 0.97) 0%,
+              rgba(141, 140, 224, 0.94) 18%,
+              rgba(223, 201, 142, 0.88) 30%,
+              rgba(204, 202, 167, 0.7) 45%,
+              rgba(255,255,255,0.40) 60%,
+              rgba(255,255,255,0.12) 78%,
+              rgba(255,255,255,0.04) 90%,
+              rgba(255,255,255,0.00) 100%
+            )
+          `,
+        }}
+      />
 
-      {/* PAGE CONTENT (stays constrained) */}
+      {/* Gentle vertical gradient + slight blur for extra readability */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-white/75 via-white/55 to-white/75 backdrop-blur-[1.5px]" />
+
+      {/* Page content */}
       <div className="relative mx-auto max-w-5xl px-4 py-10 space-y-8">
         {/* Page header */}
         <header className="space-y-3 flex flex-col items-center text-center">
@@ -61,19 +80,19 @@ export default async function YardOfTheMonthPage() {
             <span>Celebrate beautiful yards</span>
           </h1>
 
-          <p className="muted max-w-2xl text-sm md:text-base text-emerald-900/80">
+          <p className="muted max-w-2xl text-sm md:text-base text-emerald-900/95">
             Beginning in January 2026, the Yard of the Month program recognizes
             Cypressdale neighbors who go above and beyond with their landscaping,
             curb appeal, and overall care for their homes. It&apos;s a fun way to
             celebrate pride of ownership and keep our community looking vibrant
             and welcoming.
           </p>
-        </header>      
+        </header>
 
         {/* Overview + how it works */}
         <section className="grid gap-6 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)] items-start">
           {/* Left: Overview */}
-          <div className="card border border-emerald-100/80 bg-emerald-50/70 backdrop-blur-sm shadow-sm space-y-3">
+          <div className="card border border-emerald-100/80 bg-emerald-50/80 backdrop-blur-sm shadow-sm space-y-3">
             <div className="flex items-center gap-2 text-emerald-800">
               <span className="text-lg">🪴</span>
               <h2 className="h2 text-lg">Program overview</h2>
@@ -97,7 +116,7 @@ export default async function YardOfTheMonthPage() {
           </div>
 
           {/* Right: How it works / criteria */}
-          <div className="card border border-lime-100/80 bg-lime-50/80 backdrop-blur-sm shadow-sm space-y-3">
+          <div className="card border border-lime-100/80 bg-lime-50/85 backdrop-blur-sm shadow-sm space-y-3">
             <div className="flex items-center gap-2 text-emerald-800">
               <span className="text-lg">🌱</span>
               <h2 className="h2 text-lg">How winners are chosen</h2>
@@ -149,7 +168,7 @@ export default async function YardOfTheMonthPage() {
               <span className="text-base">🌼</span>
               <span>Current Yard of the Month</span>
             </h2>
-            <span className="text-xs rounded-full bg-emerald-900/10 text-emerald-900 px-3 py-1 border border-emerald-200/80">
+            <span className="text-xs rounded-full bg-white/85 text-emerald-900 px-3 py-1 border border-emerald-200/90">
               {currentWinner
                 ? 'Recognizing this month’s standout yard'
                 : 'First selection coming January 2026'}
@@ -198,7 +217,7 @@ export default async function YardOfTheMonthPage() {
               </div>
             </article>
           ) : (
-            <div className="rounded-3xl border border-dashed border-emerald-300/70 bg-emerald-50/70 px-4 py-6 text-sm text-emerald-900/80 text-center">
+            <div className="rounded-3xl border border-dashed border-emerald-300/80 bg-emerald-50/90 px-4 py-6 text-sm text-emerald-900/85 text-center backdrop-blur-[1px]">
               <p className="font-medium text-emerald-950 mb-1">
                 Yard of the Month launching January 2026
               </p>
@@ -221,7 +240,7 @@ export default async function YardOfTheMonthPage() {
               {pastWinners.map((w) => (
                 <article
                   key={w._id}
-                  className="rounded-3xl bg-white/90 border border-emerald-100/80 shadow-sm overflow-hidden flex flex-col"
+                  className="rounded-3xl bg-white/92 border border-emerald-100/85 shadow-sm overflow-hidden flex flex-col"
                 >
                   {w.photoUrl && (
                     <div className="relative h-32 w-full overflow-hidden">
@@ -264,7 +283,7 @@ export default async function YardOfTheMonthPage() {
         )}
 
         {/* Questions / contact */}
-        <section className="card border border-emerald-100/80 bg-emerald-50/80 backdrop-blur-sm space-y-2">
+        <section className="card border border-emerald-100/80 bg-emerald-50/85 backdrop-blur-sm space-y-2">
           <h2 className="h2 text-lg text-emerald-950 flex items-center gap-2">
             <span className="text-base">🌻</span>
             <span>Questions about the program?</span>
