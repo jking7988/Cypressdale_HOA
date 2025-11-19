@@ -14,6 +14,8 @@ import {
   Snowflake,
   AlertCircle,
 } from 'lucide-react';
+import { NewsLetterSignup } from '@/components/NewsLetterSignup';
+
 
 type Post = {
   _id: string;
@@ -641,6 +643,9 @@ export default async function HomePage() {
               </p>
             )}
           </section>
+
+          {/* Newsletter signup */}
+          <NewsLetterSignup />
 
           {/* About / Community Info */}
           <section className="rounded-3xl bg-white/95 border border-emerald-50 shadow-[0_18px_50px_rgba(15,118,110,0.22)] backdrop-blur px-4 py-5 md:px-6 md:py-6 grid gap-6 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)] items-start">
