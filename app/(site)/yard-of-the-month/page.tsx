@@ -31,17 +31,24 @@ export default async function YardOfTheMonthPage() {
   const pastWinners = winners.slice(1);
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-50 via-lime-50 to-amber-50">
-      {/* subtle decorative “blobs” */}
-      <div className="pointer-events-none fixed inset-0 opacity-40 mix-blend-multiply">
-        <div className="absolute -top-10 -left-16 h-56 w-56 rounded-full bg-emerald-200 blur-3xl" />
-        <div className="absolute top-24 -right-10 h-40 w-40 rounded-full bg-lime-200 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-amber-200 blur-3xl" />
-      </div>
+    <div className="relative min-h-[calc(100vh-5rem)]">
+      {/* FULL-SCREEN BACKGROUND IMAGE */}
+      <div
+        className="fixed inset-0 -z-20 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: "url('/images/flower-path.png')",
+          // optional: keep the image “fixed” for a subtle parallax feel
+          backgroundAttachment: 'fixed',
+        }}
+      />
 
+      {/* SOFT OVERLAY FOR READABILITY */}
+      <div className="fixed inset-0 -z-10 bg-emerald-50/70 backdrop-blur-[2px]" />
+
+      {/* PAGE CONTENT (stays constrained) */}
       <div className="relative mx-auto max-w-5xl px-4 py-10 space-y-8">
         {/* Page header */}
-        <header className="space-y-3">
+        <header className="space-y-3 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/80 px-4 py-1 text-xs font-medium text-emerald-50 shadow-sm">
             <span className="text-sm">🌿</span>
             <span className="tracking-[0.18em] uppercase">
@@ -56,12 +63,12 @@ export default async function YardOfTheMonthPage() {
 
           <p className="muted max-w-2xl text-sm md:text-base text-emerald-900/80">
             Beginning in January 2026, the Yard of the Month program recognizes
-            Cypressdale neighbors who go above and beyond with their
-            landscaping, curb appeal, and overall care for their homes. It&apos;s
-            a fun way to celebrate pride of ownership and keep our community
-            looking vibrant and welcoming.
+            Cypressdale neighbors who go above and beyond with their landscaping,
+            curb appeal, and overall care for their homes. It&apos;s a fun way to
+            celebrate pride of ownership and keep our community looking vibrant
+            and welcoming.
           </p>
-        </header>
+        </header>      
 
         {/* Overview + how it works */}
         <section className="grid gap-6 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)] items-start">

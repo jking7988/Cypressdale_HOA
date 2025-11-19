@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import PoolCalendar from '@/components/PoolCalendar';
+import PoolCalendar, { getPoolInfo } from '@/components/PoolCalendar';
 import {
   Waves,
   SunMedium,
@@ -22,124 +22,6 @@ import {
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
-
-// --- Local pool schedule helpers (used for "Today at the pool") ---
-
-type PoolInfo = {
-  inSeason: boolean;
-  isOpen: boolean;
-  hours?: string;
-  note?: string;
-};
-
-function sameDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-// Last Monday in May
-function getMemorialDay(year: number): Date {
-  const d = new Date(year, 4, 31); // May 31
-  while (d.getDay() !== 1) {
-    d.setDate(d.getDate() - 1);
-  }
-  return d;
-}
-
-// First Monday in September
-function getLaborDay(year: number): Date {
-  const d = new Date(year, 8, 1); // Sept 1
-  while (d.getDay() !== 1) {
-    d.setDate(d.getDate() + 1);
-  }
-  return d;
-}
-
-function getPoolInfo(date: Date): PoolInfo {
-  const year = date.getFullYear();
-  const weekday = date.getDay(); // 0 = Sun, 1 = Mon, ...
-  const memorialDay = getMemorialDay(year);
-  const laborDay = getLaborDay(year);
-
-  const tuesdayAfterMemorial = new Date(memorialDay);
-  tuesdayAfterMemorial.setDate(memorialDay.getDate() + 1);
-
-  const tuesdayAfterLabor = new Date(laborDay);
-  tuesdayAfterLabor.setDate(laborDay.getDate() + 1);
-
-  const seasonStart = new Date(year, 4, 31); // May 31
-  const seasonEnd = new Date(year, 8, 1); // Sept 1
-
-  const inMainSeason = date >= seasonStart && date <= seasonEnd;
-
-  const isMemorial = sameDay(date, memorialDay);
-  const isLabor = sameDay(date, laborDay);
-  const isTueAfterMemorial = sameDay(date, tuesdayAfterMemorial);
-  const isTueAfterLabor = sameDay(date, tuesdayAfterLabor);
-
-  const inSeason =
-    inMainSeason ||
-    isMemorial ||
-    isLabor ||
-    isTueAfterMemorial ||
-    isTueAfterLabor;
-
-  if (!inSeason) {
-    return { inSeason: false, isOpen: false };
-  }
-
-  if (isMemorial) {
-    return {
-      inSeason: true,
-      isOpen: true,
-      hours: '10:00 a.m. – 8:00 p.m.',
-      note: 'Memorial Day',
-    };
-  }
-
-  if (isLabor) {
-    return {
-      inSeason: true,
-      isOpen: true,
-      hours: '10:00 a.m. – 8:00 p.m.',
-      note: 'Labor Day',
-    };
-  }
-
-  if (isTueAfterMemorial || isTueAfterLabor) {
-    return {
-      inSeason: true,
-      isOpen: false,
-      note: 'After holiday',
-    };
-  }
-
-  // Monday during season: closed
-  if (weekday === 1) {
-    return { inSeason: true, isOpen: false };
-  }
-
-  // Sunday: 10–6
-  if (weekday === 0) {
-    return {
-      inSeason: true,
-      isOpen: true,
-      hours: '10:00 a.m. – 6:00 p.m.',
-    };
-  }
-
-  // Tuesday–Saturday: 10–8
-  return {
-    inSeason: true,
-    isOpen: true,
-    hours: '10:00 a.m. – 8:00 p.m.',
-  };
-}
-
-// --- Page component ---
 
 export default function PoolPage() {
   const now = new Date();
@@ -305,7 +187,7 @@ export default function PoolPage() {
               </div>
             </section>
 
-            {/* RIGHT: Info cards */}
+            {/* RIGHT: Info cards (unchanged) */}
             <div className="space-y-4">
               {/* Hours */}
               <section className="card space-y-2 border border-emerald-50 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition">

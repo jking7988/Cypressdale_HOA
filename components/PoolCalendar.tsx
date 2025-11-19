@@ -242,7 +242,7 @@ export default function PoolCalendar() {
               );
             }
 
-            const { inSeason, isOpen, hours, note } = getPoolInfo(date);
+            const { inSeason, isOpen, note } = getPoolInfo(date);
 
             const isToday =
               date.getFullYear() === todayYear &&
@@ -281,11 +281,6 @@ export default function PoolCalendar() {
                     {label}
                   </span>
                 )}
-                {hours && (
-                  <span className="mt-0.5 text-[10px] leading-none">
-                    {hours}
-                  </span>
-                )}
                 {note && (
                   <span className="mt-0.5 text-[10px] leading-none">
                     {note}
@@ -297,22 +292,40 @@ export default function PoolCalendar() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-[12px] text-gray-600 mt-2">
-        <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-sm bg-emerald-200 border border-emerald-400" />
-          <span>Open (see hours)</span>
+      {/* Legend + hours */}
+      <div className="mt-2 space-y-2">
+        <div className="flex flex-wrap items-center gap-3 text-[12px] text-gray-600">
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-sm bg-emerald-200 border border-emerald-400" />
+            <span>Open (see hours below)</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-sm bg-rose-200 border border-rose-400" />
+            <span>Closed (during pool season)</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-sm bg-gray-100 border border-gray-300" />
+            <span>Outside pool season</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-3 h-3 rounded-full border border-sky-300" />
+            <span>Today</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-sm bg-rose-200 border border-rose-400" />
-          <span>Closed (during pool season)</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-sm bg-gray-100 border border-gray-300" />
-          <span>Outside pool season</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-full border border-sky-300" />
-          <span>Today</span>
+
+        <div className="text-[11px] md:text-[12px] text-gray-600">
+          <p className="font-medium text-gray-700 gap-1">
+            Typical daily hours (in season):
+          </p>
+          <ul className="list-disc list-inside space-y-0.5">
+            <li>Tuesday – Saturday: 10:00 a.m. – 8:00 p.m.</li>
+            <li>Sunday: 10:00 a.m. – 6:00 p.m.</li>
+            <li>Memorial Day &amp; Labor Day (Mondays): 10:00 a.m. – 8:00 p.m.</li>
+            <li>
+              Mondays (except Memorial Day &amp; Labor Day) and the Tuesday
+              after each holiday: Closed.                     
+            </li>
+          </ul>
         </div>
       </div>
     </section>
