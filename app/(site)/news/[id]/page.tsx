@@ -4,8 +4,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { groq } from 'next-sanity';
-import { draftMode } from 'next/headers';
-import { getClient } from '@/lib/sanity.client';
+import { client } from '@/lib/sanity.client';
 import { PortableText } from '@portabletext/react';
 import { portableTextComponents } from '@/components/portableTextComponents';
 import React from 'react';
@@ -67,7 +66,7 @@ const ImportantDateBox = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-// 👇 params is a Promise with the new Next behavior
+// params is a Promise with the new Next behavior
 type Props = {
   params: Promise<{ id: string }>;
 };
@@ -77,11 +76,8 @@ export default async function NewsDetailPage(props: Props) {
   const { id } = await props.params;
   if (!id) return notFound();
 
-  // @ts-ignore
-  const { isEnabled } = draftMode();
-  const clientToUse = getClient(isEnabled);
-
-  const post = await clientToUse.fetch<Post | null>(postByIdQuery, { id });
+  // Simple published-only fetch
+  const post = await client.fetch<Post | null>(postByIdQuery, { id });
   if (!post) return notFound();
 
   const created = post._createdAt ? new Date(post._createdAt) : null;

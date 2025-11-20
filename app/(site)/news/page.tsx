@@ -1,14 +1,12 @@
+// app/(site)/news/page.tsx
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { draftMode } from 'next/headers';
-import { getClient } from '@/lib/sanity.client';
+import { client } from '@/lib/sanity.client';
 import { postsQuery } from '@/lib/queries';
 import { PortableText } from '@portabletext/react';
 import { NewsCalendar } from '@/components/NewsCalendar';
 import { NewsLetterSignup } from '@/components/NewsLetterSignup';
-
-
 
 type Post = {
   _id: string;
@@ -32,12 +30,8 @@ function toDateKey(dateStr: string | null): string | null {
   return dateStr.slice(0, 10); // "2025-11-24"
 }
 
-  // @ts-ignore
-const { isEnabled } = draftMode();
-const clientToUse = getClient(isEnabled);
-
 export default async function NewsPage() {
-  const posts = await clientToUse.fetch<Post[]>(postsQuery);
+  const posts = await client.fetch<Post[]>(postsQuery);
 
   // Lead story = first post (postsQuery should already return newest first)
   const leadStory = posts[0] ?? null;
@@ -71,23 +65,23 @@ export default async function NewsPage() {
   const dateKeysWithPosts = dateKeys;
 
   return (
-  <div className="relative min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-50 via-sky-50 to-emerald-50">
-    {/* Soft newspaper texture */}
-    <div
-      className="pointer-events-none fixed inset-0 -z-10 opacity-20"
-      style={{
-        backgroundImage: "url('/images/newsletter-bg.png')",
-        backgroundSize: '512px 512px',
-        backgroundRepeat: 'repeat',
-        backgroundAttachment: 'fixed',
-      }}
-    />
+    <div className="relative min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-50 via-sky-50 to-emerald-50">
+      {/* Soft newspaper texture */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 opacity-75"
+        style={{
+          backgroundImage: "url('/images/newsletter-bg.png')",
+          backgroundSize: '512px 512px',
+          backgroundRepeat: 'repeat',
+          backgroundAttachment: 'fixed',
+        }}
+      />
 
-    {/* Light center glow so cards are extra readable */}
-    <div className="pointer-events-none fixed inset-0 -z-5 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.92),_rgba(255,255,255,0))]" />
+      {/* Light center glow so cards are extra readable */}
+      <div className="pointer-events-none fixed inset-0 -z-5 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.92),_rgba(255,255,255,0))]" />
 
-    {/* Page content */}
-    <div className="relative mx-auto w-full max-w-5xl px-4 py-8 space-y-6">
+      {/* Page content */}
+      <div className="relative mx-auto w-full max-w-5xl px-4 py-8 space-y-6">
         {/* Masthead / front-page header */}
         <header className="space-y-3 border-b border-emerald-50 pb-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
