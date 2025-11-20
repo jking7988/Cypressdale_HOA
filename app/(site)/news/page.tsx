@@ -1,11 +1,14 @@
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { client } from '@/lib/sanity.client';
+import { draftMode } from 'next/headers';
+import { getClient } from '@/lib/sanity.client';
 import { postsQuery } from '@/lib/queries';
 import { PortableText } from '@portabletext/react';
 import { NewsCalendar } from '@/components/NewsCalendar';
 import { NewsLetterSignup } from '@/components/NewsLetterSignup';
+
+
 
 type Post = {
   _id: string;
@@ -29,8 +32,12 @@ function toDateKey(dateStr: string | null): string | null {
   return dateStr.slice(0, 10); // "2025-11-24"
 }
 
+  // @ts-ignore
+const { isEnabled } = draftMode();
+const clientToUse = getClient(isEnabled);
+
 export default async function NewsPage() {
-  const posts = await client.fetch<Post[]>(postsQuery);
+  const posts = await clientToUse.fetch<Post[]>(postsQuery);
 
   // Lead story = first post (postsQuery should already return newest first)
   const leadStory = posts[0] ?? null;
@@ -67,7 +74,7 @@ export default async function NewsPage() {
   <div className="relative min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-50 via-sky-50 to-emerald-50">
     {/* Soft newspaper texture */}
     <div
-      className="pointer-events-none fixed inset-0 -z-10 opacity-"
+      className="pointer-events-none fixed inset-0 -z-10 opacity-20"
       style={{
         backgroundImage: "url('/images/newsletter-bg.png')",
         backgroundSize: '512px 512px',

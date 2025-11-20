@@ -4,7 +4,8 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { groq } from 'next-sanity';
-import { client } from '@/lib/sanity.client';
+import { draftMode } from 'next/headers';
+import { getClient } from '@/lib/sanity.client';
 import { PortableText } from '@portabletext/react';
 import { portableTextComponents } from '@/components/portableTextComponents';
 import React from 'react';
@@ -76,7 +77,11 @@ export default async function NewsDetailPage(props: Props) {
   const { id } = await props.params;
   if (!id) return notFound();
 
-  const post = await client.fetch<Post | null>(postByIdQuery, { id });
+  // @ts-ignore
+  const { isEnabled } = draftMode();
+  const clientToUse = getClient(isEnabled);
+
+  const post = await clientToUse.fetch<Post | null>(postByIdQuery, { id });
   if (!post) return notFound();
 
   const created = post._createdAt ? new Date(post._createdAt) : null;
