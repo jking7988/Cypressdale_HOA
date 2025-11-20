@@ -18,6 +18,7 @@ type Post = {
   _createdAt?: string;
 };
 
+// Match on _id only, because your list page links with _id
 const postByIdQuery = groq`*[_type == "post" && _id == $id][0]{
   _id,
   title,
@@ -27,7 +28,6 @@ const postByIdQuery = groq`*[_type == "post" && _id == $id][0]{
   _createdAt
 }`;
 
-// Topic → icon + color system
 const topicInfo: Record<
   string,
   { icon: string; label: string; color: string }
@@ -66,11 +66,13 @@ const ImportantDateBox = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+// 👇 params is a Promise with the new Next behavior
 type Props = {
   params: Promise<{ id: string }>;
 };
 
 export default async function NewsDetailPage(props: Props) {
+  // Unwrap the params Promise
   const { id } = await props.params;
   if (!id) return notFound();
 
@@ -78,7 +80,6 @@ export default async function NewsDetailPage(props: Props) {
   if (!post) return notFound();
 
   const created = post._createdAt ? new Date(post._createdAt) : null;
-
   const topic =
     (post.topic && topicInfo[post.topic]) || topicInfo['general'];
 
@@ -86,14 +87,14 @@ export default async function NewsDetailPage(props: Props) {
     <div className="relative min-h-[calc(100vh-5rem)]">
       {/* Newspaper-style background */}
       <div
-      className="fixed inset-0 -z-30 bg-center bg-repeat opacity-[0.72]"
-      style={{
-        backgroundImage: "url('/images/newsletter-bg.png')",
-        backgroundSize: '512px 512px',
-        backgroundAttachment: 'fixed',
-      }}
-    />
-          {/* Soft overlay so content stays readable */}
+        className="fixed inset-0 -z-30 bg-center bg-repeat opacity-[0.72]"
+        style={{
+          backgroundImage: "url('/images/newsletter-bg.png')",
+          backgroundSize: '512px 512px',
+          backgroundAttachment: 'fixed',
+        }}
+      />
+      {/* Soft overlay so content stays readable */}
       <div className="fixed inset-0 -z-20 bg-white/92 backdrop-blur-[1.5px]" />
 
       {/* Page content container */}

@@ -156,20 +156,20 @@ function TrashInfoPageContent() {
                   setManageMessage(null);
                   setManageError(null);
                 }}
-                className="text-xs text-emerald-900/70 hover:text-emerald-900"
+                className="text-xs text-emerald-900 hover:text-emerald-950"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs md:text-sm text-emerald-900/85 mb-3">
+            <p className="text-xs md:text-sm text-emerald-900 mb-3">
               Enter the email address you used to sign up and choose whether you want to
               unsubscribe or turn reminders back on.
             </p>
 
             <form className="space-y-3" onSubmit={handleManageSubmit}>
               <div className="space-y-1">
-                <label className="block text-xs font-medium text-emerald-900/90">
+                <label className="block text-xs font-medium text-emerald-900">
                   Email address
                 </label>
                 <input
@@ -183,10 +183,10 @@ function TrashInfoPageContent() {
               </div>
 
               <div className="space-y-1">
-                <span className="block text-xs font-medium text-emerald-900/90">
+                <span className="block text-xs font-medium text-emerald-900">
                   Action
                 </span>
-                <div className="flex gap-3 text-xs">
+                <div className="flex gap-3 text-xs text-emerald-900">
                   <label className="inline-flex items-center gap-1.5">
                     <input
                       type="radio"
@@ -230,7 +230,7 @@ function TrashInfoPageContent() {
                     setManageMessage(null);
                     setManageError(null);
                   }}
-                  className="text-xs text-emerald-900/75 hover:text-emerald-900"
+                  className="text-xs text-emerald-900 hover:text-emerald-950"
                 >
                   Cancel
                 </button>
@@ -243,7 +243,7 @@ function TrashInfoPageContent() {
                 </button>
               </div>
 
-              <p className="text-[0.7rem] text-emerald-900/70">
+              <p className="text-[0.7rem] text-emerald-900">
                 You can also unsubscribe directly from any reminder email using the link at
                 the bottom of the message.
               </p>
@@ -269,7 +269,7 @@ function TrashInfoPageContent() {
               <h1 className="h1 text-2xl md:text-3xl text-emerald-950">
                 Trash, Recycling &amp; Heavy Trash Information
               </h1>
-              <p className="muted max-w-2xl text-sm md:text-base text-emerald-900/80">
+              <p className="muted max-w-2xl text-sm md:text-base text-emerald-900">
                 Collection in Cypressdale is provided by{' '}
                 <span className="font-semibold">Texas Pride Disposal</span>.
                 This page covers container rules, pickup days, heavy trash
@@ -312,7 +312,7 @@ function TrashInfoPageContent() {
                   <Clock className="h-4 w-4 text-emerald-700" />
                   <span>Collection days &amp; time</span>
                 </h3>
-                <p className="text-sm text-emerald-900/90">
+                <p className="text-sm text-emerald-900">
                   Texas Pride Disposal collects household garbage in
                   Cypressdale on{' '}
                   <span className="font-semibold">Wednesdays</span>{' '}
@@ -325,7 +325,7 @@ function TrashInfoPageContent() {
                   </span>
                   .
                 </p>
-                <p className="text-sm text-emerald-900/90">
+                <p className="text-sm text-emerald-900">
                   Residents should place all waste at the curb no later than{' '}
                   <span className="font-semibold">5:00 AM</span> on their
                   scheduled collection day. Items set out late may not be
@@ -339,7 +339,7 @@ function TrashInfoPageContent() {
                   <Trash2 className="h-4 w-4 text-emerald-700" />
                   <span>Household garbage</span>
                 </h3>
-                <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-1.5">
+                <ul className="list-disc pl-5 text-sm text-emerald-900 space-y-1.5">
                   <li>
                     Place waste in bags or containers{' '}
                     <span className="font-semibold">
@@ -370,7 +370,7 @@ function TrashInfoPageContent() {
                   <Truck className="h-4 w-4 text-emerald-700" />
                   <span>Heavy trash &amp; bulk items</span>
                 </h3>
-                <p className="text-sm text-emerald-900/90">
+                <p className="text-sm text-emerald-900">
                   Up to <span className="font-semibold">two heavy items</span>{' '}
                   are collected on{' '}
                   <span className="font-semibold">
@@ -378,11 +378,11 @@ function TrashInfoPageContent() {
                   </span>
                   .
                 </p>
-                <p className="text-sm text-emerald-900/90">
+                <p className="text-sm text-emerald-900">
                   Heavy trash/bulk waste includes items not generated on a
                   regular basis, such as:
                 </p>
-                <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-1.5">
+                <ul className="list-disc pl-5 text-sm text-emerald-900 space-y-1.5">
                   <li>
                     Furniture (couch, table, mattress, box spring, desk,
                     dresser, etc.).
@@ -416,7 +416,7 @@ function TrashInfoPageContent() {
                   <Leaf className="h-4 w-4 text-emerald-700" />
                   <span>Yard waste</span>
                 </h3>
-                <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-1.5">
+                <ul className="list-disc pl-5 text-sm text-emerald-900 space-y-1.5">
                   <li>
                     Place grass clippings in cans or bags under 50 lbs. Limit{' '}
                     <span className="font-semibold">
@@ -444,13 +444,13 @@ function TrashInfoPageContent() {
                   <AlertTriangle className="h-4 w-4 text-amber-700" />
                   <span>Items not accepted with regular collection</span>
                 </h3>
-                <p className="text-sm text-amber-900/90">
+                <p className="text-sm text-amber-900">
                   The following items are{' '}
                   <span className="font-semibold">not accepted</span> with
                   standard trash, bulk, or yard waste collection and require
                   special handling or separate disposal:
                 </p>
-                <ul className="grid gap-1.5 text-sm text-amber-900/90 md:grid-cols-2 list-disc pl-5">
+                <ul className="grid gap-1.5 text-sm text-amber-900 md:grid-cols-2 list-disc pl-5">
                   <li>Dirt / mulch</li>
                   <li>
                     Waste generated by a private contractor (remodeling,
@@ -469,7 +469,7 @@ function TrashInfoPageContent() {
                   <li>Sod</li>
                   <li>Lawn mowers</li>
                 </ul>
-                <p className="text-xs text-amber-900/90">
+                <p className="text-xs text-amber-900">
                   For help disposing of these materials safely, please contact
                   Texas Pride Disposal or refer to local hazardous waste and
                   recycling resources.
@@ -478,7 +478,7 @@ function TrashInfoPageContent() {
 
               {/* Large loads / quote */}
               <div className="pt-1">
-                <p className="text-sm text-emerald-900/90">
+                <p className="text-sm text-emerald-900">
                   If you have a larger-than-usual amount of household waste,
                   bulk waste, or yard waste,{' '}
                   <a
@@ -510,7 +510,7 @@ function TrashInfoPageContent() {
                 <span>Recycling guidelines &amp; accepted materials</span>
               </h2>
 
-              <p className="text-sm text-emerald-900/90">
+              <p className="text-sm text-emerald-900">
                 Please place recyclables in your recycling container{' '}
                 <span className="font-semibold">dry, clean, and loose</span>.
                 Do <span className="font-semibold">not bag</span> recyclables.
@@ -523,7 +523,7 @@ function TrashInfoPageContent() {
                   <h3 className="text-sm font-semibold text-emerald-950">
                     Paper products
                   </h3>
-                  <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-0.5">
+                  <ul className="list-disc pl-5 text-sm text-emerald-900 space-y-0.5">
                     <li>Newspaper, magazines, catalogs</li>
                     <li>Junk mail, envelopes, greeting cards</li>
                     <li>Wrapping paper (non-metallic)</li>
@@ -541,7 +541,7 @@ function TrashInfoPageContent() {
                   <h3 className="text-sm font-semibold text-emerald-950">
                     Plastics (please rinse)
                   </h3>
-                  <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-0.5">
+                  <ul className="list-disc pl-5 text-sm text-emerald-900 space-y-0.5">
                     <li>Plastics #1–#7 (where marked)</li>
                     <li>Milk and juice bottles; soda and water bottles</li>
                     <li>Shampoo, soap, bleach, and detergent containers</li>
@@ -558,7 +558,7 @@ function TrashInfoPageContent() {
                   <h3 className="text-sm font-semibold text-emerald-950">
                     Metals (please rinse)
                   </h3>
-                  <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-0.5">
+                  <ul className="list-disc pl-5 text-sm text-emerald-900 space-y-0.5">
                     <li>Soda, juice, and beer cans</li>
                     <li>Canned food and pet food cans</li>
                     <li>Aluminum foil and pie trays</li>
@@ -573,7 +573,7 @@ function TrashInfoPageContent() {
                   <h3 className="text-sm font-semibold text-emerald-950">
                     Glass (please rinse)
                   </h3>
-                  <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-0.5">
+                  <ul className="list-disc pl-5 text-sm text-emerald-900 space-y-0.5">
                     <li>Beer, wine, and soda bottles</li>
                     <li>Glass jars</li>
                   </ul>
@@ -587,11 +587,11 @@ function TrashInfoPageContent() {
                   <span className="text-red-700">not</span> accepted in
                   recycling
                 </h3>
-                <p className="text-sm text-emerald-900/90">
+                <p className="text-sm text-emerald-900">
                   These items should go in your regular household garbage, not
                   recycling:
                 </p>
-                <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-0.5">
+                <ul className="list-disc pl-5 text-sm text-emerald-900 space-y-0.5">
                   <li>Styrofoam, microwave dinner trays</li>
                   <li>Windows, mirrors, ceramics</li>
                   <li>
@@ -617,7 +617,7 @@ function TrashInfoPageContent() {
               <h2 className="h2 text-base md:text-lg text-emerald-950">
                 Get trash day reminders
               </h2>
-              <p className="text-xs md:text-sm text-emerald-900/85">
+              <p className="text-xs md:text-sm text-emerald-900">
                 Sign up to receive an email reminder the{' '}
                 <span className="font-semibold">day before</span>{' '}
                 Cypressdale trash collection (Wednesday &amp; Saturday) and
@@ -630,7 +630,7 @@ function TrashInfoPageContent() {
                 action="/api/trash-reminders"
               >
                 <div className="space-y-1">
-                  <label className="block text-xs font-medium text-emerald-900/90">
+                  <label className="block text-xs font-medium text-emerald-900">
                     Email address
                   </label>
                   <input
@@ -643,7 +643,7 @@ function TrashInfoPageContent() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-xs font-medium text-emerald-900/90">
+                  <label className="block text-xs font-medium text-emerald-900">
                     Street (optional)
                   </label>
                   <input
@@ -665,7 +665,6 @@ function TrashInfoPageContent() {
                   Sign me up
                 </button>
 
-                {/* CONTRAST-FIXED TEXT */}
                 <p className="text-[0.7rem] text-emerald-900">
                   Reminders are sent the afternoon before scheduled collection
                   days. You can unsubscribe anytime using the link in the email.
@@ -722,7 +721,7 @@ function TrashInfoPageContent() {
                   </a>
                 </p>
               </div>
-              <p className="text-xs text-emerald-900/80">
+              <p className="text-xs text-emerald-900">
                 For full guidelines, holiday schedules, service days, and pay
                 piles, please refer to the official information from Texas Pride
                 Disposal.
@@ -734,7 +733,7 @@ function TrashInfoPageContent() {
               <h2 className="h2 text-base md:text-lg text-emerald-950">
                 Related Cypressdale pages
               </h2>
-              <ul className="space-y-1 text-sm text-emerald-900/90">
+              <ul className="space-y-1 text-sm text-emerald-900">
                 <li>
                   <Link
                     href="/new-residents"
@@ -765,7 +764,7 @@ function TrashInfoPageContent() {
         </div>
 
         {/* Back link */}
-        <div className="text-xs text-emerald-900/80">
+        <div className="text-xs text-emerald-900">
           <Link
             href="/"
             className="font-medium text-emerald-800 hover:text-emerald-900 hover:underline"

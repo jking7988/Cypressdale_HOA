@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { CalendarPlus, Download } from 'lucide-react';
+import Link from 'next/link';
 
 type Event = {
   _id: string;
@@ -284,7 +285,7 @@ export default function EventsCalendar({ events }: Props) {
               >
                 ‹
               </button>
-              <div className="text-sm font-semibold text-emerald-900 flex items_center gap-2">
+              <div className="text-sm font-semibold text-emerald-900 flex items-center gap-2">
                 <span>{monthLabel}</span>
                 <span className="text-[10px] rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5">
                   Calendar
@@ -391,8 +392,13 @@ export default function EventsCalendar({ events }: Props) {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div>
-                          <div className="text-sm font-semibold text-brand-800">
-                            {e.title}
+                          <div className="font-semibold text-brand-800">
+                            <Link
+                              href={`/events/${e._id}`}
+                              className="hover:underline hover:text-emerald-800"
+                            >
+                              {e.title}
+                            </Link>
                           </div>
                           <div className="text-xs text-gray-600">
                             {timeLabel}
@@ -515,7 +521,7 @@ export default function EventsCalendar({ events }: Props) {
           <div className="flex items-center justify-between gap-2">
             <h2 className="h2 flex items-center gap-2">
               <span>Upcoming Events</span>
-              <span className="text-[11px] rounded_full bg-emerald-100 text-emerald-800 px-2 py-0.5">
+              <span className="text-[11px] rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5">
                 {events.length} total
               </span>
             </h2>
@@ -548,6 +554,7 @@ export default function EventsCalendar({ events }: Props) {
               return (
                 <div
                   key={e._id}
+                  id={e._id} // 👈 anchor for /events#<id> preview
                   className="card relative overflow-hidden border border-emerald-50 transition hover:-translate-y-[1px] hover:shadow-md"
                 >
                   {/* accent bar */}
@@ -578,7 +585,7 @@ export default function EventsCalendar({ events }: Props) {
                     </div>
 
                     {e.description && (
-                      <p className="text_sm mt-1 text-gray-800">
+                      <p className="text-sm mt-1 text-gray-800">
                         {e.description}
                       </p>
                     )}
@@ -617,7 +624,7 @@ export default function EventsCalendar({ events }: Props) {
                     </div>
 
                     {/* Icon-only calendar export buttons */}
-                    <div className="flex flex_wrap gap-2 mt-3">
+                    <div className="flex flex-wrap gap-2 mt-3">
                       <a
                         href={buildGoogleCalendarUrl(e)}
                         target="_blank"

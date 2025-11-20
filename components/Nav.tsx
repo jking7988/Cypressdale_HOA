@@ -14,6 +14,7 @@ export default function Nav() {
     { href: '/events', label: 'Events', icon: '📅' },
     { href: '/pool', label: 'Pool', icon: '🌊', highlight: true },
     { href: '/new-residents', label: 'New Residents', icon: '🧭' },
+    { href: '/local-area', label: 'Local Area Map', icon: '📍' },
     { href: '/trash', label: 'Trash & Recycling', icon: '🗑️' },
     { href: '/documents', label: 'Documents', icon: '📄' },
     { href: '/yard-of-the-month', label: 'Yard of the Month', icon: '🌿' },
@@ -83,17 +84,6 @@ export default function Nav() {
               </Link>
             );
           })}
-
-          {/* Admin link */}
-          <a
-            href="https://cypressdale-admin.sanity.studio/"
-            target="_blank"
-            rel="noreferrer"
-            className="px-3 py-2 text-sm rounded-lg text-accent-700 font-medium hover:bg-accent-50 flex items-center gap-1"
-          >
-            <span>🔐</span>
-            <span>Admin</span>
-          </a>
         </nav>
       </div>
 
@@ -112,16 +102,6 @@ export default function Nav() {
                 <span>{link.label}</span>
               </Link>
             ))}
-
-            <a
-              href="https://cypressdale-admin.sanity.studio/"
-              target="_blank"
-              rel="noreferrer"
-              onClick={() => setOpen(false)}
-              className="py-3 px-2 text-accent-600 hover:bg-accent-50 rounded font-medium flex items-center gap-2 text-base"
-            >
-              🔐 <span>Admin</span>
-            </a>
           </nav>
         </div>
       )}

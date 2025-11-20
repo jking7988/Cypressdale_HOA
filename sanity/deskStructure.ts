@@ -15,12 +15,18 @@ export const deskStructure = (S) =>
               S.listItem()
                 .title('Folders')
                 .child(
-                  S.documentTypeList('documentFolder').title('Document Folders'),
+                  S.documentTypeList('documentFolder')
+                    .title('Document Folders')
+                    .defaultOrdering([
+                      {field: 'sortOrder', direction: 'asc'},
+                      {field: 'title', direction: 'asc'},
+                    ]),
                 ),
               S.listItem()
                 .title('Files')
                 .child(
-                  S.documentTypeList('documentFile').title('Document Files'),
+                  S.documentTypeList('documentFile')
+                    .title('Document Files'),
                 ),
             ]),
         ),
@@ -28,12 +34,18 @@ export const deskStructure = (S) =>
       // Events
       S.listItem()
         .title('Events')
-        .child(S.documentTypeList('event').title('Events')),
+        .child(
+          S.documentTypeList('event')
+            .title('Events'),
+        ),
 
       // News
       S.listItem()
         .title('News')
-        .child(S.documentTypeList('post').title('News')),
+        .child(
+          S.documentTypeList('post')
+            .title('News'),
+        ),
 
       // Yard of the Month
       S.listItem()
@@ -51,7 +63,7 @@ export const deskStructure = (S) =>
             .title('Holiday Winners'),
         ),
 
-      // Everything else
+      // Everything else (no RSVP section)
       ...S.documentTypeListItems().filter((item) => {
         const id = String(item.getId());
         return ![
@@ -61,7 +73,7 @@ export const deskStructure = (S) =>
           'post',
           'yardWinner',
           'holidayWinner',
-          'rsvpResponse', // 👈 make sure RSVPs are NOT their own section
+          'rsvpResponse', // 👈 still excluded so it won't show as its own type
         ].includes(id);
       }),
     ]);

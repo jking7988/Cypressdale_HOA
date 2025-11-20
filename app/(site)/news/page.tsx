@@ -67,7 +67,7 @@ export default async function NewsPage() {
   <div className="relative min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-50 via-sky-50 to-emerald-50">
     {/* Soft newspaper texture */}
     <div
-      className="pointer-events-none fixed inset-0 -z-10 opacity-75"
+      className="pointer-events-none fixed inset-0 -z-10 opacity-"
       style={{
         backgroundImage: "url('/images/newsletter-bg.png')",
         backgroundSize: '512px 512px',
