@@ -9,30 +9,34 @@ import {deskStructure} from './deskStructure';
 import {teamChatTool} from './teamChatTool';
 import {Iframe} from 'sanity-plugin-iframe-pane';
 
-// 👇 Public URL of your Next app (no localhost here)
 const frontendHost = 'https://www.cypressdalehoa.com';
+const previewSecret = '8f4b1e3c-2f4f-4f6d-9f6e-5e3d6c7b8a9b'; // same as URL you showed
 
-// 👇 Same value as SANITY_PREVIEW_SECRET in the Next app
-const previewSecret = 'cypressdale-super-secret-123';
-
-function resolvePostPreviewUrl(doc) {
-  if (!doc?._id) return `${frontendHost}/news`;
-  return `${frontendHost}/api/preview?secret=${previewSecret}&type=post&id=${doc._id}`;
+function getBaseId(doc: any) {
+  const id = doc?._id || '';
+  return id.startsWith('drafts.') ? id.slice(7) : id;
 }
 
-function resolveEventPreviewUrl(doc) {
-  if (!doc?._id) return `${frontendHost}/events`;
-  return `${frontendHost}/api/preview?secret=${previewSecret}&type=event&id=${doc._id}`;
+function resolvePostPreviewUrl(doc: any) {
+  const baseId = getBaseId(doc);
+  if (!baseId) return `${frontendHost}/news`;
+  return `${frontendHost}/api/preview?secret=${previewSecret}&type=post&id=${baseId}`;
 }
 
-const defaultDocumentNode = (S, {schemaType}) => {
+function resolveEventPreviewUrl(doc: any) {
+  const baseId = getBaseId(doc);
+  if (!baseId) return `${frontendHost}/events`;
+  return `${frontendHost}/api/preview?secret=${previewSecret}&type=event&id=${baseId}`;
+}
+
+const defaultDocumentNode = (S: any, {schemaType}: {schemaType: string}) => {
   if (schemaType === 'post') {
     return S.document().views([
       S.view.form(),
       S.view
         .component(Iframe)
         .options({
-          url: (doc) => resolvePostPreviewUrl(doc),
+          url: (doc: any) => resolvePostPreviewUrl(doc),
           reload: {button: true},
         })
         .title('Preview'),
@@ -45,7 +49,7 @@ const defaultDocumentNode = (S, {schemaType}) => {
       S.view
         .component(Iframe)
         .options({
-          url: (doc) => resolveEventPreviewUrl(doc),
+          url: (doc: any) => resolveEventPreviewUrl(doc),
           reload: {button: true},
         })
         .title('Preview'),
