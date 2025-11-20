@@ -10,7 +10,7 @@ import {teamChatTool} from './teamChatTool';
 import {Iframe} from 'sanity-plugin-iframe-pane';
 
 const frontendHost = 'https://www.cypressdalehoa.com';
-const previewSecret = '8f4b1e3c-2f4f-4f6d-9f6e-5e3d6c7b8a9b'; // same as URL you showed
+const PREVIEW_SECRET = '8f4b1e3c-2f4f-4f6d-9f6e-5e3d6c7b8a9b'; // same as URL you showed
 
 function getBaseId(doc: any) {
   const id = doc?._id || '';
@@ -20,13 +20,13 @@ function getBaseId(doc: any) {
 function resolvePostPreviewUrl(doc: any) {
   const baseId = getBaseId(doc);
   if (!baseId) return `${frontendHost}/news`;
-  return `${frontendHost}/api/preview?secret=${previewSecret}&type=post&id=${baseId}`;
+  return `${frontendHost}/api/preview?secret=${PREVIEW_SECRET}&type=post&id=${baseId}`;
 }
 
 function resolveEventPreviewUrl(doc: any) {
   const baseId = getBaseId(doc);
   if (!baseId) return `${frontendHost}/events`;
-  return `${frontendHost}/api/preview?secret=${previewSecret}&type=event&id=${baseId}`;
+  return `${frontendHost}/api/preview?secret=${PREVIEW_SECRET}&type=event&id=${baseId}`;
 }
 
 const defaultDocumentNode = (S: any, {schemaType}: {schemaType: string}) => {
