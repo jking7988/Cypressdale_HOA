@@ -12,10 +12,29 @@ export default defineType({
       validation: rule => rule.required().max(160),
     }),
 
+    // ⭐ NEW: topic / category
+    defineField({
+      name: 'topic',
+      title: 'Topic',
+      type: 'string',
+      description: 'Used to show a badge and icon on the news detail page.',
+      options: {
+        list: [
+          {title: 'General update', value: 'general'},
+          {title: 'Elections / Board', value: 'elections'},
+          {title: 'Pool', value: 'pool'},
+          {title: 'Community event', value: 'events'},
+          {title: 'Maintenance / repairs', value: 'maintenance'},
+        ],
+        layout: 'radio', // or 'dropdown' if you prefer a select
+      },
+      initialValue: 'general',
+    }),
+
     defineField({
       name: 'excerpt',
       title: 'Excerpt',
-      description: 'Short teaser shown on the homepage and news list.',
+      description: 'Short teaser shown on the homepage and news list (and used as an “Important info” callout).',
       type: 'array',
       of: [
         defineArrayMember({
@@ -40,7 +59,7 @@ export default defineType({
       ],
     }),
 
-    // ⭐ NEW: date used for the calendar / deadline / effective date
+    // ⭐ Date used for calendar / deadlines / effective date
     defineField({
       name: 'newsDate',
       title: 'News date / deadline',

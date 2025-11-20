@@ -32,9 +32,13 @@ function toDateKey(dateStr: string | null): string | null {
 export default async function NewsPage() {
   const posts = await client.fetch<Post[]>(postsQuery);
 
-  // Group posts by date key: YYYY-MM-DD
+  // Lead story = first post (postsQuery should already return newest first)
+  const leadStory = posts[0] ?? null;
+  const remainingPosts = leadStory ? posts.slice(1) : posts;
+
+  // Group remaining posts by date key: YYYY-MM-DD
   const postsByDate = new Map<string, Post[]>();
-  for (const p of posts) {
+  for (const p of remainingPosts) {
     const key = toDateKey(getEffectiveDate(p));
     if (!key) continue;
     if (!postsByDate.has(key)) postsByDate.set(key, []);
@@ -60,111 +64,208 @@ export default async function NewsPage() {
   const dateKeysWithPosts = dateKeys;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <header className="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
-        <div>
-          <h1 className="h1 flex items-center gap-2">
-            <span>News &amp; Updates</span>
+  <div className="relative min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-50 via-sky-50 to-emerald-50">
+    {/* Soft newspaper texture */}
+    <div
+      className="pointer-events-none fixed inset-0 -z-10 opacity-75"
+      style={{
+        backgroundImage: "url('/images/newsletter-bg.png')",
+        backgroundSize: '512px 512px',
+        backgroundRepeat: 'repeat',
+        backgroundAttachment: 'fixed',
+      }}
+    />
+
+    {/* Light center glow so cards are extra readable */}
+    <div className="pointer-events-none fixed inset-0 -z-5 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.92),_rgba(255,255,255,0))]" />
+
+    {/* Page content */}
+    <div className="relative mx-auto w-full max-w-5xl px-4 py-8 space-y-6">
+        {/* Masthead / front-page header */}
+        <header className="space-y-3 border-b border-emerald-50 pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <span className="text-lg">🗞️</span>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
+                Cypressdale HOA — News &amp; Updates
+              </p>
+            </div>
+
             {posts.length > 0 && (
-              <span className="text-[11px] rounded-full bg-sky-100 text-sky-800 px-2 py-0.5">
-                {posts.length} post{posts.length === 1 ? '' : 's'}
+              <span className="inline-flex items-center rounded-full bg-emerald-50/80 border border-emerald-100 px-3 py-1 text-[11px] font-medium text-emerald-800">
+                {posts.length} active update{posts.length === 1 ? '' : 's'}
               </span>
             )}
-          </h1>
-          <p className="muted text-sm mt-1">
-            Official announcements, reminders, and updates from your Cypressdale HOA.
+          </div>
+
+          <div>
+            <h1 className="text-2xl md:text-3xl font-semibold text-brand-900 leading-tight">
+              Community News &amp; Official Announcements
+            </h1>
+            <p className="muted text-sm md:text-[15px] mt-1 max-w-2xl">
+              Stay informed about elections, meetings, maintenance, and neighborhood
+              happenings in Cypressdale. This page is your front page for HOA news.
+            </p>
+          </div>
+        </header>
+
+        {posts.length === 0 && (
+          <p className="muted text-sm">
+            No news posts have been published yet.
           </p>
-        </div>
-      </header>
+        )}
 
-      {posts.length === 0 && (
-        <p className="muted text-sm">No news posts have been published yet.</p>
-      )}
-
-      {posts.length > 0 && (
-        <section className="grid gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)] items-start">
-          {/* LEFT: posts grouped by date */}
-          <div className="space-y-4">
-            {Array.from(postsByDate.entries())
-              .sort(([a], [b]) => (a < b ? 1 : -1)) // newest date first
-              .map(([dateKey, dayPosts]) => {
-                const d = new Date(`${dateKey}T12:00:00.000Z`);
-                const heading = d.toLocaleDateString(undefined, {
-                  weekday: 'long',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                });
-
-                return (
-                  <div key={dateKey} className="space-y-3">
-                    <h2
-                      id={`news-${dateKey}`}
-                      className="scroll-mt-24 text-xs font-semibold text-gray-500 uppercase tracking-[0.18em]"
-                    >
-                      {heading}
+        {posts.length > 0 && (
+          <section className="grid gap-6 md:grid-cols-[minmax(0,1.7fr)_minmax(0,1.1fr)] items-start">
+            {/* LEFT COLUMN: Lead story + more updates */}
+            <div className="space-y-6">
+              {/* Lead story */}
+              {leadStory && (
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-sm font-semibold tracking-[0.18em] uppercase text-emerald-700">
+                      Lead Story
                     </h2>
+                    <Link
+                      href={`/news/${leadStory._id}`}
+                      className="text-[11px] text-emerald-700 hover:underline"
+                    >
+                      View full article →
+                    </Link>
+                  </div>
 
-                    <div className="grid gap-4">
-                      {dayPosts.map((p) => {
-                        const created = p._createdAt
-                          ? new Date(p._createdAt)
-                          : null;
-                        const href = `/news/${p._id}`;
+                  <Link href={`/news/${leadStory._id}`} className="group block">
+                    <article className="rounded-3xl border border-emerald-50 bg-white/95 shadow-sm px-4 py-4 md:px-5 md:py-5 transition hover:-translate-y-[1px] hover:shadow-md hover:border-emerald-100 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-lg md:text-xl font-semibold text-brand-900">
+                          {leadStory.title}
+                        </h3>
+                        {leadStory._createdAt && (
+                          <p className="text-[11px] text-gray-500 whitespace-nowrap">
+                            {new Date(leadStory._createdAt).toLocaleDateString(
+                              undefined,
+                              {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              },
+                            )}
+                          </p>
+                        )}
+                      </div>
+
+                      {leadStory.excerpt && (
+                        <div className="text-sm text-gray-700 mt-1 line-clamp-4">
+                          <PortableText value={leadStory.excerpt} />
+                        </div>
+                      )}
+
+                      <p className="mt-2 text-[11px] font-medium text-emerald-700 group-hover:underline">
+                        Read full update →
+                      </p>
+                    </article>
+                  </Link>
+                </section>
+              )}
+
+              {/* More updates by date */}
+              {postsByDate.size > 0 && (
+                <section className="space-y-4">
+                  <h2 className="text-sm font-semibold tracking-[0.18em] uppercase text-gray-600">
+                    More Updates
+                  </h2>
+
+                  <div className="space-y-4">
+                    {Array.from(postsByDate.entries())
+                      .sort(([a], [b]) => (a < b ? 1 : -1)) // newest date first
+                      .map(([dateKey, dayPosts]) => {
+                        const d = new Date(`${dateKey}T12:00:00.000Z`);
+                        const heading = d.toLocaleDateString(undefined, {
+                          weekday: 'long',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        });
 
                         return (
-                          <Link key={p._id} href={href} className="group">
-                            <article className="card flex flex-col gap-2 border border-emerald-50 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md hover:border-emerald-100">
-                              <div>
-                                <h3 className="text-base md:text-lg font-semibold text-brand-900 mb-0.5 flex items-center gap-1.5">
-                                  <span>🗞️</span>
-                                  <span>{p.title}</span>
-                                </h3>
-                                {created && (
-                                  <p className="text-[11px] text-gray-500">
-                                    {created.toLocaleDateString(undefined, {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      year: 'numeric',
-                                      hour: 'numeric',
-                                      minute: '2-digit',
-                                    })}
-                                  </p>
-                                )}
-                              </div>
+                          <div key={dateKey} className="space-y-2">
+                            <h3
+                              id={`news-${dateKey}`}
+                              className="scroll-mt-24 text-[11px] font-semibold text-gray-500 uppercase tracking-[0.18em]"
+                            >
+                              {heading}
+                            </h3>
 
-                              {p.excerpt && (
-                                <div className="text-sm text-gray-700 mt-2 line-clamp-3">
-                                  <PortableText value={p.excerpt} />
-                                </div>
-                              )}
+                            <div className="grid gap-3">
+                              {dayPosts.map((p) => {
+                                const created = p._createdAt
+                                  ? new Date(p._createdAt)
+                                  : null;
+                                const href = `/news/${p._id}`;
 
-                              <p className="mt-2 text-[11px] font-medium text-emerald-700 group-hover:underline">
-                                Read full update →
-                              </p>
-                            </article>
-                          </Link>
+                                return (
+                                  <Link key={p._id} href={href} className="group">
+                                    <article className="card flex flex-col gap-2 border border-emerald-50 shadow-sm bg-white/95 transition hover:-translate-y-[1px] hover:shadow-md hover:border-emerald-100">
+                                      <div>
+                                        <h4 className="text-sm md:text-base font-semibold text-brand-900 mb-0.5 flex items-center gap-1.5">
+                                          <span>📌</span>
+                                          <span>{p.title}</span>
+                                        </h4>
+                                        {created && (
+                                          <p className="text-[11px] text-gray-500">
+                                            {created.toLocaleDateString(
+                                              undefined,
+                                              {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                                hour: 'numeric',
+                                                minute: '2-digit',
+                                              },
+                                            )}
+                                          </p>
+                                        )}
+                                      </div>
+
+                                      {p.excerpt && (
+                                        <div className="text-[13px] text-gray-700 mt-1 line-clamp-3">
+                                          <PortableText value={p.excerpt} />
+                                        </div>
+                                      )}
+
+                                      <p className="mt-1 text-[11px] font-medium text-emerald-700 group-hover:underline">
+                                        Read full update →
+                                      </p>
+                                    </article>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </div>
                         );
                       })}
-                    </div>
                   </div>
-                );
-              })}
-          </div>
+                </section>
+              )}
+            </div>
 
-          {/* RIGHT: calendar + newsletter signup */}
-          <div className="space-y-4">
-            <NewsCalendar
-              baseDateIso={baseDateIso}
-              dateKeysWithPosts={dateKeysWithPosts}
-              postsForDate={postsForDate}
-            />
+            {/* RIGHT COLUMN: calendar + newsletter signup */}
+            <div className="space-y-4">
+              <div className="card border border-emerald-50 bg-white/95 shadow-sm">
+                <NewsCalendar
+                  baseDateIso={baseDateIso}
+                  dateKeysWithPosts={dateKeysWithPosts}
+                  postsForDate={postsForDate}
+                />
+              </div>
 
-            <NewsLetterSignup />
-          </div>
-        </section>
-      )}
+              <div className="card border border-emerald-50 bg-white/95 shadow-sm">
+                <NewsLetterSignup />
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

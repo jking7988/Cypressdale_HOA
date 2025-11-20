@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <!-- Just big green exclamation marks, no background -->
+  <g fill="#16a34a" opacity="0.22">
+    <!-- left exclamation -->
+    <g transform="translate(220,260) rotate(-30)">
+      <rect x="-40" y="-60" width="80" height="360" rx="30"></rect>
+      <circle cx="0" cy="340" r="48"></circle>
+    </g>
+
+    <!-- center exclamation -->
+    <g transform="translate(820,260) rotate(-30)">
+      <rect x="-45" y="-80" width="90" height="400" rx="32"></rect>
+      <circle cx="0" cy="360" r="52"></circle>
+    </g>
+
+    <!-- right exclamation -->
+    <g transform="translate(1420,260) rotate(-30)">
+      <rect x="-40" y="-60" width="80" height="360" rx="30"></rect>
+      <circle cx="0" cy="340" r="48"></circle>
+    </g>
+  </g>
+</svg>

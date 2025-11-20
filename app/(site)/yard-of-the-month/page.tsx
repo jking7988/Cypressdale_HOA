@@ -41,7 +41,7 @@ export default async function YardOfTheMonthPage() {
         }}
       />
 
-      {/* TIGHTER radial spotlight overlay */}
+      {/* Tighter radial spotlight, focused a bit above center (nice for hero section) */}
       <div
         className="fixed inset-0 -z-20 pointer-events-none"
         style={{
@@ -61,11 +61,23 @@ export default async function YardOfTheMonthPage() {
         }}
       />
 
-      {/* Gentle vertical gradient + slight blur for extra readability */}
+      {/* Gentle vertical gradient + slight blur for readability */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-b from-white/75 via-white/55 to-white/75 backdrop-blur-[1.5px]" />
 
       {/* Page content */}
-      <div className="relative mx-auto max-w-5xl px-4 py-10 space-y-8">
+      <div className="relative mx-auto w-full max-w-5xl px-4 py-8 md:py-10 space-y-6 md:space-y-8">
+        {/* Corner “vine” accents instead of a full border */}
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          {/* top-left vine */}
+          <div className="absolute -top-4 -left-3 md:-top-6 md:-left-4 h-14 w-16 md:h-20 md:w-24 bg-gradient-to-br from-emerald-300/75 via-emerald-200/0 to-transparent blur-md" />
+          {/* top-right vine */}
+          <div className="absolute -top-4 -right-3 md:-top-6 md:-right-4 h-14 w-16 md:h-20 md:w-24 bg-gradient-to-bl from-emerald-300/75 via-emerald-200/0 to-transparent blur-md" />
+          {/* bottom-left vine */}
+          <div className="absolute -bottom-4 -left-3 md:-bottom-6 md:-left-4 h-14 w-16 md:h-20 md:w-24 bg-gradient-to-tr from-amber-300/70 via-emerald-200/0 to-transparent blur-md" />
+          {/* bottom-right vine */}
+          <div className="absolute -bottom-4 -right-3 md:-bottom-6 md:-right-4 h-14 w-16 md:h-20 md:w-24 bg-gradient-to-tl from-amber-300/70 via-emerald-200/0 to-transparent blur-md" />
+        </div>
+
         {/* Page header */}
         <header className="space-y-3 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/80 px-4 py-1 text-xs font-medium text-emerald-50 shadow-sm">
@@ -165,7 +177,7 @@ export default async function YardOfTheMonthPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h2 className="h2 flex items-center gap-2 text-lg text-emerald-950">
-              <span className="text-base">🌼</span>
+              <span className="text-base">🏆</span>
               <span>Current Yard of the Month</span>
             </h2>
             <span className="text-xs rounded-full bg-white/85 text-emerald-900 px-3 py-1 border border-emerald-200/90">
@@ -233,7 +245,7 @@ export default async function YardOfTheMonthPage() {
         {pastWinners.length > 0 && (
           <section className="space-y-3">
             <h2 className="h2 text-lg text-emerald-950 flex items-center gap-2">
-              <span className="text-base">🌷</span>
+              <span className="text-base">🏆</span>
               <span>Past winners</span>
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
