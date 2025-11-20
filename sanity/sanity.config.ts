@@ -10,7 +10,9 @@ import {teamChatTool} from './teamChatTool';
 import {Iframe} from 'sanity-plugin-iframe-pane';
 
 const frontendHost = 'https://www.cypressdalehoa.com';
-const PREVIEW_SECRET = '8f4b1e3c-2f4f-4f6d-9f6e-5e3d6c7b8a9b'; // same as URL you showed
+
+// 👇 use this consistently
+const PREVIEW_SECRET = '8f4b1e3c-2f4f-4f6d-9f6e-5e3d6c7b8a9b';
 
 function getBaseId(doc: any) {
   const id = doc?._id || '';
