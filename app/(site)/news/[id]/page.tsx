@@ -16,6 +16,9 @@ type Post = {
   excerpt?: any;
   body?: any;
   _createdAt?: string;
+  layoutVariant?: 'standard' | 'narrow' | 'wide';
+  showRightSidebar?: boolean;
+  sections?: any[];
 };
 
 const postByIdQuery = groq`*[
@@ -27,7 +30,10 @@ const postByIdQuery = groq`*[
   topic,
   excerpt,
   body,
-  _createdAt
+  _createdAt,
+  layoutVariant,
+  showRightSidebar,
+  sections
 }`;
 
 const topicInfo: Record<
@@ -63,6 +69,7 @@ const topicInfo: Record<
 
 const ImportantDateBox = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900 flex items-start gap-2">
+    {/* change or remove this icon if you don't want the alarm clock */}
     <span className="text-lg">⏰</span>
     <div>{children}</div>
   </div>
@@ -88,13 +95,11 @@ export default async function NewsDetailPage(props: Props) {
       ? draftParam[0] === '1'
       : false;
 
-  // Only use previewClient when draft=1 AND a token exists
   const sanity =
     isDraft && process.env.SANITY_API_READ_TOKEN
       ? previewClient
       : client;
 
-  // 👈 THIS is what lets the query see the draft
   const draftId = `drafts.${id}`;
 
   const post = await sanity.fetch<Post | null>(postByIdQuery, {
@@ -106,6 +111,15 @@ export default async function NewsDetailPage(props: Props) {
   const created = post._createdAt ? new Date(post._createdAt) : null;
   const topic =
     (post.topic && topicInfo[post.topic]) || topicInfo['general'];
+
+  const layout = post.layoutVariant || 'standard';
+
+  const widthClass =
+    layout === 'narrow'
+      ? 'max-w-2xl'
+      : layout === 'wide'
+      ? 'max-w-5xl'
+      : 'max-w-3xl';
 
   return (
     <div className="relative min-h-[calc(100vh-5rem)]">
@@ -121,8 +135,10 @@ export default async function NewsDetailPage(props: Props) {
       {/* Soft overlay so content stays readable */}
       <div className="fixed inset-0 -z-20 bg-white/92 backdrop-blur-[1.5px]" />
 
-      {/* Page content container */}
-      <div className="relative mx-auto max-w-3xl px-4 py-6 md:py-8 space-y-4">
+      {/* Page content container, width controlled by layoutVariant */}
+      <div
+        className={`relative mx-auto px-4 py-6 md:py-8 space-y-4 ${widthClass}`}
+      >
         {/* Back link */}
         <div className="mb-1">
           <Link

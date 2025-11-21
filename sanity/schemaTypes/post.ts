@@ -12,12 +12,122 @@ export default defineType({
 
   fields: [
     defineField({
+      name: 'sections',
+      title: 'Page sections',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          name: 'textSection',
+          title: 'Text section',
+          fields: [
+            { name: 'title', type: 'string', title: 'Section title' },
+            {
+              name: 'alignment',
+              type: 'string',
+              title: 'Text alignment',
+              options: {
+                list: [
+                  { title: 'Left', value: 'left' },
+                  { title: 'Centered', value: 'center' },
+                ],
+                layout: 'radio',
+              },
+              initialValue: 'left',
+            },
+            { name: 'body', type: 'array', of: [{ type: 'block' }] },
+          ],
+        },
+        {
+          type: 'object',
+          name: 'imageWithText',
+          title: 'Image + text',
+          fields: [
+            { name: 'image', type: 'image', title: 'Image', options: { hotspot: true } },
+            {
+              name: 'imagePosition',
+              type: 'string',
+              title: 'Image position',
+              options: {
+                list: [
+                  { title: 'Left', value: 'left' },
+                  { title: 'Right', value: 'right' },
+                ],
+                layout: 'radio',
+              },
+              initialValue: 'left',
+            },
+            { name: 'body', type: 'array', of: [{ type: 'block' }] },
+          ],
+        },
+        {
+          type: 'object',
+          name: 'fullWidthCallout',
+          title: 'Full-width callout',
+          fields: [
+            { name: 'tone', type: 'string', title: 'Tone', options: {
+                list: [
+                  { title: 'Info', value: 'info' },
+                  { title: 'Warning', value: 'warning' },
+                  { title: 'Success', value: 'success' },
+                ],
+                layout: 'radio',
+              },
+              initialValue: 'info',
+            },
+            { name: 'body', type: 'array', of: [{ type: 'block' }] },
+          ],
+        },
+      ],
+    }),
+    defineField({
+      name: 'layoutVariant',
+      title: 'Page layout',
+      type: 'string',
+      description: 'Controls width and overall layout of the article page.',
+      initialValue: 'standard',
+      options: {
+        list: [
+          { title: 'Standard (default)', value: 'standard' },
+          { title: 'Narrow reading column', value: 'narrow' },
+          { title: 'Wide / full-width card', value: 'wide' },
+        ],
+        layout: 'radio',
+      },
+    }),
+
+    defineField({
+      name: 'showRightSidebar',
+      title: 'Show sidebar (calendar & signup)',
+      type: 'boolean',
+      initialValue: true,
+    }),
+    defineField({
+      name: 'topic',
+      title: 'Type of update',
+      type: 'string',
+      description: 'Controls the badge style on the website.',
+      initialValue: 'general',
+      options: {
+        list: [
+          {title: 'General update', value: 'general'},
+          {title: 'Elections', value: 'elections'},
+          {title: 'Pool update', value: 'pool'},
+          {title: 'Community event', value: 'events'},
+          {title: 'Maintenance', value: 'maintenance'},
+        ],
+        layout: 'radio', // shows as buttons
+      },
+      validation: rule => rule.required(),
+    }),
+    defineField({
       name: 'title',
       title: 'Title',
       type: 'string',
       group: 'content',
       validation: (rule) => rule.required(),
     }),
+    
     defineField({
       name: 'excerpt',
       title: 'Excerpt',
