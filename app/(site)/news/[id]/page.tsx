@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { groq } from 'next-sanity';
-import { client } from '@/lib/sanity.client';
+import { client, previewClient } from '@/lib/sanity.client';
 import { PortableText } from '@portabletext/react';
 import { portableTextComponents } from '@/components/portableTextComponents';
 import React from 'react';
@@ -66,18 +66,29 @@ const ImportantDateBox = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-// params is a Promise with the new Next behavior
+// ⬇️ Next 16 style: both params and searchParams come in as Promises
 type Props = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function NewsDetailPage(props: Props) {
-  // Unwrap the params Promise
   const { id } = await props.params;
   if (!id) return notFound();
 
-  // Simple published-only fetch
-  const post = await client.fetch<Post | null>(postByIdQuery, { id });
+  const searchParams = await props.searchParams;
+  const draftParam = searchParams?.draft;
+
+  const isDraft =
+    typeof draftParam === 'string'
+      ? draftParam === '1'
+      : Array.isArray(draftParam)
+      ? draftParam[0] === '1'
+      : false;
+
+  const sanity = isDraft ? previewClient : client;
+
+  const post = await sanity.fetch<Post | null>(postByIdQuery, { id });
   if (!post) return notFound();
 
   const created = post._createdAt ? new Date(post._createdAt) : null;

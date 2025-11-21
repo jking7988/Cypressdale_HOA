@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { client } from '@/lib/sanity.client';
+import { client, previewClient } from '@/lib/sanity.client';
 import { postsQuery } from '@/lib/queries';
 import { PortableText } from '@portabletext/react';
 import { NewsCalendar } from '@/components/NewsCalendar';
@@ -30,8 +30,19 @@ function toDateKey(dateStr: string | null): string | null {
   return dateStr.slice(0, 10); // "2025-11-24"
 }
 
-export default async function NewsPage() {
-  const posts = await client.fetch<Post[]>(postsQuery);
+// 👇 Next 16 passes searchParams as a Promise
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function NewsPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const isDraft = searchParams?.draft === '1';
+
+  // Use previewClient when ?draft=1, otherwise normal client
+  const sanity = isDraft ? previewClient : client;
+
+  const posts = await sanity.fetch<Post[]>(postsQuery);
 
   // Lead story = first post (postsQuery should already return newest first)
   const leadStory = posts[0] ?? null;

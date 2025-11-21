@@ -19,15 +19,13 @@ function getBaseId(doc: any) {
   return id.startsWith('drafts.') ? id.slice(7) : id;
 }
 
-function resolvePostPreviewUrl(doc: any) {
+function resolvePostPreviewUrl(doc) {
   const baseId = getBaseId(doc);
-  if (!baseId) return `${frontendHost}/news`;
   return `${frontendHost}/api/preview?secret=${PREVIEW_SECRET}&type=post&id=${baseId}`;
 }
 
-function resolveEventPreviewUrl(doc: any) {
+function resolveEventPreviewUrl(doc) {
   const baseId = getBaseId(doc);
-  if (!baseId) return `${frontendHost}/events`;
   return `${frontendHost}/api/preview?secret=${PREVIEW_SECRET}&type=event&id=${baseId}`;
 }
 
