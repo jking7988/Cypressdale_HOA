@@ -208,6 +208,105 @@ export default async function NewsDetailPage(props: Props) {
             </section>
           )}
 
+          {/* Dynamic sections from Sanity */}
+          {post.sections && post.sections.length > 0 && (
+            <div className="space-y-6 pt-4 border-t border-emerald-50">
+              {post.sections.map((section: any, idx: number) => {
+                switch (section._type) {
+                  case 'textSection': {
+                    const alignment =
+                      section.alignment === 'center' ? 'text-center' : 'text-left';
+
+                    return (
+                      <section key={idx} className={alignment}>
+                        {section.title && (
+                          <h2 className="text-lg font-semibold text-brand-900 mb-2">
+                            {section.title}
+                          </h2>
+                        )}
+                        {section.body && (
+                          <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
+                            <PortableText
+                              value={section.body}
+                              components={portableTextComponents}
+                            />
+                          </div>
+                        )}
+                      </section>
+                    );
+                  }
+
+                  case 'twoColumn': {
+                    return (
+                      <section
+                        key={idx}
+                        className="grid gap-6 md:grid-cols-2 items-start"
+                      >
+                        <div>
+                          {section.leftTitle && (
+                            <h2 className="text-base font-semibold text-brand-900 mb-1">
+                              {section.leftTitle}
+                            </h2>
+                          )}
+                          {section.leftBody && (
+                            <div className="text-sm leading-relaxed text-gray-800 space-y-3">
+                              <PortableText
+                                value={section.leftBody}
+                                components={portableTextComponents}
+                              />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          {section.rightTitle && (
+                            <h2 className="text-base font-semibold text-brand-900 mb-1">
+                              {section.rightTitle}
+                            </h2>
+                          )}
+                          {section.rightBody && (
+                            <div className="text-sm leading-relaxed text-gray-800 space-y-3">
+                              <PortableText
+                                value={section.rightBody}
+                                components={portableTextComponents}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </section>
+                    );
+                  }
+
+                  case 'callout': {
+                    const tone = section.tone || 'info';
+                    const toneClasses =
+                      tone === 'warning'
+                        ? 'bg-amber-50 border-amber-200 text-amber-900'
+                        : tone === 'success'
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                        : 'bg-sky-50 border-sky-200 text-sky-900';
+
+                    return (
+                      <section
+                        key={idx}
+                        className={`rounded-2xl border px-4 py-3 text-sm ${toneClasses}`}
+                      >
+                        {section.body && (
+                          <PortableText
+                            value={section.body}
+                            components={portableTextComponents}
+                          />
+                        )}
+                      </section>
+                    );
+                  }
+
+                  default:
+                    return null;
+                }
+              })}
+            </div>
+          )}
+
           {/* Footer */}
           <footer className="mt-4 pt-4 border-t border-emerald-50 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
             <span>Prepared by the Cypressdale HOA Board of Directors</span>

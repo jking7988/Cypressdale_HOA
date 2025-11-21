@@ -12,9 +12,32 @@ export default defineType({
 
   fields: [
     defineField({
+      name: 'title',
+      title: 'Title',
+      type: 'string',
+      group: 'content',
+      validation: (rule) => rule.required(),
+    }),
+    
+    defineField({
+      name: 'excerpt',
+      title: 'Excerpt',
+      type: 'array',
+      of: [{type: 'block'}],
+      group: 'content',
+    }),
+    defineField({
+      name: 'body',
+      title: 'Body',
+      type: 'array',
+      of: [{type: 'block'}],
+      group: 'content',
+    }),
+    defineField({
       name: 'sections',
       title: 'Page sections',
       type: 'array',
+      group: 'content',   // 
       of: [
         {
           type: 'object',
@@ -86,6 +109,7 @@ export default defineType({
       type: 'string',
       description: 'Controls width and overall layout of the article page.',
       initialValue: 'standard',
+      group: 'content',                   // 👈 add this
       options: {
         list: [
           { title: 'Standard (default)', value: 'standard' },
@@ -95,19 +119,21 @@ export default defineType({
         layout: 'radio',
       },
     }),
-
     defineField({
       name: 'showRightSidebar',
       title: 'Show sidebar (calendar & signup)',
       type: 'boolean',
       initialValue: true,
+      group: 'content',                   // 👈 add this
     }),
+
     defineField({
       name: 'topic',
       title: 'Type of update',
       type: 'string',
       description: 'Controls the badge style on the website.',
       initialValue: 'general',
+      group: 'content',                   // 👈 add this
       options: {
         list: [
           {title: 'General update', value: 'general'},
@@ -116,32 +142,11 @@ export default defineType({
           {title: 'Community event', value: 'events'},
           {title: 'Maintenance', value: 'maintenance'},
         ],
-        layout: 'radio', // shows as buttons
+        layout: 'radio',
       },
       validation: rule => rule.required(),
     }),
-    defineField({
-      name: 'title',
-      title: 'Title',
-      type: 'string',
-      group: 'content',
-      validation: (rule) => rule.required(),
-    }),
     
-    defineField({
-      name: 'excerpt',
-      title: 'Excerpt',
-      type: 'array',
-      of: [{type: 'block'}],
-      group: 'content',
-    }),
-    defineField({
-      name: 'body',
-      title: 'Body',
-      type: 'array',
-      of: [{type: 'block'}],
-      group: 'content',
-    }),
     defineField({
       name: 'publishedAt',
       title: 'Publish Date',
