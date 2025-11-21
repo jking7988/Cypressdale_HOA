@@ -33,7 +33,15 @@ const postByIdQuery = groq`*[
   _createdAt,
   layoutVariant,
   showRightSidebar,
-  sections
+  sections[]{
+    ...,
+    _type == "imageWithText" => {
+      ...,
+      // pull the actual URL + optional alt text
+      "imageUrl": image.asset->url,
+      "imageAlt": coalesce(image.alt, "")
+    }
+  }
 }`;
 
 const topicInfo: Record<
@@ -238,16 +246,18 @@ export default async function NewsDetailPage(props: Props) {
 
                   case 'imageWithText': {
                     const imageOnLeft = section.imagePosition === 'left';
+                    const imageUrl = section.imageUrl as string | undefined;
+                    const imageAlt = (section.imageAlt as string | undefined) || '';
 
                     return (
                       <section
                         key={idx}
                         className="grid gap-4 md:grid-cols-2 items-center"
                       >
-                        {imageOnLeft && section.image && (
+                        {imageOnLeft && imageUrl && (
                           <img
-                            src={section.image.asset?.url}
-                            alt={section.image.alt || section.title || ''}
+                            src={imageUrl}
+                            alt={imageAlt}
                             className="rounded-2xl shadow-sm"
                           />
                         )}
@@ -259,10 +269,10 @@ export default async function NewsDetailPage(props: Props) {
                           />
                         </div>
 
-                        {!imageOnLeft && section.image && (
+                        {!imageOnLeft && imageUrl && (
                           <img
-                            src={section.image.asset?.url}
-                            alt={section.image.alt || section.title || ''}
+                            src={imageUrl}
+                            alt={imageAlt}
                             className="rounded-2xl shadow-sm"
                           />
                         )}
