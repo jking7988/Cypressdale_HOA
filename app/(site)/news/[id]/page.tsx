@@ -18,8 +18,10 @@ type Post = {
   _createdAt?: string;
 };
 
-// Match on _id only, because your list page links with _id
-const postByIdQuery = groq`*[_type == "post" && _id == $id][0]{
+const postByIdQuery = groq`*[
+  _type == "post" &&
+  (_id == $id || _id == $draftId)
+] | order(_id desc)[0]{
   _id,
   title,
   topic,
@@ -66,7 +68,7 @@ const ImportantDateBox = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-// ⬇️ Next 16 style: both params and searchParams come in as Promises
+// Next 16 style: both params and searchParams come in as Promises
 type Props = {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -86,9 +88,19 @@ export default async function NewsDetailPage(props: Props) {
       ? draftParam[0] === '1'
       : false;
 
-  const sanity = isDraft ? previewClient : client;
+  // Only use previewClient when draft=1 AND a token exists
+  const sanity =
+    isDraft && process.env.SANITY_API_READ_TOKEN
+      ? previewClient
+      : client;
 
-  const post = await sanity.fetch<Post | null>(postByIdQuery, { id });
+  // 👈 THIS is what lets the query see the draft
+  const draftId = `drafts.${id}`;
+
+  const post = await sanity.fetch<Post | null>(postByIdQuery, {
+    id,
+    draftId,
+  });
   if (!post) return notFound();
 
   const created = post._createdAt ? new Date(post._createdAt) : null;

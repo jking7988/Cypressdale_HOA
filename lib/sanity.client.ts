@@ -14,5 +14,5 @@ export const client = createClient({
 export const previewClient = createClient({
   ...config,
   useCdn: false,
-  token: process.env.SANITY_API_READ_TOKEN!, // set in Vercel
+  token: process.env.SANITY_API_READ_TOKEN, // set in Vercel
 });
