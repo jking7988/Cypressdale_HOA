@@ -37,7 +37,6 @@ const postByIdQuery = groq`*[
     ...,
     _type == "imageWithText" => {
       ...,
-      // pull the actual URL + optional alt text
       "imageUrl": image.asset->url,
       "imageAlt": coalesce(image.alt, "")
     }
@@ -77,11 +76,41 @@ const topicInfo: Record<
 
 const ImportantDateBox = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900 flex items-start gap-2">
-    {/* change or remove this icon if you don't want the alarm clock */}
     <span className="text-lg">⏰</span>
     <div>{children}</div>
   </div>
 );
+
+type SectionColorScheme =
+  | 'plain'
+  | 'emerald'
+  | 'sky'
+  | 'amber'
+  | 'rose'
+  | 'slate'
+  | undefined;
+
+function colorSchemeToClasses(
+  scheme: SectionColorScheme,
+  fallback = '',
+) {
+  if (!scheme || scheme === 'plain') return fallback;
+
+  switch (scheme) {
+    case 'emerald':
+      return 'bg-emerald-50 border-emerald-200 text-emerald-900';
+    case 'sky':
+      return 'bg-sky-50 border-sky-200 text-sky-900';
+    case 'amber':
+      return 'bg-amber-50 border-amber-200 text-amber-900';
+    case 'rose':
+      return 'bg-rose-50 border-rose-200 text-rose-900';
+    case 'slate':
+      return 'bg-slate-50 border-slate-200 text-slate-900';
+    default:
+      return fallback;
+  }
+}
 
 // Next 16 style: both params and searchParams come in as Promises
 type Props = {
@@ -223,10 +252,26 @@ export default async function NewsDetailPage(props: Props) {
                 switch (section._type) {
                   case 'textSection': {
                     const alignment =
-                      section.alignment === 'center' ? 'text-center' : 'text-left';
+                      section.alignment === 'center'
+                        ? 'text-center'
+                        : 'text-left';
+
+                    const colorClasses = colorSchemeToClasses(
+                      section.colorScheme as SectionColorScheme,
+                      '',
+                    );
+
+                    const wrapperClasses = [
+                      alignment,
+                      colorClasses &&
+                        'rounded-2xl border px-4 py-3 md:px-6 md:py-4 mt-2',
+                      colorClasses,
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
 
                     return (
-                      <section key={idx} className={alignment}>
+                      <section key={idx} className={wrapperClasses}>
                         {section.title && (
                           <h2 className="text-lg font-semibold text-brand-900 mb-2">
                             {section.title}
@@ -247,13 +292,25 @@ export default async function NewsDetailPage(props: Props) {
                   case 'imageWithText': {
                     const imageOnLeft = section.imagePosition === 'left';
                     const imageUrl = section.imageUrl as string | undefined;
-                    const imageAlt = (section.imageAlt as string | undefined) || '';
+                    const imageAlt =
+                      (section.imageAlt as string | undefined) || '';
+
+                    const colorClasses = colorSchemeToClasses(
+                      section.colorScheme as SectionColorScheme,
+                      '',
+                    );
+
+                    const wrapperClasses = [
+                      'grid gap-4 md:grid-cols-2 items-center',
+                      colorClasses &&
+                        'rounded-2xl border px-4 py-3 md:px-5 md:py-4',
+                      colorClasses,
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
 
                     return (
-                      <section
-                        key={idx}
-                        className="grid gap-4 md:grid-cols-2 items-center"
-                      >
+                      <section key={idx} className={wrapperClasses}>
                         {imageOnLeft && imageUrl && (
                           <img
                             src={imageUrl}
@@ -282,42 +339,23 @@ export default async function NewsDetailPage(props: Props) {
 
                   case 'fullWidthCallout': {
                     const tone = section.tone || 'info';
-                    const scheme = section.colorScheme as
-                      | 'sky'
-                      | 'emerald'
-                      | 'amber'
-                      | 'rose'
-                      | 'slate'
-                      | undefined;
 
-                    // If editor picked a scheme, use that.
-                    // Otherwise fall back to tone-based colors.
-                    let toneClasses: string;
+                    const toneFallback =
+                      tone === 'warning'
+                        ? 'bg-amber-50 border-amber-200 text-amber-900'
+                        : tone === 'success'
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                        : 'bg-sky-50 border-sky-200 text-sky-900';
 
-                    if (scheme === 'sky') {
-                      toneClasses = 'bg-sky-50 border-sky-200 text-sky-900';
-                    } else if (scheme === 'emerald') {
-                      toneClasses = 'bg-emerald-50 border-emerald-200 text-emerald-900';
-                    } else if (scheme === 'amber') {
-                      toneClasses = 'bg-amber-50 border-amber-200 text-amber-900';
-                    } else if (scheme === 'rose') {
-                      toneClasses = 'bg-rose-50 border-rose-200 text-rose-900';
-                    } else if (scheme === 'slate') {
-                      toneClasses = 'bg-slate-50 border-slate-200 text-slate-900';
-                    } else {
-                      // fallback to your existing tone mapping
-                      toneClasses =
-                        tone === 'warning'
-                          ? 'bg-amber-50 border-amber-200 text-amber-900'
-                          : tone === 'success'
-                          ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                          : 'bg-sky-50 border-sky-200 text-sky-900';
-                    }
+                    const colorClasses = colorSchemeToClasses(
+                      section.colorScheme as SectionColorScheme,
+                      toneFallback,
+                    );
 
                     return (
                       <section
                         key={idx}
-                        className={`rounded-2xl border px-4 py-3 text-sm ${toneClasses}`}
+                        className={`rounded-2xl border px-4 py-3 text-sm ${colorClasses}`}
                       >
                         {section.body && (
                           <PortableText

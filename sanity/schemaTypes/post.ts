@@ -1,5 +1,17 @@
 import {defineField, defineType} from 'sanity';
 
+const sectionColorOptions = {
+  list: [
+    { title: 'Plain (no background)', value: 'plain' },
+    { title: 'Emerald', value: 'emerald' },
+    { title: 'Sky', value: 'sky' },
+    { title: 'Amber', value: 'amber' },
+    { title: 'Rose', value: 'rose' },
+    { title: 'Slate', value: 'slate' },
+  ],
+  layout: 'radio',
+};
+
 export default defineType({
   name: 'post',
   title: 'Post / News',
@@ -37,8 +49,9 @@ export default defineType({
       name: 'sections',
       title: 'Page sections',
       type: 'array',
-      group: 'content',   // 
+      group: 'content',
       of: [
+        // TEXT SECTION
         {
           type: 'object',
           name: 'textSection',
@@ -58,15 +71,29 @@ export default defineType({
               },
               initialValue: 'left',
             },
+            {
+              name: 'colorScheme',
+              title: 'Color',
+              type: 'string',
+              description: 'Background color for this text section.',
+              options: sectionColorOptions,
+            },
             { name: 'body', type: 'array', of: [{ type: 'block' }] },
           ],
         },
+
+        // IMAGE + TEXT
         {
           type: 'object',
           name: 'imageWithText',
           title: 'Image + text',
           fields: [
-            { name: 'image', type: 'image', title: 'Image', options: { hotspot: true } },
+            {
+              name: 'image',
+              type: 'image',
+              title: 'Image',
+              options: { hotspot: true },
+            },
             {
               name: 'imagePosition',
               type: 'string',
@@ -80,9 +107,18 @@ export default defineType({
               },
               initialValue: 'left',
             },
+            {
+              name: 'colorScheme',
+              title: 'Color',
+              type: 'string',
+              description: 'Background color behind this image + text block.',
+              options: sectionColorOptions,
+            },
             { name: 'body', type: 'array', of: [{ type: 'block' }] },
           ],
         },
+
+        // FULL-WIDTH CALLOUT
         {
           type: 'object',
           name: 'fullWidthCallout',
@@ -102,30 +138,19 @@ export default defineType({
               },
               initialValue: 'info',
             },
-
-            // 👇 NEW: simple color scheme selector
             {
               name: 'colorScheme',
-              title: 'Color scheme (optional)',
+              title: 'Color',
               type: 'string',
-              description: 'Override the default colors for this callout.',
-              options: {
-                list: [
-                  { title: 'Sky', value: 'sky' },
-                  { title: 'Emerald', value: 'emerald' },
-                  { title: 'Amber', value: 'amber' },
-                  { title: 'Rose', value: 'rose' },
-                  { title: 'Slate', value: 'slate' },
-                ],
-                layout: 'radio',
-              },
+              description:
+                'Override the default tone colors. Leave blank to use tone.',
+              options: sectionColorOptions,
             },
-
-            { 
-              name: 'body', 
-              type: 'array', 
+            {
+              name: 'body',
+              type: 'array',
               title: 'Text',
-              of: [{ type: 'block' }] 
+              of: [{ type: 'block' }],
             },
           ],
         },
