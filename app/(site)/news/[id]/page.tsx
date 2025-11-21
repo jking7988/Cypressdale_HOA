@@ -236,47 +236,41 @@ export default async function NewsDetailPage(props: Props) {
                     );
                   }
 
-                  case 'twoColumn': {
+                  case 'imageWithText': {
+                    const imageOnLeft = section.imagePosition === 'left';
+
                     return (
                       <section
                         key={idx}
-                        className="grid gap-6 md:grid-cols-2 items-start"
+                        className="grid gap-4 md:grid-cols-2 items-center"
                       >
-                        <div>
-                          {section.leftTitle && (
-                            <h2 className="text-base font-semibold text-brand-900 mb-1">
-                              {section.leftTitle}
-                            </h2>
-                          )}
-                          {section.leftBody && (
-                            <div className="text-sm leading-relaxed text-gray-800 space-y-3">
-                              <PortableText
-                                value={section.leftBody}
-                                components={portableTextComponents}
-                              />
-                            </div>
-                          )}
+                        {imageOnLeft && section.image && (
+                          <img
+                            src={section.image.asset?.url}
+                            alt={section.image.alt || section.title || ''}
+                            className="rounded-2xl shadow-sm"
+                          />
+                        )}
+
+                        <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
+                          <PortableText
+                            value={section.body}
+                            components={portableTextComponents}
+                          />
                         </div>
-                        <div>
-                          {section.rightTitle && (
-                            <h2 className="text-base font-semibold text-brand-900 mb-1">
-                              {section.rightTitle}
-                            </h2>
-                          )}
-                          {section.rightBody && (
-                            <div className="text-sm leading-relaxed text-gray-800 space-y-3">
-                              <PortableText
-                                value={section.rightBody}
-                                components={portableTextComponents}
-                              />
-                            </div>
-                          )}
-                        </div>
+
+                        {!imageOnLeft && section.image && (
+                          <img
+                            src={section.image.asset?.url}
+                            alt={section.image.alt || section.title || ''}
+                            className="rounded-2xl shadow-sm"
+                          />
+                        )}
                       </section>
                     );
                   }
 
-                  case 'callout': {
+                  case 'fullWidthCallout': {
                     const tone = section.tone || 'info';
                     const toneClasses =
                       tone === 'warning'
