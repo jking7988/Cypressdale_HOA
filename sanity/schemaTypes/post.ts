@@ -88,7 +88,11 @@ export default defineType({
           name: 'fullWidthCallout',
           title: 'Full-width callout',
           fields: [
-            { name: 'tone', type: 'string', title: 'Tone', options: {
+            {
+              name: 'tone',
+              type: 'string',
+              title: 'Tone',
+              options: {
                 list: [
                   { title: 'Info', value: 'info' },
                   { title: 'Warning', value: 'warning' },
@@ -98,7 +102,31 @@ export default defineType({
               },
               initialValue: 'info',
             },
-            { name: 'body', type: 'array', of: [{ type: 'block' }] },
+
+            // 👇 NEW: simple color scheme selector
+            {
+              name: 'colorScheme',
+              title: 'Color scheme (optional)',
+              type: 'string',
+              description: 'Override the default colors for this callout.',
+              options: {
+                list: [
+                  { title: 'Sky', value: 'sky' },
+                  { title: 'Emerald', value: 'emerald' },
+                  { title: 'Amber', value: 'amber' },
+                  { title: 'Rose', value: 'rose' },
+                  { title: 'Slate', value: 'slate' },
+                ],
+                layout: 'radio',
+              },
+            },
+
+            { 
+              name: 'body', 
+              type: 'array', 
+              title: 'Text',
+              of: [{ type: 'block' }] 
+            },
           ],
         },
       ],

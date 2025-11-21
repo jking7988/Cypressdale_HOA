@@ -272,12 +272,37 @@ export default async function NewsDetailPage(props: Props) {
 
                   case 'fullWidthCallout': {
                     const tone = section.tone || 'info';
-                    const toneClasses =
-                      tone === 'warning'
-                        ? 'bg-amber-50 border-amber-200 text-amber-900'
-                        : tone === 'success'
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                        : 'bg-sky-50 border-sky-200 text-sky-900';
+                    const scheme = section.colorScheme as
+                      | 'sky'
+                      | 'emerald'
+                      | 'amber'
+                      | 'rose'
+                      | 'slate'
+                      | undefined;
+
+                    // If editor picked a scheme, use that.
+                    // Otherwise fall back to tone-based colors.
+                    let toneClasses: string;
+
+                    if (scheme === 'sky') {
+                      toneClasses = 'bg-sky-50 border-sky-200 text-sky-900';
+                    } else if (scheme === 'emerald') {
+                      toneClasses = 'bg-emerald-50 border-emerald-200 text-emerald-900';
+                    } else if (scheme === 'amber') {
+                      toneClasses = 'bg-amber-50 border-amber-200 text-amber-900';
+                    } else if (scheme === 'rose') {
+                      toneClasses = 'bg-rose-50 border-rose-200 text-rose-900';
+                    } else if (scheme === 'slate') {
+                      toneClasses = 'bg-slate-50 border-slate-200 text-slate-900';
+                    } else {
+                      // fallback to your existing tone mapping
+                      toneClasses =
+                        tone === 'warning'
+                          ? 'bg-amber-50 border-amber-200 text-amber-900'
+                          : tone === 'success'
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                          : 'bg-sky-50 border-sky-200 text-sky-900';
+                    }
 
                     return (
                       <section
