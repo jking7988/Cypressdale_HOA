@@ -35,6 +35,8 @@ const postByIdQuery = groq`*[
   showRightSidebar,
   sections[]{
     ...,
+    // expose section color as a simple hex string
+    "sectionColorHex": sectionColor.hex,
     _type == "imageWithText" => {
       ...,
       "imageUrl": image.asset->url,
@@ -292,30 +294,13 @@ export default async function NewsDetailPage(props: Props) {
                 switch (section._type) {
                   case 'textSection': {
                     const alignment =
-                      section.alignment === 'center'
-                        ? 'text-center'
-                        : 'text-left';
+                      section.alignment === 'center' ? 'text-center' : 'text-left';
 
-                    const colorClasses = colorSchemeToClasses(
-                      section.colorScheme as SectionColorScheme,
-                      '',
-                    );
+                    const widthClasses = sectionWidthClasses(section.width as SectionWidth);
+                    const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
+                    const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
 
-                    const widthClasses = sectionWidthClasses(
-                      section.width as SectionWidth,
-                    );
-
-                    const spacingClasses = sectionSpacingClasses(
-                      section.spacing as SectionSpacing,
-                    );
-
-                    const borderClasses = sectionBorderClasses(
-                      section.borderStyle as SectionBorder,
-                    );
-
-                    const hasCard = Boolean(
-                      colorClasses || section.borderStyle,
-                    );
+                    const hasCard = Boolean(section.sectionColorHex || section.borderStyle);
 
                     const wrapperClasses = [
                       alignment,
@@ -323,13 +308,19 @@ export default async function NewsDetailPage(props: Props) {
                       hasCard && 'rounded-2xl px-4 md:px-6 mt-2',
                       hasCard && spacingClasses,
                       hasCard && borderClasses,
-                      hasCard && colorClasses,
                     ]
                       .filter(Boolean)
                       .join(' ');
 
+                    const style: React.CSSProperties = {};
+
+                    if (section.sectionColorHex) {
+                      style.backgroundColor = section.sectionColorHex;           // 👈 bg color
+                      style.borderColor = section.sectionColorHex;               // 👈 border color
+                    }
+
                     return (
-                      <section key={idx} className={wrapperClasses}>
+                      <section key={idx} className={wrapperClasses} style={style}>
                         {section.title && (
                           <h2 className="text-lg font-semibold text-brand-900 mb-2">
                             {section.title}
@@ -385,8 +376,14 @@ export default async function NewsDetailPage(props: Props) {
                       .filter(Boolean)
                       .join(' ');
 
+                      const style: React.CSSProperties = {};
+                      if (section.sectionColorHex) {
+                        style.backgroundColor = section.sectionColorHex;
+                        style.borderColor = section.sectionColorHex;
+                      }
+
                     return (
-                      <section key={idx} className={wrapperClasses}>
+                      <section key={idx} className={wrapperClasses} style={style}>
                         {imageOnLeft && imageUrl && (
                           <img
                             src={imageUrl}

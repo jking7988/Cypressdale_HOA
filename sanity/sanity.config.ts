@@ -8,6 +8,7 @@ import schemaTypes from './schemaTypes';
 import {deskStructure} from './deskStructure';
 import {teamChatTool} from './teamChatTool';
 import {Iframe} from 'sanity-plugin-iframe-pane';
+import {colorInput} from '@sanity/color-input'; 
 
 const frontendHost = 'https://www.cypressdalehoa.com';
 
@@ -73,6 +74,7 @@ export default defineConfig({
     }),
     visionTool(),
     teamChatTool(),
+    colorInput(),
   ],
 
   schema: {
