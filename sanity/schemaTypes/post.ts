@@ -1,3 +1,4 @@
+// schemas/post.ts
 import {defineField, defineType} from 'sanity';
 
 export default defineType({
@@ -6,12 +7,11 @@ export default defineType({
   type: 'document',
 
   groups: [
-    { name: 'content', title: 'Content', default: true },
-    { name: 'meta', title: 'Meta' },
+    {name: 'content', title: 'Content', default: true},
+    {name: 'meta', title: 'Meta'},
   ],
 
   fields: [
-    // MAIN FIELDS
     defineField({
       name: 'title',
       title: 'Title',
@@ -24,7 +24,7 @@ export default defineType({
       name: 'excerpt',
       title: 'Excerpt',
       type: 'array',
-      of: [{ type: 'block' }],
+      of: [{type: 'block'}],
       group: 'content',
     }),
 
@@ -32,7 +32,7 @@ export default defineType({
       name: 'body',
       title: 'Body',
       type: 'array',
-      of: [{ type: 'block' }],
+      of: [{type: 'block'}],
       group: 'content',
     }),
 
@@ -51,7 +51,7 @@ export default defineType({
           name: 'textSection',
           title: 'Text section',
           fields: [
-            { name: 'title', type: 'string', title: 'Section title' },
+            {name: 'title', type: 'string', title: 'Section title'},
 
             {
               name: 'alignment',
@@ -59,21 +59,40 @@ export default defineType({
               title: 'Text alignment',
               options: {
                 list: [
-                  { title: 'Left', value: 'left' },
-                  { title: 'Centered', value: 'center' },
-                  { title: 'Right', value: 'right' },
+                  {title: 'Left', value: 'left'},
+                  {title: 'Centered', value: 'center'},
+                  {title: 'Right', value: 'right'},
                 ],
                 layout: 'radio',
               },
               initialValue: 'left',
             },
 
-            // COLORS
+            // 🎨 separate background + border colors
             {
               name: 'backgroundColor',
               title: 'Background color',
               type: 'color',
               description: 'Fill color behind this section.',
+            },
+            {
+              name: 'backgroundColorEnd',
+              title: 'Secondary background color (for gradient)',
+              type: 'color',
+              description:
+                'If set, creates a gradient from Background color → this color.',
+            },
+            {
+              name: 'gradientDirection',
+              title: 'Gradient direction',
+              type: 'string',
+              options: {
+                list: [
+                  {title: 'Vertical (top → bottom)', value: 'to bottom'},
+                  {title: 'Horizontal (left → right)', value: 'to right'},
+                ],
+                layout: 'radio',
+              },
             },
             {
               name: 'borderColor',
@@ -82,16 +101,15 @@ export default defineType({
               description: 'Outline color for this section.',
             },
 
-            // LAYOUT CONTROLS
             {
               name: 'borderStyle',
-              title: 'Border',
+              title: 'Border strength',
               type: 'string',
               options: {
                 list: [
-                  { title: 'None', value: 'none' },
-                  { title: 'Subtle', value: 'subtle' },
-                  { title: 'Strong', value: 'strong' },
+                  {title: 'None', value: 'none'},
+                  {title: 'Subtle', value: 'subtle'},
+                  {title: 'Strong', value: 'strong'},
                 ],
                 layout: 'radio',
               },
@@ -103,34 +121,34 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  { title: 'Default', value: 'default' },
-                  { title: 'Narrow', value: 'narrow' },
-                  { title: 'Wide', value: 'wide' },
-                  { title: 'Full bleed', value: 'full' },
+                  {title: 'Default', value: 'default'},
+                  {title: 'Narrow', value: 'narrow'},
+                  {title: 'Wide', value: 'wide'},
+                  {title: 'Full bleed', value: 'full'},
                 ],
                 layout: 'radio',
               },
             },
             {
               name: 'spacing',
-              title: 'Spacing',
+              title: 'Vertical spacing',
               type: 'string',
               options: {
                 list: [
-                  { title: 'Tight', value: 'tight' },
-                  { title: 'Normal', value: 'normal' },
-                  { title: 'Spacious', value: 'spacious' },
+                  {title: 'Tight', value: 'tight'},
+                  {title: 'Normal', value: 'normal'},
+                  {title: 'Spacious', value: 'spacious'},
                 ],
                 layout: 'radio',
               },
             },
 
-            { name: 'body', type: 'array', of: [{ type: 'block' }] },
+            {name: 'body', type: 'array', of: [{type: 'block'}]},
           ],
         },
 
         //
-        // IMAGE + TEXT SECTION
+        // IMAGE + TEXT
         //
         {
           type: 'object',
@@ -141,7 +159,7 @@ export default defineType({
               name: 'image',
               type: 'image',
               title: 'Image',
-              options: { hotspot: true },
+              options: {hotspot: true},
             },
             {
               name: 'imagePosition',
@@ -149,39 +167,53 @@ export default defineType({
               title: 'Image position',
               options: {
                 list: [
-                  { title: 'Left', value: 'left' },
-                  { title: 'Centered', value: 'center' },
-                  { title: 'Right', value: 'right' },
+                  {title: 'Left', value: 'left'},
+                  {title: 'Centered', value: 'center'},
+                  {title: 'Right', value: 'right'},
                 ],
                 layout: 'radio',
               },
               initialValue: 'left',
             },
 
-            // COLORS
+            // 🎨 colors
             {
               name: 'backgroundColor',
               title: 'Background color',
               type: 'color',
-              description: 'Fill color behind this section.',
+            },
+            {
+              name: 'backgroundColorEnd',
+              title: 'Secondary background color (for gradient)',
+              type: 'color',
+            },
+            {
+              name: 'gradientDirection',
+              title: 'Gradient direction',
+              type: 'string',
+              options: {
+                list: [
+                  {title: 'Vertical (top → bottom)', value: 'to bottom'},
+                  {title: 'Horizontal (left → right)', value: 'to right'},
+                ],
+                layout: 'radio',
+              },
             },
             {
               name: 'borderColor',
               title: 'Border color',
               type: 'color',
-              description: 'Outline color for this section.',
             },
 
-            // LAYOUT CONTROLS
             {
               name: 'borderStyle',
-              title: 'Border',
+              title: 'Border strength',
               type: 'string',
               options: {
                 list: [
-                  { title: 'None', value: 'none' },
-                  { title: 'Subtle', value: 'subtle' },
-                  { title: 'Strong', value: 'strong' },
+                  {title: 'None', value: 'none'},
+                  {title: 'Subtle', value: 'subtle'},
+                  {title: 'Strong', value: 'strong'},
                 ],
                 layout: 'radio',
               },
@@ -193,29 +225,29 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  { title: 'Default', value: 'default' },
-                  { title: 'Narrow', value: 'narrow' },
-                  { title: 'Wide', value: 'wide' },
-                  { title: 'Full bleed', value: 'full' },
+                  {title: 'Default', value: 'default'},
+                  {title: 'Narrow', value: 'narrow'},
+                  {title: 'Wide', value: 'wide'},
+                  {title: 'Full bleed', value: 'full'},
                 ],
                 layout: 'radio',
               },
             },
             {
               name: 'spacing',
-              title: 'Spacing',
+              title: 'Vertical spacing',
               type: 'string',
               options: {
                 list: [
-                  { title: 'Tight', value: 'tight' },
-                  { title: 'Normal', value: 'normal' },
-                  { title: 'Spacious', value: 'spacious' },
+                  {title: 'Tight', value: 'tight'},
+                  {title: 'Normal', value: 'normal'},
+                  {title: 'Spacious', value: 'spacious'},
                 ],
                 layout: 'radio',
               },
             },
 
-            { name: 'body', type: 'array', of: [{ type: 'block' }] },
+            {name: 'body', type: 'array', of: [{type: 'block'}]},
           ],
         },
 
@@ -229,14 +261,15 @@ export default defineType({
           fields: [
             {
               name: 'topicLabel',
-              title: 'Topic label',
               type: 'string',
-              description: 'Small label for this block (e.g. "Reminder", "Pool hours").',
+              title: 'Topic label',
+              description: 'e.g. Reminder, Pool Update, Elections',
             },
             {
-              name: 'title',
-              title: 'Headline',
+              name: 'icon',
               type: 'string',
+              title: 'Icon',
+              description: 'Emoji or short label shown before the topic label.',
             },
 
             {
@@ -245,84 +278,131 @@ export default defineType({
               title: 'Text alignment',
               options: {
                 list: [
-                  { title: 'Left', value: 'left' },
-                  { title: 'Centered', value: 'center' },
-                  { title: 'Right', value: 'right' },
+                  {title: 'Left', value: 'left'},
+                  {title: 'Centered', value: 'center'},
+                  {title: 'Right', value: 'right'},
                 ],
                 layout: 'radio',
               },
               initialValue: 'left',
             },
 
-            // COLORS
+            {
+              name: 'showDividerAbove',
+              type: 'boolean',
+              title: 'Show divider above',
+            },
+            {
+              name: 'showDividerBelow',
+              type: 'boolean',
+              title: 'Show divider below',
+            },
+
+            // background + gradient
             {
               name: 'backgroundColor',
               title: 'Background color',
               type: 'color',
-              description: 'Fill color for this topic block.',
             },
+            {
+              name: 'backgroundColorEnd',
+              title: 'Secondary background color (for gradient)',
+              type: 'color',
+            },
+            {
+              name: 'gradientDirection',
+              title: 'Gradient direction',
+              type: 'string',
+              options: {
+                list: [
+                  {title: 'Vertical (top → bottom)', value: 'to bottom'},
+                  {title: 'Horizontal (left → right)', value: 'to right'},
+                ],
+                layout: 'radio',
+              },
+            },
+
+            // optional background image
+            {
+              name: 'backgroundImage',
+              title: 'Background image',
+              type: 'image',
+              options: {hotspot: true},
+            },
+            {
+              name: 'backgroundImageOpacity',
+              title: 'Background image strength',
+              type: 'number',
+              description: '0 = invisible, 1 = full image',
+              options: {min: 0, max: 1, step: 0.05},
+            },
+
+            // border
             {
               name: 'borderColor',
               title: 'Border color',
               type: 'color',
-              description: 'Border color for this topic block.',
             },
-
-            // LAYOUT
             {
               name: 'borderStyle',
-              title: 'Border',
+              title: 'Border strength',
               type: 'string',
               options: {
                 list: [
-                  { title: 'None', value: 'none' },
-                  { title: 'Subtle', value: 'subtle' },
-                  { title: 'Strong', value: 'strong' },
+                  {title: 'None', value: 'none'},
+                  {title: 'Subtle', value: 'subtle'},
+                  {title: 'Strong', value: 'strong'},
                 ],
                 layout: 'radio',
               },
               initialValue: 'subtle',
             },
+
+            // layout
             {
               name: 'width',
               title: 'Width',
               type: 'string',
               options: {
                 list: [
-                  { title: 'Default', value: 'default' },
-                  { title: 'Narrow', value: 'narrow' },
-                  { title: 'Wide', value: 'wide' },
-                  { title: 'Full bleed', value: 'full' },
+                  {title: 'Default', value: 'default'},
+                  {title: 'Narrow', value: 'narrow'},
+                  {title: 'Wide', value: 'wide'},
+                  {title: 'Full bleed', value: 'full'},
                 ],
                 layout: 'radio',
               },
             },
             {
               name: 'spacing',
-              title: 'Spacing',
+              title: 'Vertical spacing',
               type: 'string',
               options: {
                 list: [
-                  { title: 'Tight', value: 'tight' },
-                  { title: 'Normal', value: 'normal' },
-                  { title: 'Spacious', value: 'spacious' },
+                  {title: 'Tight', value: 'tight'},
+                  {title: 'Normal', value: 'normal'},
+                  {title: 'Spacious', value: 'spacious'},
                 ],
                 layout: 'radio',
               },
             },
 
             {
+              name: 'title',
+              title: 'Section title',
+              type: 'string',
+            },
+            {
               name: 'body',
               type: 'array',
               title: 'Text',
-              of: [{ type: 'block' }],
+              of: [{type: 'block'}],
             },
           ],
         },
       ],
     }),
 
-    // PAGE-LEVEL LAYOUT
     defineField({
       name: 'layoutVariant',
       title: 'Page layout',
@@ -332,9 +412,9 @@ export default defineType({
       group: 'content',
       options: {
         list: [
-          { title: 'Standard (default)', value: 'standard' },
-          { title: 'Narrow reading column', value: 'narrow' },
-          { title: 'Wide / full-width card', value: 'wide' },
+          {title: 'Standard (default)', value: 'standard'},
+          {title: 'Narrow reading column', value: 'narrow'},
+          {title: 'Wide / full-width card', value: 'wide'},
         ],
         layout: 'radio',
       },
@@ -348,7 +428,6 @@ export default defineType({
       group: 'content',
     }),
 
-    // PAGE-LEVEL TOPIC BADGE
     defineField({
       name: 'topic',
       title: 'Type of update',
@@ -358,18 +437,17 @@ export default defineType({
       group: 'content',
       options: {
         list: [
-          { title: 'General update', value: 'general' },
-          { title: 'Elections', value: 'elections' },
-          { title: 'Pool update', value: 'pool' },
-          { title: 'Community event', value: 'events' },
-          { title: 'Maintenance', value: 'maintenance' },
+          {title: 'General update', value: 'general'},
+          {title: 'Elections', value: 'elections'},
+          {title: 'Pool update', value: 'pool'},
+          {title: 'Community event', value: 'events'},
+          {title: 'Maintenance', value: 'maintenance'},
         ],
         layout: 'radio',
       },
       validation: (rule) => rule.required(),
     }),
 
-    // META
     defineField({
       name: 'publishedAt',
       title: 'Publish Date',
@@ -384,7 +462,7 @@ export default defineType({
     {
       title: 'Publish date (newest first)',
       name: 'publishedAtDesc',
-      by: [{ field: 'publishedAt', direction: 'desc' }],
+      by: [{field: 'publishedAt', direction: 'desc'}],
     },
   ],
 
@@ -393,7 +471,7 @@ export default defineType({
       title: 'title',
       publishedAt: 'publishedAt',
     },
-    prepare({ title, publishedAt }) {
+    prepare({title, publishedAt}) {
       const date = publishedAt
         ? new Date(publishedAt).toLocaleString()
         : 'Draft';

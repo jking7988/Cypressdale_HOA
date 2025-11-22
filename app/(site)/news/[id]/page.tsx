@@ -36,14 +36,14 @@ const postByIdQuery = groq`*[
   showRightSidebar,
   sections[]{
     ...,
-    // color fields for all section types
-    "bgColorHex": backgroundColor.hex,
-    "borderColorHex": borderColor.hex,
-
     _type == "imageWithText" => {
       ...,
       "imageUrl": image.asset->url,
       "imageAlt": coalesce(image.alt, "")
+    },
+    _type == "topicSection" => {
+      ...,
+      "backgroundImageUrl": backgroundImage.asset->url
     }
   }
 }`;
@@ -155,6 +155,50 @@ function sectionBorderClasses(border: SectionBorder) {
     default:
       return 'border border-emerald-100 shadow-sm';
   }
+}
+
+type ColorField = { hex?: string };
+
+type BaseSection = {
+  backgroundColor?: ColorField;
+  backgroundColorEnd?: ColorField;
+  gradientDirection?: string;
+  borderColor?: ColorField;
+  backgroundImageUrl?: string;
+  backgroundImageOpacity?: number;
+};
+
+function buildSectionStyle(section: BaseSection): React.CSSProperties {
+  const style: React.CSSProperties = {};
+
+  const bg = section.backgroundColor?.hex;
+  const bgEnd = section.backgroundColorEnd?.hex;
+  const dir = section.gradientDirection || 'to bottom';
+
+  if (bg && bgEnd) {
+    style.backgroundImage = `linear-gradient(${dir}, ${bg}, ${bgEnd})`;
+  } else if (bg) {
+    style.backgroundColor = bg;
+  }
+
+  if (section.borderColor?.hex) {
+    style.borderColor = section.borderColor.hex;
+  }
+
+  if (section.backgroundImageUrl) {
+    const opacity = section.backgroundImageOpacity ?? 0.18;
+    style.backgroundImage = [
+      style.backgroundImage,
+      `linear-gradient(rgba(255,255,255,${1 - opacity}), rgba(255,255,255,${1 - opacity}))`,
+      `url(${section.backgroundImageUrl})`,
+    ]
+      .filter(Boolean)
+      .join(', ');
+    style.backgroundSize = 'cover';
+    style.backgroundPosition = 'center';
+  }
+
+  return style;
 }
 
 // Next 16 style: both params and searchParams come in as Promises
@@ -291,163 +335,180 @@ export default async function NewsDetailPage(props: Props) {
           )}
 
           {/* Dynamic sections from Sanity */}
-          {post.sections && post.sections.length > 0 && (
-            <div className="space-y-6 pt-4 border-t border-emerald-50">
-              {post.sections.map((section: any, idx: number) => {
-                switch (section._type) {
-                  case 'textSection': {
-                    const alignment =
-                      section.alignment === 'center'
-                        ? 'text-center'
-                        : section.alignment === 'right'
-                        ? 'text-right'
-                        : 'text-left';
+            {post.sections && post.sections.length > 0 && (
+              <div className="space-y-6 pt-4 border-t border-emerald-50">
+                {post.sections.map((section: any, idx: number) => {
+                  switch (section._type) {
+                    //
+                    // TEXT SECTION
+                    //
+                    case 'textSection': {
+                      const alignment =
+                        section.alignment === 'center'
+                          ? 'text-center'
+                          : section.alignment === 'right'
+                          ? 'text-right'
+                          : 'text-left';
 
-                    const widthClasses = sectionWidthClasses(section.width as SectionWidth);
-                    const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
-                    const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
+                      const widthClasses = sectionWidthClasses(section.width as SectionWidth);
+                      const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
+                      const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
 
-                    const wrapperClasses = [
-                      alignment,
-                      widthClasses,
-                      'rounded-2xl px-4 md:px-6 mt-2',
-                      spacingClasses,
-                      borderClasses,
-                    ]
-                      .filter(Boolean)
-                      .join(' ');
+                      const wrapperClasses = [
+                        alignment,
+                        widthClasses,
+                        'rounded-2xl px-4 md:px-6 mt-2',
+                        spacingClasses,
+                        borderClasses,
+                      ]
+                        .filter(Boolean)
+                        .join(' ');
 
-                    const style: React.CSSProperties = {
-                      backgroundColor: section.backgroundColor?.hex || undefined,
-                      borderColor: section.borderColor?.hex || undefined,
-                    };
+                      const style = buildSectionStyle(section);
 
-                    return (
-                      <section key={idx} className={wrapperClasses} style={style}>
-                        {section.title && (
-                          <h2 className="text-lg font-semibold text-brand-900 mb-2">
-                            {section.title}
-                          </h2>
-                        )}
+                      return (
+                        <section key={idx} className={wrapperClasses} style={style}>
+                          {section.title && (
+                            <h2 className="text-lg font-semibold text-brand-900 mb-2">
+                              {section.title}
+                            </h2>
+                          )}
+                          {section.body && (
+                            <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
+                              <PortableText
+                                value={section.body}
+                                components={portableTextComponents}
+                              />
+                            </div>
+                          )}
+                        </section>
+                      );
+                    }
 
-                        {section.body && (
+                    //
+                    // IMAGE + TEXT
+                    //
+                    case 'imageWithText': {
+                      const imageOnLeft = section.imagePosition === 'left';
+                      const imageUrl = section.imageUrl as string | undefined;
+                      const imageAlt = (section.imageAlt as string | undefined) || '';
+
+                      const widthClasses = sectionWidthClasses(section.width as SectionWidth);
+                      const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
+                      const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
+
+                      const wrapperClasses = [
+                        'grid gap-4 md:grid-cols-2 items-center',
+                        widthClasses,
+                        'rounded-2xl px-4 md:px-5 mt-2',
+                        spacingClasses,
+                        borderClasses,
+                      ]
+                        .filter(Boolean)
+                        .join(' ');
+
+                      const style = buildSectionStyle(section);
+
+                      return (
+                        <section key={idx} className={wrapperClasses} style={style}>
+                          {imageOnLeft && imageUrl && (
+                            <img
+                              src={imageUrl}
+                              alt={imageAlt}
+                              className="rounded-2xl shadow-sm"
+                            />
+                          )}
+
                           <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
                             <PortableText
                               value={section.body}
                               components={portableTextComponents}
                             />
                           </div>
-                        )}
-                      </section>
-                    );
-                  }
 
-                  case 'imageWithText': {
-                    const imageOnLeft = section.imagePosition === 'left';
-                    const imageUrl = section.imageUrl;
-                    const imageAlt = section.imageAlt || '';
-
-                    const widthClasses = sectionWidthClasses(section.width as SectionWidth);
-                    const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
-                    const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
-
-                    const wrapperClasses = [
-                      'grid gap-4 md:grid-cols-2 items-center',
-                      widthClasses,
-                      'rounded-2xl px-4 md:px-5 mt-2',
-                      spacingClasses,
-                      borderClasses,
-                    ]
-                      .filter(Boolean)
-                      .join(' ');
-
-                    const style: React.CSSProperties = {
-                      backgroundColor: section.backgroundColor?.hex || undefined,
-                      borderColor: section.borderColor?.hex || undefined,
-                    };
-
-                    return (
-                      <section key={idx} className={wrapperClasses} style={style}>
-                        {imageOnLeft && imageUrl && (
-                          <img src={imageUrl} alt={imageAlt} className="rounded-2xl shadow-sm" />
-                        )}
-
-                        <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
-                          <PortableText
-                            value={section.body}
-                            components={portableTextComponents}
-                          />
-                        </div>
-
-                        {!imageOnLeft && imageUrl && (
-                          <img src={imageUrl} alt={imageAlt} className="rounded-2xl shadow-sm" />
-                        )}
-                      </section>
-                    );
-                  }
-
-                  //
-                  // ✅ NEW topicSection BLOCK
-                  //
-                  case 'topicSection': {
-                    const alignment =
-                      section.alignment === 'center'
-                        ? 'text-center'
-                        : section.alignment === 'right'
-                        ? 'text-right'
-                        : 'text-left';
-
-                    const widthClasses = sectionWidthClasses(section.width as SectionWidth);
-                    const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
-                    const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
-
-                    const wrapperClasses = [
-                      alignment,
-                      widthClasses,
-                      'rounded-2xl px-4 md:px-6 mt-2',
-                      spacingClasses,
-                      borderClasses,
-                    ]
-                      .filter(Boolean)
-                      .join(' ');
-
-                    const style: React.CSSProperties = {
-                      backgroundColor: section.backgroundColor?.hex || undefined,
-                      borderColor: section.borderColor?.hex || undefined,
-                    };
-
-                    return (
-                      <section key={idx} className={wrapperClasses} style={style}>
-                        {section.topicLabel && (
-                          <span className="inline-block text-[11px] font-semibold tracking-wide uppercase opacity-80 mb-1">
-                            {section.topicLabel}
-                          </span>
-                        )}
-
-                        {section.title && (
-                          <h2 className="text-lg font-semibold text-brand-900 mb-2">
-                            {section.title}
-                          </h2>
-                        )}
-
-                        {section.body && (
-                          <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
-                            <PortableText
-                              value={section.body}
-                              components={portableTextComponents}
+                          {!imageOnLeft && imageUrl && (
+                            <img
+                              src={imageUrl}
+                              alt={imageAlt}
+                              className="rounded-2xl shadow-sm"
                             />
-                          </div>
-                        )}
-                      </section>
-                    );
-                  }
+                          )}
+                        </section>
+                      );
+                    }
 
-                  default:
-                    return null;
-                }
-              })}
-            </div>
-          )}
+                    //
+                    // TOPIC SECTION
+                    //
+                    case 'topicSection': {
+                      const alignment =
+                        section.alignment === 'center'
+                          ? 'text-center'
+                          : section.alignment === 'right'
+                          ? 'text-right'
+                          : 'text-left';
+
+                      const widthClasses = sectionWidthClasses(section.width as SectionWidth);
+                      const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
+                      const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
+
+                      const wrapperClasses = [
+                        alignment,
+                        widthClasses,
+                        'rounded-2xl px-4 md:px-6 mt-2',
+                        spacingClasses,
+                        borderClasses,
+                      ]
+                        .filter(Boolean)
+                        .join(' ');
+
+                      const style = buildSectionStyle(section);
+
+                      const content = (
+                        <section key={idx} className={wrapperClasses} style={style}>
+                          {section.topicLabel && (
+                            <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold tracking-wide uppercase opacity-80 justify-start">
+                              {section.icon && <span>{section.icon}</span>}
+                              <span>{section.topicLabel}</span>
+                            </div>
+                          )}
+
+                          {section.title && (
+                            <h2 className="text-lg font-semibold text-brand-900 mb-2">
+                              {section.title}
+                            </h2>
+                          )}
+
+                          {section.body && (
+                            <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
+                              <PortableText
+                                value={section.body}
+                                components={portableTextComponents}
+                              />
+                            </div>
+                          )}
+                        </section>
+                      );
+
+                      return (
+                        <React.Fragment key={idx}>
+                          {section.showDividerAbove && (
+                            <div className="border-t border-emerald-100 my-4" />
+                          )}
+                          {content}
+                          {section.showDividerBelow && (
+                            <div className="border-t border-emerald-100 my-4" />
+                          )}
+                        </React.Fragment>
+                      );
+                    }
+
+                    default:
+                      return null;
+                  }
+                })}
+              </div>
+            )}
 
           {/* Footer */}
           <footer className="mt-4 pt-4 border-t border-emerald-50 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
