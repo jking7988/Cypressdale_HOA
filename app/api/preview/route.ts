@@ -1,5 +1,10 @@
+// app/api/preview/route.ts
 // @ts-nocheck
-const PREVIEW_SECRET = '8f4b1e3c-2f4f-4f6d-9f6e-5e3d6c7b8a9b';
+import { NextResponse } from 'next/server';
+
+const PREVIEW_SECRET =
+  process.env.SANITY_PREVIEW_SECRET ||
+  '8f4b1e3c-2f4f-4f6d-9f6e-5e3d6c7b8a9b';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -8,11 +13,11 @@ export async function GET(request: Request) {
   const id = searchParams.get('id');
 
   if (!secret || secret !== PREVIEW_SECRET) {
-    return new Response('Invalid secret', { status: 401 });
+    return new NextResponse('Invalid secret', { status: 401 });
   }
 
   if (!type || !id) {
-    return new Response('Missing id/type', { status: 400 });
+    return new NextResponse('Missing id/type', { status: 400 });
   }
 
   let path = '/';
@@ -24,5 +29,6 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(path, request.url);
-  return Response.redirect(url);
+  // use NextResponse + a 307 redirect
+  return NextResponse.redirect(url.toString(), 307);
 }

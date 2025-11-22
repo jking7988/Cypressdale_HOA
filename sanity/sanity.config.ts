@@ -10,7 +10,9 @@ import {teamChatTool} from './teamChatTool';
 import {Iframe} from 'sanity-plugin-iframe-pane';
 import {colorInput} from '@sanity/color-input'; 
 
-const frontendHost = 'https://www.cypressdalehoa.com';
+const frontendHost =
+  process.env.NEXT_PUBLIC_PREVIEW_URL ||
+  'https://cypressdale-hoa.vercel.app';
 
 // 👇 use this consistently
 const SANITY_PREVIEW_SECRET =
