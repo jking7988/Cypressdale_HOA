@@ -6,11 +6,12 @@ export default defineType({
   type: 'document',
 
   groups: [
-    {name: 'content', title: 'Content', default: true},
-    {name: 'meta', title: 'Meta'},
+    { name: 'content', title: 'Content', default: true },
+    { name: 'meta', title: 'Meta' },
   ],
 
   fields: [
+    // MAIN FIELDS
     defineField({
       name: 'title',
       title: 'Title',
@@ -23,7 +24,7 @@ export default defineType({
       name: 'excerpt',
       title: 'Excerpt',
       type: 'array',
-      of: [{type: 'block'}],
+      of: [{ type: 'block' }],
       group: 'content',
     }),
 
@@ -31,7 +32,7 @@ export default defineType({
       name: 'body',
       title: 'Body',
       type: 'array',
-      of: [{type: 'block'}],
+      of: [{ type: 'block' }],
       group: 'content',
     }),
 
@@ -50,7 +51,7 @@ export default defineType({
           name: 'textSection',
           title: 'Text section',
           fields: [
-            {name: 'title', type: 'string', title: 'Section title'},
+            { name: 'title', type: 'string', title: 'Section title' },
 
             {
               name: 'alignment',
@@ -58,31 +59,39 @@ export default defineType({
               title: 'Text alignment',
               options: {
                 list: [
-                  {title: 'Left', value: 'left'},
-                  {title: 'Centered', value: 'center'},
-                  {title: 'Right', value: 'right'},
+                  { title: 'Left', value: 'left' },
+                  { title: 'Centered', value: 'center' },
+                  { title: 'Right', value: 'right' },
                 ],
                 layout: 'radio',
               },
               initialValue: 'left',
             },
 
-            // 🎨 COLOR PICKER + LAYOUT CONTROLS
+            // COLORS
             {
-              name: 'sectionColor',
-              title: 'Section color',
-              type: 'color', // <- from @sanity/color-input
-              description: 'Background + border color for this section.',
+              name: 'backgroundColor',
+              title: 'Background color',
+              type: 'color',
+              description: 'Fill color behind this section.',
             },
+            {
+              name: 'borderColor',
+              title: 'Border color',
+              type: 'color',
+              description: 'Outline color for this section.',
+            },
+
+            // LAYOUT CONTROLS
             {
               name: 'borderStyle',
               title: 'Border',
               type: 'string',
               options: {
                 list: [
-                  {title: 'None', value: 'none'},
-                  {title: 'Subtle', value: 'subtle'},
-                  {title: 'Strong', value: 'strong'},
+                  { title: 'None', value: 'none' },
+                  { title: 'Subtle', value: 'subtle' },
+                  { title: 'Strong', value: 'strong' },
                 ],
                 layout: 'radio',
               },
@@ -94,10 +103,10 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Default', value: 'default'},
-                  {title: 'Narrow', value: 'narrow'},
-                  {title: 'Wide', value: 'wide'},
-                  {title: 'Full bleed', value: 'full'},
+                  { title: 'Default', value: 'default' },
+                  { title: 'Narrow', value: 'narrow' },
+                  { title: 'Wide', value: 'wide' },
+                  { title: 'Full bleed', value: 'full' },
                 ],
                 layout: 'radio',
               },
@@ -108,20 +117,20 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Tight', value: 'tight'},
-                  {title: 'Normal', value: 'normal'},
-                  {title: 'Spacious', value: 'spacious'},
+                  { title: 'Tight', value: 'tight' },
+                  { title: 'Normal', value: 'normal' },
+                  { title: 'Spacious', value: 'spacious' },
                 ],
                 layout: 'radio',
               },
             },
 
-            {name: 'body', type: 'array', of: [{type: 'block'}]},
+            { name: 'body', type: 'array', of: [{ type: 'block' }] },
           ],
         },
 
         //
-        // IMAGE + TEXT
+        // IMAGE + TEXT SECTION
         //
         {
           type: 'object',
@@ -132,7 +141,7 @@ export default defineType({
               name: 'image',
               type: 'image',
               title: 'Image',
-              options: {hotspot: true},
+              options: { hotspot: true },
             },
             {
               name: 'imagePosition',
@@ -140,30 +149,39 @@ export default defineType({
               title: 'Image position',
               options: {
                 list: [
-                  {title: 'Left', value: 'left'},
-                  {title: 'Centered', value: 'center'},
-                  {title: 'Right', value: 'right'},
+                  { title: 'Left', value: 'left' },
+                  { title: 'Centered', value: 'center' },
+                  { title: 'Right', value: 'right' },
                 ],
                 layout: 'radio',
               },
               initialValue: 'left',
             },
 
+            // COLORS
             {
-              name: 'sectionColor',
-              title: 'Section color',
+              name: 'backgroundColor',
+              title: 'Background color',
               type: 'color',
-              description: 'Background + border color for this section.',
+              description: 'Fill color behind this section.',
             },
+            {
+              name: 'borderColor',
+              title: 'Border color',
+              type: 'color',
+              description: 'Outline color for this section.',
+            },
+
+            // LAYOUT CONTROLS
             {
               name: 'borderStyle',
               title: 'Border',
               type: 'string',
               options: {
                 list: [
-                  {title: 'None', value: 'none'},
-                  {title: 'Subtle', value: 'subtle'},
-                  {title: 'Strong', value: 'strong'},
+                  { title: 'None', value: 'none' },
+                  { title: 'Subtle', value: 'subtle' },
+                  { title: 'Strong', value: 'strong' },
                 ],
                 layout: 'radio',
               },
@@ -175,10 +193,10 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Default', value: 'default'},
-                  {title: 'Narrow', value: 'narrow'},
-                  {title: 'Wide', value: 'wide'},
-                  {title: 'Full bleed', value: 'full'},
+                  { title: 'Default', value: 'default' },
+                  { title: 'Narrow', value: 'narrow' },
+                  { title: 'Wide', value: 'wide' },
+                  { title: 'Full bleed', value: 'full' },
                 ],
                 layout: 'radio',
               },
@@ -189,55 +207,77 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Tight', value: 'tight'},
-                  {title: 'Normal', value: 'normal'},
-                  {title: 'Spacious', value: 'spacious'},
+                  { title: 'Tight', value: 'tight' },
+                  { title: 'Normal', value: 'normal' },
+                  { title: 'Spacious', value: 'spacious' },
                 ],
                 layout: 'radio',
               },
             },
 
-            {name: 'body', type: 'array', of: [{type: 'block'}]},
+            { name: 'body', type: 'array', of: [{ type: 'block' }] },
           ],
         },
 
         //
-        // FULL-WIDTH CALLOUT
+        // TOPIC SECTION (replaces fullWidthCallout)
         //
         {
           type: 'object',
-          name: 'fullWidthCallout',
-          title: 'Full-width callout',
+          name: 'topicSection',
+          title: 'Topic section',
           fields: [
             {
-              name: 'tone',
+              name: 'topicLabel',
+              title: 'Topic label',
               type: 'string',
-              title: 'Tone',
+              description: 'Small label for this block (e.g. "Reminder", "Pool hours").',
+            },
+            {
+              name: 'title',
+              title: 'Headline',
+              type: 'string',
+            },
+
+            {
+              name: 'alignment',
+              type: 'string',
+              title: 'Text alignment',
               options: {
                 list: [
-                  {title: 'Info', value: 'info'},
-                  {title: 'Warning', value: 'warning'},
-                  {title: 'Success', value: 'success'},
+                  { title: 'Left', value: 'left' },
+                  { title: 'Centered', value: 'center' },
+                  { title: 'Right', value: 'right' },
                 ],
                 layout: 'radio',
               },
-              initialValue: 'info',
+              initialValue: 'left',
+            },
+
+            // COLORS
+            {
+              name: 'backgroundColor',
+              title: 'Background color',
+              type: 'color',
+              description: 'Fill color for this topic block.',
             },
             {
-              name: 'sectionColor',
-              title: 'Section color (optional)',
+              name: 'borderColor',
+              title: 'Border color',
               type: 'color',
-              description: 'Override the tone with a custom color.',
+              description: 'Border color for this topic block.',
             },
+
+            // LAYOUT
             {
               name: 'borderStyle',
               title: 'Border',
               type: 'string',
               options: {
                 list: [
-                  {title: 'None', value: 'none'},
-                  {title: 'Subtle', value: 'subtle'},
-                  {title: 'Strong', value: 'strong'},
+                  { title: 'None', value: 'none' },
+                  { title: 'Subtle', value: 'subtle' },
+                  { title: 'Strong', value: 'strong' },
                 ],
                 layout: 'radio',
               },
@@ -249,10 +289,10 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Default', value: 'default'},
-                  {title: 'Narrow', value: 'narrow'},
-                  {title: 'Wide', value: 'wide'},
-                  {title: 'Full bleed', value: 'full'},
+                  { title: 'Default', value: 'default' },
+                  { title: 'Narrow', value: 'narrow' },
+                  { title: 'Wide', value: 'wide' },
+                  { title: 'Full bleed', value: 'full' },
                 ],
                 layout: 'radio',
               },
@@ -263,24 +303,26 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Tight', value: 'tight'},
-                  {title: 'Normal', value: 'normal'},
-                  {title: 'Spacious', value: 'spacious'},
+                  { title: 'Tight', value: 'tight' },
+                  { title: 'Normal', value: 'normal' },
+                  { title: 'Spacious', value: 'spacious' },
                 ],
                 layout: 'radio',
               },
             },
+
             {
               name: 'body',
               type: 'array',
               title: 'Text',
-              of: [{type: 'block'}],
+              of: [{ type: 'block' }],
             },
           ],
         },
       ],
     }),
 
+    // PAGE-LEVEL LAYOUT
     defineField({
       name: 'layoutVariant',
       title: 'Page layout',
@@ -290,9 +332,9 @@ export default defineType({
       group: 'content',
       options: {
         list: [
-          {title: 'Standard (default)', value: 'standard'},
-          {title: 'Narrow reading column', value: 'narrow'},
-          {title: 'Wide / full-width card', value: 'wide'},
+          { title: 'Standard (default)', value: 'standard' },
+          { title: 'Narrow reading column', value: 'narrow' },
+          { title: 'Wide / full-width card', value: 'wide' },
         ],
         layout: 'radio',
       },
@@ -306,6 +348,7 @@ export default defineType({
       group: 'content',
     }),
 
+    // PAGE-LEVEL TOPIC BADGE
     defineField({
       name: 'topic',
       title: 'Type of update',
@@ -315,17 +358,18 @@ export default defineType({
       group: 'content',
       options: {
         list: [
-          {title: 'General update', value: 'general'},
-          {title: 'Elections', value: 'elections'},
-          {title: 'Pool update', value: 'pool'},
-          {title: 'Community event', value: 'events'},
-          {title: 'Maintenance', value: 'maintenance'},
+          { title: 'General update', value: 'general' },
+          { title: 'Elections', value: 'elections' },
+          { title: 'Pool update', value: 'pool' },
+          { title: 'Community event', value: 'events' },
+          { title: 'Maintenance', value: 'maintenance' },
         ],
         layout: 'radio',
       },
       validation: (rule) => rule.required(),
     }),
 
+    // META
     defineField({
       name: 'publishedAt',
       title: 'Publish Date',
@@ -340,7 +384,7 @@ export default defineType({
     {
       title: 'Publish date (newest first)',
       name: 'publishedAtDesc',
-      by: [{field: 'publishedAt', direction: 'desc'}],
+      by: [{ field: 'publishedAt', direction: 'desc' }],
     },
   ],
 
@@ -348,9 +392,8 @@ export default defineType({
     select: {
       title: 'title',
       publishedAt: 'publishedAt',
-      excerpt: 'excerpt',
     },
-    prepare({title, publishedAt}) {
+    prepare({ title, publishedAt }) {
       const date = publishedAt
         ? new Date(publishedAt).toLocaleString()
         : 'Draft';

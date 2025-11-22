@@ -8,6 +8,7 @@ import { client, previewClient } from '@/lib/sanity.client';
 import { PortableText } from '@portabletext/react';
 import { portableTextComponents } from '@/components/portableTextComponents';
 import React from 'react';
+import type { CSSProperties } from 'react';
 
 type Post = {
   _id: string;
@@ -35,8 +36,10 @@ const postByIdQuery = groq`*[
   showRightSidebar,
   sections[]{
     ...,
-    // expose section color as a simple hex string
-    "sectionColorHex": sectionColor.hex,
+    // color fields for all section types
+    "bgColorHex": backgroundColor.hex,
+    "borderColorHex": borderColor.hex,
+
     _type == "imageWithText" => {
       ...,
       "imageUrl": image.asset->url,
@@ -294,30 +297,30 @@ export default async function NewsDetailPage(props: Props) {
                 switch (section._type) {
                   case 'textSection': {
                     const alignment =
-                      section.alignment === 'center' ? 'text-center' : 'text-left';
+                      section.alignment === 'center'
+                        ? 'text-center'
+                        : section.alignment === 'right'
+                        ? 'text-right'
+                        : 'text-left';
 
                     const widthClasses = sectionWidthClasses(section.width as SectionWidth);
                     const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
                     const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
 
-                    const hasCard = Boolean(section.sectionColorHex || section.borderStyle);
-
                     const wrapperClasses = [
                       alignment,
                       widthClasses,
-                      hasCard && 'rounded-2xl px-4 md:px-6 mt-2',
-                      hasCard && spacingClasses,
-                      hasCard && borderClasses,
+                      'rounded-2xl px-4 md:px-6 mt-2',
+                      spacingClasses,
+                      borderClasses,
                     ]
                       .filter(Boolean)
                       .join(' ');
 
-                    const style: React.CSSProperties = {};
-
-                    if (section.sectionColorHex) {
-                      style.backgroundColor = section.sectionColorHex;           // 👈 bg color
-                      style.borderColor = section.sectionColorHex;               // 👈 border color
-                    }
+                    const style: React.CSSProperties = {
+                      backgroundColor: section.backgroundColor?.hex || undefined,
+                      borderColor: section.borderColor?.hex || undefined,
+                    };
 
                     return (
                       <section key={idx} className={wrapperClasses} style={style}>
@@ -326,6 +329,7 @@ export default async function NewsDetailPage(props: Props) {
                             {section.title}
                           </h2>
                         )}
+
                         {section.body && (
                           <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
                             <PortableText
@@ -339,57 +343,33 @@ export default async function NewsDetailPage(props: Props) {
                   }
 
                   case 'imageWithText': {
-                    const imageOnLeft =
-                      section.imagePosition === 'left';
-                    const imageUrl = section.imageUrl as
-                      | string
-                      | undefined;
-                    const imageAlt =
-                      (section.imageAlt as string | undefined) || '';
+                    const imageOnLeft = section.imagePosition === 'left';
+                    const imageUrl = section.imageUrl;
+                    const imageAlt = section.imageAlt || '';
 
-                    const colorClasses = colorSchemeToClasses(
-                      section.colorScheme as SectionColorScheme,
-                      '',
-                    );
-                    const widthClasses = sectionWidthClasses(
-                      section.width as SectionWidth,
-                    );
-                    const spacingClasses = sectionSpacingClasses(
-                      section.spacing as SectionSpacing,
-                    );
-                    const borderClasses = sectionBorderClasses(
-                      section.borderStyle as SectionBorder,
-                    );
-
-                    const hasCard = Boolean(
-                      colorClasses || section.borderStyle,
-                    );
+                    const widthClasses = sectionWidthClasses(section.width as SectionWidth);
+                    const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
+                    const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
 
                     const wrapperClasses = [
                       'grid gap-4 md:grid-cols-2 items-center',
                       widthClasses,
-                      hasCard && 'rounded-2xl px-4 md:px-5 mt-2',
-                      hasCard && spacingClasses,
-                      hasCard && borderClasses,
-                      hasCard && colorClasses,
+                      'rounded-2xl px-4 md:px-5 mt-2',
+                      spacingClasses,
+                      borderClasses,
                     ]
                       .filter(Boolean)
                       .join(' ');
 
-                      const style: React.CSSProperties = {};
-                      if (section.sectionColorHex) {
-                        style.backgroundColor = section.sectionColorHex;
-                        style.borderColor = section.sectionColorHex;
-                      }
+                    const style: React.CSSProperties = {
+                      backgroundColor: section.backgroundColor?.hex || undefined,
+                      borderColor: section.borderColor?.hex || undefined,
+                    };
 
                     return (
                       <section key={idx} className={wrapperClasses} style={style}>
                         {imageOnLeft && imageUrl && (
-                          <img
-                            src={imageUrl}
-                            alt={imageAlt}
-                            className="rounded-2xl shadow-sm"
-                          />
+                          <img src={imageUrl} alt={imageAlt} className="rounded-2xl shadow-sm" />
                         )}
 
                         <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
@@ -400,57 +380,63 @@ export default async function NewsDetailPage(props: Props) {
                         </div>
 
                         {!imageOnLeft && imageUrl && (
-                          <img
-                            src={imageUrl}
-                            alt={imageAlt}
-                            className="rounded-2xl shadow-sm"
-                          />
+                          <img src={imageUrl} alt={imageAlt} className="rounded-2xl shadow-sm" />
                         )}
                       </section>
                     );
                   }
 
-                  case 'fullWidthCallout': {
-                    const tone = section.tone || 'info';
+                  //
+                  // ✅ NEW topicSection BLOCK
+                  //
+                  case 'topicSection': {
+                    const alignment =
+                      section.alignment === 'center'
+                        ? 'text-center'
+                        : section.alignment === 'right'
+                        ? 'text-right'
+                        : 'text-left';
 
-                    const toneFallback =
-                      tone === 'warning'
-                        ? 'bg-amber-50 border-amber-200 text-amber-900'
-                        : tone === 'success'
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                        : 'bg-sky-50 border-sky-200 text-sky-900';
-
-                    const colorClasses = colorSchemeToClasses(
-                      section.colorScheme as SectionColorScheme,
-                      toneFallback,
-                    );
-                    const widthClasses = sectionWidthClasses(
-                      section.width as SectionWidth,
-                    );
-                    const spacingClasses = sectionSpacingClasses(
-                      section.spacing as SectionSpacing,
-                    );
-                    const borderClasses = sectionBorderClasses(
-                      section.borderStyle as SectionBorder,
-                    );
+                    const widthClasses = sectionWidthClasses(section.width as SectionWidth);
+                    const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
+                    const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
 
                     const wrapperClasses = [
-                      'rounded-2xl px-4 md:px-6 text-sm',
+                      alignment,
                       widthClasses,
+                      'rounded-2xl px-4 md:px-6 mt-2',
                       spacingClasses,
                       borderClasses,
-                      colorClasses,
                     ]
                       .filter(Boolean)
                       .join(' ');
 
+                    const style: React.CSSProperties = {
+                      backgroundColor: section.backgroundColor?.hex || undefined,
+                      borderColor: section.borderColor?.hex || undefined,
+                    };
+
                     return (
-                      <section key={idx} className={wrapperClasses}>
+                      <section key={idx} className={wrapperClasses} style={style}>
+                        {section.topicLabel && (
+                          <span className="inline-block text-[11px] font-semibold tracking-wide uppercase opacity-80 mb-1">
+                            {section.topicLabel}
+                          </span>
+                        )}
+
+                        {section.title && (
+                          <h2 className="text-lg font-semibold text-brand-900 mb-2">
+                            {section.title}
+                          </h2>
+                        )}
+
                         {section.body && (
-                          <PortableText
-                            value={section.body}
-                            components={portableTextComponents}
-                          />
+                          <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
+                            <PortableText
+                              value={section.body}
+                              components={portableTextComponents}
+                            />
+                          </div>
                         )}
                       </section>
                     );
