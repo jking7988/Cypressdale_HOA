@@ -78,6 +78,47 @@ export default defineType({
               description: 'Background color for this text section.',
               options: sectionColorOptions,
             },
+            // 👇 NEW: layout knobs
+            {
+              name: 'width',
+              title: 'Width',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Default', value: 'default' },
+                  { title: 'Narrow', value: 'narrow' },
+                  { title: 'Wide', value: 'wide' },
+                  { title: 'Full bleed', value: 'full' },
+                ],
+                layout: 'radio',
+              },
+            },
+            {
+              name: 'spacing',
+              title: 'Spacing',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Tight', value: 'tight' },
+                  { title: 'Normal', value: 'normal' },
+                  { title: 'Spacious', value: 'spacious' },
+                ],
+                layout: 'radio',
+              },
+            },
+            {
+              name: 'borderStyle',
+              title: 'Border',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'None', value: 'none' },
+                  { title: 'Subtle', value: 'subtle' },
+                  { title: 'Strong', value: 'strong' },
+                ],
+                layout: 'radio',
+              },
+            },
             { name: 'body', type: 'array', of: [{ type: 'block' }] },
           ],
         },
@@ -114,6 +155,46 @@ export default defineType({
               description: 'Background color behind this image + text block.',
               options: sectionColorOptions,
             },
+            {
+              name: 'width',
+              title: 'Width',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Default', value: 'default' },
+                  { title: 'Narrow', value: 'narrow' },
+                  { title: 'Wide', value: 'wide' },
+                  { title: 'Full bleed', value: 'full' },
+                ],
+                layout: 'radio',
+              },
+            },
+            {
+              name: 'spacing',
+              title: 'Spacing',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Tight', value: 'tight' },
+                  { title: 'Normal', value: 'normal' },
+                  { title: 'Spacious', value: 'spacious' },
+                ],
+                layout: 'radio',
+              },
+            },
+            {
+              name: 'borderStyle',
+              title: 'Border',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'None', value: 'none' },
+                  { title: 'Subtle', value: 'subtle' },
+                  { title: 'Strong', value: 'strong' },
+                ],
+                layout: 'radio',
+              },
+            },
             { name: 'body', type: 'array', of: [{ type: 'block' }] },
           ],
         },
@@ -145,6 +226,46 @@ export default defineType({
               description:
                 'Override the default tone colors. Leave blank to use tone.',
               options: sectionColorOptions,
+            },
+            {
+              name: 'width',
+              title: 'Width',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Default', value: 'default' },
+                  { title: 'Narrow', value: 'narrow' },
+                  { title: 'Wide', value: 'wide' },
+                  { title: 'Full bleed', value: 'full' },
+                ],
+                layout: 'radio',
+              },
+            },
+            {
+              name: 'spacing',
+              title: 'Spacing',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Tight', value: 'tight' },
+                  { title: 'Normal', value: 'normal' },
+                  { title: 'Spacious', value: 'spacious' },
+                ],
+                layout: 'radio',
+              },
+            },
+            {
+              name: 'borderStyle',
+              title: 'Border',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'None', value: 'none' },
+                  { title: 'Subtle', value: 'subtle' },
+                  { title: 'Strong', value: 'strong' },
+                ],
+                layout: 'radio',
+              },
             },
             {
               name: 'body',

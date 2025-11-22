@@ -90,10 +90,14 @@ type SectionColorScheme =
   | 'slate'
   | undefined;
 
+type SectionWidth = 'default' | 'narrow' | 'wide' | 'full' | undefined;
+type SectionSpacing = 'tight' | 'normal' | 'spacious' | undefined;
+type SectionBorder = 'none' | 'subtle' | 'strong' | undefined;
+
 function colorSchemeToClasses(
   scheme: SectionColorScheme,
-  fallback = '',
-) {
+  fallback: string = '',
+): string {
   if (!scheme || scheme === 'plain') return fallback;
 
   switch (scheme) {
@@ -109,6 +113,42 @@ function colorSchemeToClasses(
       return 'bg-slate-50 border-slate-200 text-slate-900';
     default:
       return fallback;
+  }
+}
+
+function sectionWidthClasses(width: SectionWidth) {
+  switch (width) {
+    case 'narrow':
+      return 'max-w-2xl mx-auto';
+    case 'wide':
+      return 'max-w-5xl mx-auto';
+    case 'full':
+      return 'mx-[-1rem] md:mx-[-2rem]'; // bleed to card edges
+    default:
+      return '';
+  }
+}
+
+function sectionSpacingClasses(spacing: SectionSpacing) {
+  switch (spacing) {
+    case 'tight':
+      return 'py-2 md:py-3';
+    case 'spacious':
+      return 'py-6 md:py-8';
+    default:
+      return 'py-4 md:py-5'; // normal
+  }
+}
+
+function sectionBorderClasses(border: SectionBorder) {
+  switch (border) {
+    case 'none':
+      return 'border-none shadow-none';
+    case 'strong':
+      return 'border border-emerald-300 shadow-md';
+    case 'subtle':
+    default:
+      return 'border border-emerald-100 shadow-sm';
   }
 }
 
@@ -261,11 +301,29 @@ export default async function NewsDetailPage(props: Props) {
                       '',
                     );
 
+                    const widthClasses = sectionWidthClasses(
+                      section.width as SectionWidth,
+                    );
+
+                    const spacingClasses = sectionSpacingClasses(
+                      section.spacing as SectionSpacing,
+                    );
+
+                    const borderClasses = sectionBorderClasses(
+                      section.borderStyle as SectionBorder,
+                    );
+
+                    const hasCard = Boolean(
+                      colorClasses || section.borderStyle,
+                    );
+
                     const wrapperClasses = [
                       alignment,
-                      colorClasses &&
-                        'rounded-2xl border px-4 py-3 md:px-6 md:py-4 mt-2',
-                      colorClasses,
+                      widthClasses,
+                      hasCard && 'rounded-2xl px-4 md:px-6 mt-2',
+                      hasCard && spacingClasses,
+                      hasCard && borderClasses,
+                      hasCard && colorClasses,
                     ]
                       .filter(Boolean)
                       .join(' ');
@@ -290,8 +348,11 @@ export default async function NewsDetailPage(props: Props) {
                   }
 
                   case 'imageWithText': {
-                    const imageOnLeft = section.imagePosition === 'left';
-                    const imageUrl = section.imageUrl as string | undefined;
+                    const imageOnLeft =
+                      section.imagePosition === 'left';
+                    const imageUrl = section.imageUrl as
+                      | string
+                      | undefined;
                     const imageAlt =
                       (section.imageAlt as string | undefined) || '';
 
@@ -299,12 +360,27 @@ export default async function NewsDetailPage(props: Props) {
                       section.colorScheme as SectionColorScheme,
                       '',
                     );
+                    const widthClasses = sectionWidthClasses(
+                      section.width as SectionWidth,
+                    );
+                    const spacingClasses = sectionSpacingClasses(
+                      section.spacing as SectionSpacing,
+                    );
+                    const borderClasses = sectionBorderClasses(
+                      section.borderStyle as SectionBorder,
+                    );
+
+                    const hasCard = Boolean(
+                      colorClasses || section.borderStyle,
+                    );
 
                     const wrapperClasses = [
                       'grid gap-4 md:grid-cols-2 items-center',
-                      colorClasses &&
-                        'rounded-2xl border px-4 py-3 md:px-5 md:py-4',
-                      colorClasses,
+                      widthClasses,
+                      hasCard && 'rounded-2xl px-4 md:px-5 mt-2',
+                      hasCard && spacingClasses,
+                      hasCard && borderClasses,
+                      hasCard && colorClasses,
                     ]
                       .filter(Boolean)
                       .join(' ');
@@ -351,12 +427,28 @@ export default async function NewsDetailPage(props: Props) {
                       section.colorScheme as SectionColorScheme,
                       toneFallback,
                     );
+                    const widthClasses = sectionWidthClasses(
+                      section.width as SectionWidth,
+                    );
+                    const spacingClasses = sectionSpacingClasses(
+                      section.spacing as SectionSpacing,
+                    );
+                    const borderClasses = sectionBorderClasses(
+                      section.borderStyle as SectionBorder,
+                    );
+
+                    const wrapperClasses = [
+                      'rounded-2xl px-4 md:px-6 text-sm',
+                      widthClasses,
+                      spacingClasses,
+                      borderClasses,
+                      colorClasses,
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
 
                     return (
-                      <section
-                        key={idx}
-                        className={`rounded-2xl border px-4 py-3 text-sm ${colorClasses}`}
-                      >
+                      <section key={idx} className={wrapperClasses}>
                         {section.body && (
                           <PortableText
                             value={section.body}
@@ -376,7 +468,9 @@ export default async function NewsDetailPage(props: Props) {
 
           {/* Footer */}
           <footer className="mt-4 pt-4 border-t border-emerald-50 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500">
-            <span>Prepared by the Cypressdale HOA Board of Directors</span>
+            <span>
+              Prepared by the Cypressdale HOA Board of Directors
+            </span>
             {created && (
               <span>
                 Published{' '}
