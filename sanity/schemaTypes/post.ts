@@ -7,11 +7,32 @@ export default defineType({
   type: 'document',
 
   groups: [
-    {name: 'content', title: 'Content', default: true},
-    {name: 'meta', title: 'Meta'},
+    { name: 'content', title: 'Content', default: true },
+    { name: 'meta', title: 'Meta' },
   ],
 
   fields: [
+    // TOP-LEVEL TOPIC (DROPDOWN)
+    defineField({
+      name: 'topic',
+      title: 'Type of update',
+      type: 'string',
+      description: 'Controls the badge style on the website.',
+      initialValue: 'general',
+      group: 'content',
+      options: {
+        list: [
+          { title: 'General update', value: 'general' },
+          { title: 'Elections', value: 'elections' },
+          { title: 'Pool update', value: 'pool' },
+          { title: 'Community event', value: 'events' },
+          { title: 'Maintenance', value: 'maintenance' },
+        ],
+        layout: 'dropdown',
+      },
+      validation: (rule) => rule.required(),
+    }),
+
     defineField({
       name: 'title',
       title: 'Title',
@@ -24,7 +45,7 @@ export default defineType({
       name: 'excerpt',
       title: 'Excerpt',
       type: 'array',
-      of: [{type: 'block'}],
+      of: [{ type: 'block' }],
       group: 'content',
     }),
 
@@ -32,7 +53,7 @@ export default defineType({
       name: 'body',
       title: 'Body',
       type: 'array',
-      of: [{type: 'block'}],
+      of: [{ type: 'block' }],
       group: 'content',
     }),
 
@@ -51,7 +72,7 @@ export default defineType({
           name: 'textSection',
           title: 'Text section',
           fields: [
-            {name: 'title', type: 'string', title: 'Section title'},
+            { name: 'title', type: 'string', title: 'Section title' },
 
             {
               name: 'alignment',
@@ -59,16 +80,16 @@ export default defineType({
               title: 'Text alignment',
               options: {
                 list: [
-                  {title: 'Left', value: 'left'},
-                  {title: 'Centered', value: 'center'},
-                  {title: 'Right', value: 'right'},
+                  { title: 'Left', value: 'left' },
+                  { title: 'Centered', value: 'center' },
+                  { title: 'Right', value: 'right' },
                 ],
                 layout: 'radio',
               },
               initialValue: 'left',
             },
 
-            // 🎨 separate background + border colors
+            // background + gradient
             {
               name: 'backgroundColor',
               title: 'Background color',
@@ -88,43 +109,46 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Vertical (top → bottom)', value: 'to bottom'},
-                  {title: 'Horizontal (left → right)', value: 'to right'},
+                  { title: 'Vertical (top → bottom)', value: 'to bottom' },
+                  { title: 'Horizontal (left → right)', value: 'to right' },
                 ],
                 layout: 'radio',
               },
             },
+
+            // border
             {
               name: 'borderColor',
               title: 'Border color',
               type: 'color',
               description: 'Outline color for this section.',
             },
-
             {
               name: 'borderStyle',
               title: 'Border strength',
               type: 'string',
               options: {
                 list: [
-                  {title: 'None', value: 'none'},
-                  {title: 'Subtle', value: 'subtle'},
-                  {title: 'Strong', value: 'strong'},
+                  { title: 'None', value: 'none' },
+                  { title: 'Subtle', value: 'subtle' },
+                  { title: 'Strong', value: 'strong' },
                 ],
                 layout: 'radio',
               },
               initialValue: 'subtle',
             },
+
+            // layout
             {
               name: 'width',
               title: 'Width',
               type: 'string',
               options: {
                 list: [
-                  {title: 'Default', value: 'default'},
-                  {title: 'Narrow', value: 'narrow'},
-                  {title: 'Wide', value: 'wide'},
-                  {title: 'Full bleed', value: 'full'},
+                  { title: 'Default', value: 'default' },
+                  { title: 'Narrow', value: 'narrow' },
+                  { title: 'Wide', value: 'wide' },
+                  { title: 'Full bleed', value: 'full' },
                 ],
                 layout: 'radio',
               },
@@ -135,15 +159,15 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Tight', value: 'tight'},
-                  {title: 'Normal', value: 'normal'},
-                  {title: 'Spacious', value: 'spacious'},
+                  { title: 'Tight', value: 'tight' },
+                  { title: 'Normal', value: 'normal' },
+                  { title: 'Spacious', value: 'spacious' },
                 ],
                 layout: 'radio',
               },
             },
 
-            {name: 'body', type: 'array', of: [{type: 'block'}]},
+            { name: 'body', type: 'array', of: [{ type: 'block' }] },
           ],
         },
 
@@ -159,7 +183,7 @@ export default defineType({
               name: 'image',
               type: 'image',
               title: 'Image',
-              options: {hotspot: true},
+              options: { hotspot: true },
             },
             {
               name: 'imagePosition',
@@ -167,16 +191,16 @@ export default defineType({
               title: 'Image position',
               options: {
                 list: [
-                  {title: 'Left', value: 'left'},
-                  {title: 'Centered', value: 'center'},
-                  {title: 'Right', value: 'right'},
+                  { title: 'Left', value: 'left' },
+                  { title: 'Centered', value: 'center' },
+                  { title: 'Right', value: 'right' },
                 ],
                 layout: 'radio',
               },
               initialValue: 'left',
             },
 
-            // 🎨 colors
+            // colors
             {
               name: 'backgroundColor',
               title: 'Background color',
@@ -193,8 +217,8 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Vertical (top → bottom)', value: 'to bottom'},
-                  {title: 'Horizontal (left → right)', value: 'to right'},
+                  { title: 'Vertical (top → bottom)', value: 'to bottom' },
+                  { title: 'Horizontal (left → right)', value: 'to right' },
                 ],
                 layout: 'radio',
               },
@@ -204,31 +228,32 @@ export default defineType({
               title: 'Border color',
               type: 'color',
             },
-
             {
               name: 'borderStyle',
               title: 'Border strength',
               type: 'string',
               options: {
                 list: [
-                  {title: 'None', value: 'none'},
-                  {title: 'Subtle', value: 'subtle'},
-                  {title: 'Strong', value: 'strong'},
+                  { title: 'None', value: 'none' },
+                  { title: 'Subtle', value: 'subtle' },
+                  { title: 'Strong', value: 'strong' },
                 ],
                 layout: 'radio',
               },
               initialValue: 'subtle',
             },
+
+            // layout
             {
               name: 'width',
               title: 'Width',
               type: 'string',
               options: {
                 list: [
-                  {title: 'Default', value: 'default'},
-                  {title: 'Narrow', value: 'narrow'},
-                  {title: 'Wide', value: 'wide'},
-                  {title: 'Full bleed', value: 'full'},
+                  { title: 'Default', value: 'default' },
+                  { title: 'Narrow', value: 'narrow' },
+                  { title: 'Wide', value: 'wide' },
+                  { title: 'Full bleed', value: 'full' },
                 ],
                 layout: 'radio',
               },
@@ -239,20 +264,20 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Tight', value: 'tight'},
-                  {title: 'Normal', value: 'normal'},
-                  {title: 'Spacious', value: 'spacious'},
+                  { title: 'Tight', value: 'tight' },
+                  { title: 'Normal', value: 'normal' },
+                  { title: 'Spacious', value: 'spacious' },
                 ],
                 layout: 'radio',
               },
             },
 
-            {name: 'body', type: 'array', of: [{type: 'block'}]},
+            { name: 'body', type: 'array', of: [{ type: 'block' }] },
           ],
         },
 
         //
-        // TOPIC SECTION (replaces fullWidthCallout)
+        // TOPIC SECTION
         //
         {
           type: 'object',
@@ -278,9 +303,9 @@ export default defineType({
               title: 'Text alignment',
               options: {
                 list: [
-                  {title: 'Left', value: 'left'},
-                  {title: 'Centered', value: 'center'},
-                  {title: 'Right', value: 'right'},
+                  { title: 'Left', value: 'left' },
+                  { title: 'Centered', value: 'center' },
+                  { title: 'Right', value: 'right' },
                 ],
                 layout: 'radio',
               },
@@ -315,26 +340,26 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Vertical (top → bottom)', value: 'to bottom'},
-                  {title: 'Horizontal (left → right)', value: 'to right'},
+                  { title: 'Vertical (top → bottom)', value: 'to bottom' },
+                  { title: 'Horizontal (left → right)', value: 'to right' },
                 ],
                 layout: 'radio',
               },
             },
 
-            // optional background image
+            // background image
             {
               name: 'backgroundImage',
               title: 'Background image',
               type: 'image',
-              options: {hotspot: true},
+              options: { hotspot: true },
             },
             {
               name: 'backgroundImageOpacity',
               title: 'Background image strength',
               type: 'number',
               description: '0 = invisible, 1 = full image',
-              options: {min: 0, max: 1, step: 0.05},
+              options: { min: 0, max: 1, step: 0.05 },
             },
 
             // border
@@ -349,9 +374,9 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'None', value: 'none'},
-                  {title: 'Subtle', value: 'subtle'},
-                  {title: 'Strong', value: 'strong'},
+                  { title: 'None', value: 'none' },
+                  { title: 'Subtle', value: 'subtle' },
+                  { title: 'Strong', value: 'strong' },
                 ],
                 layout: 'radio',
               },
@@ -365,10 +390,10 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Default', value: 'default'},
-                  {title: 'Narrow', value: 'narrow'},
-                  {title: 'Wide', value: 'wide'},
-                  {title: 'Full bleed', value: 'full'},
+                  { title: 'Default', value: 'default' },
+                  { title: 'Narrow', value: 'narrow' },
+                  { title: 'Wide', value: 'wide' },
+                  { title: 'Full bleed', value: 'full' },
                 ],
                 layout: 'radio',
               },
@@ -379,9 +404,9 @@ export default defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Tight', value: 'tight'},
-                  {title: 'Normal', value: 'normal'},
-                  {title: 'Spacious', value: 'spacious'},
+                  { title: 'Tight', value: 'tight' },
+                  { title: 'Normal', value: 'normal' },
+                  { title: 'Spacious', value: 'spacious' },
                 ],
                 layout: 'radio',
               },
@@ -396,7 +421,7 @@ export default defineType({
               name: 'body',
               type: 'array',
               title: 'Text',
-              of: [{type: 'block'}],
+              of: [{ type: 'block' }],
             },
           ],
         },
@@ -412,9 +437,9 @@ export default defineType({
       group: 'content',
       options: {
         list: [
-          {title: 'Standard (default)', value: 'standard'},
-          {title: 'Narrow reading column', value: 'narrow'},
-          {title: 'Wide / full-width card', value: 'wide'},
+          { title: 'Standard (default)', value: 'standard' },
+          { title: 'Narrow reading column', value: 'narrow' },
+          { title: 'Wide / full-width card', value: 'wide' },
         ],
         layout: 'radio',
       },
@@ -426,26 +451,6 @@ export default defineType({
       type: 'boolean',
       initialValue: true,
       group: 'content',
-    }),
-
-    defineField({
-      name: 'topic',
-      title: 'Type of update',
-      type: 'string',
-      description: 'Controls the badge style on the website.',
-      initialValue: 'general',
-      group: 'content',
-      options: {
-        list: [
-          {title: 'General update', value: 'general'},
-          {title: 'Elections', value: 'elections'},
-          {title: 'Pool update', value: 'pool'},
-          {title: 'Community event', value: 'events'},
-          {title: 'Maintenance', value: 'maintenance'},
-        ],
-        layout: 'radio',
-      },
-      validation: (rule) => rule.required(),
     }),
 
     defineField({
@@ -462,7 +467,7 @@ export default defineType({
     {
       title: 'Publish date (newest first)',
       name: 'publishedAtDesc',
-      by: [{field: 'publishedAt', direction: 'desc'}],
+      by: [{ field: 'publishedAt', direction: 'desc' }],
     },
   ],
 
@@ -471,7 +476,7 @@ export default defineType({
       title: 'title',
       publishedAt: 'publishedAt',
     },
-    prepare({title, publishedAt}) {
+    prepare({ title, publishedAt }) {
       const date = publishedAt
         ? new Date(publishedAt).toLocaleString()
         : 'Draft';
