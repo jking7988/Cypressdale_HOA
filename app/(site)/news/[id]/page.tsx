@@ -90,10 +90,6 @@ type SectionColorScheme =
   | 'slate'
   | undefined;
 
-type SectionWidth = 'default' | 'narrow' | 'wide' | 'full' | undefined;
-type SectionSpacing = 'tight' | 'normal' | 'spacious' | undefined;
-type SectionBorder = 'none' | 'subtle' | 'strong' | undefined;
-
 function colorSchemeToClasses(
   scheme: SectionColorScheme,
   fallback: string = '',
@@ -102,19 +98,23 @@ function colorSchemeToClasses(
 
   switch (scheme) {
     case 'emerald':
-      return 'bg-emerald-50 border-emerald-200 text-emerald-900';
+      return 'bg-emerald-50 border-emerald-300 text-emerald-900';
     case 'sky':
-      return 'bg-sky-50 border-sky-200 text-sky-900';
+      return 'bg-sky-50 border-sky-300 text-sky-900';
     case 'amber':
-      return 'bg-amber-50 border-amber-200 text-amber-900';
+      return 'bg-amber-50 border-amber-300 text-amber-900';
     case 'rose':
-      return 'bg-rose-50 border-rose-200 text-rose-900';
+      return 'bg-rose-50 border-rose-300 text-rose-900';
     case 'slate':
-      return 'bg-slate-50 border-slate-200 text-slate-900';
+      return 'bg-slate-50 border-slate-300 text-slate-900';
     default:
       return fallback;
   }
 }
+
+type SectionWidth = 'default' | 'narrow' | 'wide' | 'full' | undefined;
+type SectionSpacing = 'tight' | 'normal' | 'spacious' | undefined;
+type SectionBorder = 'none' | 'subtle' | 'strong' | undefined;
 
 function sectionWidthClasses(width: SectionWidth) {
   switch (width) {

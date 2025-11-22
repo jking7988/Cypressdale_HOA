@@ -66,6 +66,7 @@ export default defineType({
                 list: [
                   { title: 'Left', value: 'left' },
                   { title: 'Centered', value: 'center' },
+                  { title: 'Right', value: 'right' },
                 ],
                 layout: 'radio',
               },
@@ -142,6 +143,7 @@ export default defineType({
               options: {
                 list: [
                   { title: 'Left', value: 'left' },
+                  { title: 'Centered', value: 'center' },
                   { title: 'Right', value: 'right' },
                 ],
                 layout: 'radio',
