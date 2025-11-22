@@ -1,0 +1,1542 @@
+[
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "of": [
+          {
+            "marks": {
+              "annotations": [
+                {
+                  "i18nTitleKey": "inputs.portable-text.annotation.link",
+                  "options": {
+                    "modal": {
+                      "type": "popover"
+                    }
+                  },
+                  "fields": [
+                    {
+                      "validation": [
+                        {
+                          "rules": [
+                            {
+                              "flag": "uri",
+                              "constraint": {
+                                "options": {
+                                  "scheme": [
+                                    "/^http$/",
+                                    "/^https$/",
+                                    "/^tel$/",
+                                    "/^mailto$/"
+                                  ],
+                                  "allowRelative": true,
+                                  "relativeOnly": false,
+                                  "allowCredentials": false
+                                }
+                              }
+                            }
+                          ],
+                          "level": "error"
+                        }
+                      ],
+                      "description": "A valid web, email, phone, or relative link.",
+                      "name": "href",
+                      "type": "url",
+                      "title": "Link"
+                    }
+                  ],
+                  "name": "link",
+                  "type": "object"
+                }
+              ],
+              "decorators": [
+                {
+                  "value": "strong",
+                  "title": "Strong"
+                },
+                {
+                  "value": "em",
+                  "title": "Italic"
+                },
+                {
+                  "value": "code",
+                  "title": "Code"
+                },
+                {
+                  "value": "underline",
+                  "title": "Underline"
+                },
+                {
+                  "value": "strike-through",
+                  "title": "Strike"
+                }
+              ]
+            },
+            "lists": [
+              {
+                "value": "bullet",
+                "title": "Bulleted list"
+              },
+              {
+                "value": "number",
+                "title": "Numbered list"
+              }
+            ],
+            "styles": [
+              {
+                "value": "normal",
+                "title": "Normal"
+              },
+              {
+                "value": "h1",
+                "title": "Heading 1"
+              },
+              {
+                "value": "h2",
+                "title": "Heading 2"
+              },
+              {
+                "value": "h3",
+                "title": "Heading 3"
+              },
+              {
+                "value": "h4",
+                "title": "Heading 4"
+              },
+              {
+                "value": "h5",
+                "title": "Heading 5"
+              },
+              {
+                "value": "h6",
+                "title": "Heading 6"
+              },
+              {
+                "value": "blockquote",
+                "title": "Quote"
+              }
+            ],
+            "of": [],
+            "type": "block"
+          }
+        ],
+        "name": "excerpt",
+        "type": "array"
+      },
+      {
+        "of": [
+          {
+            "marks": {
+              "annotations": [
+                {
+                  "i18nTitleKey": "inputs.portable-text.annotation.link",
+                  "options": {
+                    "modal": {
+                      "type": "popover"
+                    }
+                  },
+                  "fields": [
+                    {
+                      "validation": [
+                        {
+                          "rules": [
+                            {
+                              "flag": "uri",
+                              "constraint": {
+                                "options": {
+                                  "scheme": [
+                                    "/^http$/",
+                                    "/^https$/",
+                                    "/^tel$/",
+                                    "/^mailto$/"
+                                  ],
+                                  "allowRelative": true,
+                                  "relativeOnly": false,
+                                  "allowCredentials": false
+                                }
+                              }
+                            }
+                          ],
+                          "level": "error"
+                        }
+                      ],
+                      "description": "A valid web, email, phone, or relative link.",
+                      "name": "href",
+                      "type": "url",
+                      "title": "Link"
+                    }
+                  ],
+                  "name": "link",
+                  "type": "object"
+                }
+              ],
+              "decorators": [
+                {
+                  "value": "strong",
+                  "title": "Strong"
+                },
+                {
+                  "value": "em",
+                  "title": "Italic"
+                },
+                {
+                  "value": "code",
+                  "title": "Code"
+                },
+                {
+                  "value": "underline",
+                  "title": "Underline"
+                },
+                {
+                  "value": "strike-through",
+                  "title": "Strike"
+                }
+              ]
+            },
+            "lists": [
+              {
+                "value": "bullet",
+                "title": "Bulleted list"
+              },
+              {
+                "value": "number",
+                "title": "Numbered list"
+              }
+            ],
+            "styles": [
+              {
+                "value": "normal",
+                "title": "Normal"
+              },
+              {
+                "value": "h1",
+                "title": "Heading 1"
+              },
+              {
+                "value": "h2",
+                "title": "Heading 2"
+              },
+              {
+                "value": "h3",
+                "title": "Heading 3"
+              },
+              {
+                "value": "h4",
+                "title": "Heading 4"
+              },
+              {
+                "value": "h5",
+                "title": "Heading 5"
+              },
+              {
+                "value": "h6",
+                "title": "Heading 6"
+              },
+              {
+                "value": "blockquote",
+                "title": "Quote"
+              }
+            ],
+            "of": [],
+            "type": "block"
+          }
+        ],
+        "name": "body",
+        "type": "array"
+      },
+      {
+        "of": [
+          {
+            "fields": [
+              {
+                "name": "title",
+                "type": "string",
+                "title": "Section title"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Left",
+                      "value": "left"
+                    },
+                    {
+                      "title": "Centered",
+                      "value": "center"
+                    },
+                    {
+                      "title": "Right",
+                      "value": "right"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "initialValue": "left",
+                "name": "alignment",
+                "type": "string",
+                "title": "Text alignment"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Plain (no background)",
+                      "value": "plain"
+                    },
+                    {
+                      "title": "Emerald",
+                      "value": "emerald"
+                    },
+                    {
+                      "title": "Sky",
+                      "value": "sky"
+                    },
+                    {
+                      "title": "Amber",
+                      "value": "amber"
+                    },
+                    {
+                      "title": "Rose",
+                      "value": "rose"
+                    },
+                    {
+                      "title": "Slate",
+                      "value": "slate"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "description": "Background color for this text section.",
+                "name": "colorScheme",
+                "type": "string",
+                "title": "Color"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Default",
+                      "value": "default"
+                    },
+                    {
+                      "title": "Narrow",
+                      "value": "narrow"
+                    },
+                    {
+                      "title": "Wide",
+                      "value": "wide"
+                    },
+                    {
+                      "title": "Full bleed",
+                      "value": "full"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "name": "width",
+                "type": "string"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Tight",
+                      "value": "tight"
+                    },
+                    {
+                      "title": "Normal",
+                      "value": "normal"
+                    },
+                    {
+                      "title": "Spacious",
+                      "value": "spacious"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "name": "spacing",
+                "type": "string"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "None",
+                      "value": "none"
+                    },
+                    {
+                      "title": "Subtle",
+                      "value": "subtle"
+                    },
+                    {
+                      "title": "Strong",
+                      "value": "strong"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "name": "borderStyle",
+                "type": "string",
+                "title": "Border"
+              },
+              {
+                "of": [
+                  {
+                    "marks": {
+                      "annotations": [
+                        {
+                          "i18nTitleKey": "inputs.portable-text.annotation.link",
+                          "options": {
+                            "modal": {
+                              "type": "popover"
+                            }
+                          },
+                          "fields": [
+                            {
+                              "validation": [
+                                {
+                                  "rules": [
+                                    {
+                                      "flag": "uri",
+                                      "constraint": {
+                                        "options": {
+                                          "scheme": [
+                                            "/^http$/",
+                                            "/^https$/",
+                                            "/^tel$/",
+                                            "/^mailto$/"
+                                          ],
+                                          "allowRelative": true,
+                                          "relativeOnly": false,
+                                          "allowCredentials": false
+                                        }
+                                      }
+                                    }
+                                  ],
+                                  "level": "error"
+                                }
+                              ],
+                              "description": "A valid web, email, phone, or relative link.",
+                              "name": "href",
+                              "type": "url",
+                              "title": "Link"
+                            }
+                          ],
+                          "name": "link",
+                          "type": "object"
+                        }
+                      ],
+                      "decorators": [
+                        {
+                          "value": "strong",
+                          "title": "Strong"
+                        },
+                        {
+                          "value": "em",
+                          "title": "Italic"
+                        },
+                        {
+                          "value": "code",
+                          "title": "Code"
+                        },
+                        {
+                          "value": "underline",
+                          "title": "Underline"
+                        },
+                        {
+                          "value": "strike-through",
+                          "title": "Strike"
+                        }
+                      ]
+                    },
+                    "lists": [
+                      {
+                        "value": "bullet",
+                        "title": "Bulleted list"
+                      },
+                      {
+                        "value": "number",
+                        "title": "Numbered list"
+                      }
+                    ],
+                    "styles": [
+                      {
+                        "value": "normal",
+                        "title": "Normal"
+                      },
+                      {
+                        "value": "h1",
+                        "title": "Heading 1"
+                      },
+                      {
+                        "value": "h2",
+                        "title": "Heading 2"
+                      },
+                      {
+                        "value": "h3",
+                        "title": "Heading 3"
+                      },
+                      {
+                        "value": "h4",
+                        "title": "Heading 4"
+                      },
+                      {
+                        "value": "h5",
+                        "title": "Heading 5"
+                      },
+                      {
+                        "value": "h6",
+                        "title": "Heading 6"
+                      },
+                      {
+                        "value": "blockquote",
+                        "title": "Quote"
+                      }
+                    ],
+                    "of": [],
+                    "type": "block"
+                  }
+                ],
+                "name": "body",
+                "type": "array"
+              }
+            ],
+            "type": "object",
+            "name": "textSection",
+            "title": "Text section"
+          },
+          {
+            "fields": [
+              {
+                "options": {
+                  "hotspot": true
+                },
+                "name": "image",
+                "type": "image"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Left",
+                      "value": "left"
+                    },
+                    {
+                      "title": "Centered",
+                      "value": "center"
+                    },
+                    {
+                      "title": "Right",
+                      "value": "right"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "initialValue": "left",
+                "name": "imagePosition",
+                "type": "string",
+                "title": "Image position"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Plain (no background)",
+                      "value": "plain"
+                    },
+                    {
+                      "title": "Emerald",
+                      "value": "emerald"
+                    },
+                    {
+                      "title": "Sky",
+                      "value": "sky"
+                    },
+                    {
+                      "title": "Amber",
+                      "value": "amber"
+                    },
+                    {
+                      "title": "Rose",
+                      "value": "rose"
+                    },
+                    {
+                      "title": "Slate",
+                      "value": "slate"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "description": "Background color behind this image + text block.",
+                "name": "colorScheme",
+                "type": "string",
+                "title": "Color"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Default",
+                      "value": "default"
+                    },
+                    {
+                      "title": "Narrow",
+                      "value": "narrow"
+                    },
+                    {
+                      "title": "Wide",
+                      "value": "wide"
+                    },
+                    {
+                      "title": "Full bleed",
+                      "value": "full"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "name": "width",
+                "type": "string"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Tight",
+                      "value": "tight"
+                    },
+                    {
+                      "title": "Normal",
+                      "value": "normal"
+                    },
+                    {
+                      "title": "Spacious",
+                      "value": "spacious"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "name": "spacing",
+                "type": "string"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "None",
+                      "value": "none"
+                    },
+                    {
+                      "title": "Subtle",
+                      "value": "subtle"
+                    },
+                    {
+                      "title": "Strong",
+                      "value": "strong"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "name": "borderStyle",
+                "type": "string",
+                "title": "Border"
+              },
+              {
+                "of": [
+                  {
+                    "marks": {
+                      "annotations": [
+                        {
+                          "i18nTitleKey": "inputs.portable-text.annotation.link",
+                          "options": {
+                            "modal": {
+                              "type": "popover"
+                            }
+                          },
+                          "fields": [
+                            {
+                              "validation": [
+                                {
+                                  "rules": [
+                                    {
+                                      "flag": "uri",
+                                      "constraint": {
+                                        "options": {
+                                          "scheme": [
+                                            "/^http$/",
+                                            "/^https$/",
+                                            "/^tel$/",
+                                            "/^mailto$/"
+                                          ],
+                                          "allowRelative": true,
+                                          "relativeOnly": false,
+                                          "allowCredentials": false
+                                        }
+                                      }
+                                    }
+                                  ],
+                                  "level": "error"
+                                }
+                              ],
+                              "description": "A valid web, email, phone, or relative link.",
+                              "name": "href",
+                              "type": "url",
+                              "title": "Link"
+                            }
+                          ],
+                          "name": "link",
+                          "type": "object"
+                        }
+                      ],
+                      "decorators": [
+                        {
+                          "value": "strong",
+                          "title": "Strong"
+                        },
+                        {
+                          "value": "em",
+                          "title": "Italic"
+                        },
+                        {
+                          "value": "code",
+                          "title": "Code"
+                        },
+                        {
+                          "value": "underline",
+                          "title": "Underline"
+                        },
+                        {
+                          "value": "strike-through",
+                          "title": "Strike"
+                        }
+                      ]
+                    },
+                    "lists": [
+                      {
+                        "value": "bullet",
+                        "title": "Bulleted list"
+                      },
+                      {
+                        "value": "number",
+                        "title": "Numbered list"
+                      }
+                    ],
+                    "styles": [
+                      {
+                        "value": "normal",
+                        "title": "Normal"
+                      },
+                      {
+                        "value": "h1",
+                        "title": "Heading 1"
+                      },
+                      {
+                        "value": "h2",
+                        "title": "Heading 2"
+                      },
+                      {
+                        "value": "h3",
+                        "title": "Heading 3"
+                      },
+                      {
+                        "value": "h4",
+                        "title": "Heading 4"
+                      },
+                      {
+                        "value": "h5",
+                        "title": "Heading 5"
+                      },
+                      {
+                        "value": "h6",
+                        "title": "Heading 6"
+                      },
+                      {
+                        "value": "blockquote",
+                        "title": "Quote"
+                      }
+                    ],
+                    "of": [],
+                    "type": "block"
+                  }
+                ],
+                "name": "body",
+                "type": "array"
+              }
+            ],
+            "type": "object",
+            "name": "imageWithText",
+            "title": "Image + text"
+          },
+          {
+            "fields": [
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Info",
+                      "value": "info"
+                    },
+                    {
+                      "title": "Warning",
+                      "value": "warning"
+                    },
+                    {
+                      "title": "Success",
+                      "value": "success"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "initialValue": "info",
+                "name": "tone",
+                "type": "string"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Plain (no background)",
+                      "value": "plain"
+                    },
+                    {
+                      "title": "Emerald",
+                      "value": "emerald"
+                    },
+                    {
+                      "title": "Sky",
+                      "value": "sky"
+                    },
+                    {
+                      "title": "Amber",
+                      "value": "amber"
+                    },
+                    {
+                      "title": "Rose",
+                      "value": "rose"
+                    },
+                    {
+                      "title": "Slate",
+                      "value": "slate"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "description": "Override the default tone colors. Leave blank to use tone.",
+                "name": "colorScheme",
+                "type": "string",
+                "title": "Color"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Default",
+                      "value": "default"
+                    },
+                    {
+                      "title": "Narrow",
+                      "value": "narrow"
+                    },
+                    {
+                      "title": "Wide",
+                      "value": "wide"
+                    },
+                    {
+                      "title": "Full bleed",
+                      "value": "full"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "name": "width",
+                "type": "string"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "Tight",
+                      "value": "tight"
+                    },
+                    {
+                      "title": "Normal",
+                      "value": "normal"
+                    },
+                    {
+                      "title": "Spacious",
+                      "value": "spacious"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "name": "spacing",
+                "type": "string"
+              },
+              {
+                "options": {
+                  "list": [
+                    {
+                      "title": "None",
+                      "value": "none"
+                    },
+                    {
+                      "title": "Subtle",
+                      "value": "subtle"
+                    },
+                    {
+                      "title": "Strong",
+                      "value": "strong"
+                    }
+                  ],
+                  "layout": "radio"
+                },
+                "name": "borderStyle",
+                "type": "string",
+                "title": "Border"
+              },
+              {
+                "of": [
+                  {
+                    "marks": {
+                      "annotations": [
+                        {
+                          "i18nTitleKey": "inputs.portable-text.annotation.link",
+                          "options": {
+                            "modal": {
+                              "type": "popover"
+                            }
+                          },
+                          "fields": [
+                            {
+                              "validation": [
+                                {
+                                  "rules": [
+                                    {
+                                      "flag": "uri",
+                                      "constraint": {
+                                        "options": {
+                                          "scheme": [
+                                            "/^http$/",
+                                            "/^https$/",
+                                            "/^tel$/",
+                                            "/^mailto$/"
+                                          ],
+                                          "allowRelative": true,
+                                          "relativeOnly": false,
+                                          "allowCredentials": false
+                                        }
+                                      }
+                                    }
+                                  ],
+                                  "level": "error"
+                                }
+                              ],
+                              "description": "A valid web, email, phone, or relative link.",
+                              "name": "href",
+                              "type": "url",
+                              "title": "Link"
+                            }
+                          ],
+                          "name": "link",
+                          "type": "object"
+                        }
+                      ],
+                      "decorators": [
+                        {
+                          "value": "strong",
+                          "title": "Strong"
+                        },
+                        {
+                          "value": "em",
+                          "title": "Italic"
+                        },
+                        {
+                          "value": "code",
+                          "title": "Code"
+                        },
+                        {
+                          "value": "underline",
+                          "title": "Underline"
+                        },
+                        {
+                          "value": "strike-through",
+                          "title": "Strike"
+                        }
+                      ]
+                    },
+                    "lists": [
+                      {
+                        "value": "bullet",
+                        "title": "Bulleted list"
+                      },
+                      {
+                        "value": "number",
+                        "title": "Numbered list"
+                      }
+                    ],
+                    "styles": [
+                      {
+                        "value": "normal",
+                        "title": "Normal"
+                      },
+                      {
+                        "value": "h1",
+                        "title": "Heading 1"
+                      },
+                      {
+                        "value": "h2",
+                        "title": "Heading 2"
+                      },
+                      {
+                        "value": "h3",
+                        "title": "Heading 3"
+                      },
+                      {
+                        "value": "h4",
+                        "title": "Heading 4"
+                      },
+                      {
+                        "value": "h5",
+                        "title": "Heading 5"
+                      },
+                      {
+                        "value": "h6",
+                        "title": "Heading 6"
+                      },
+                      {
+                        "value": "blockquote",
+                        "title": "Quote"
+                      }
+                    ],
+                    "of": [],
+                    "type": "block"
+                  }
+                ],
+                "name": "body",
+                "type": "array",
+                "title": "Text"
+              }
+            ],
+            "type": "object",
+            "name": "fullWidthCallout",
+            "title": "Full-width callout"
+          }
+        ],
+        "name": "sections",
+        "type": "array",
+        "title": "Page sections"
+      },
+      {
+        "initialValue": "standard",
+        "options": {
+          "list": [
+            {
+              "title": "Standard (default)",
+              "value": "standard"
+            },
+            {
+              "title": "Narrow reading column",
+              "value": "narrow"
+            },
+            {
+              "title": "Wide / full-width card",
+              "value": "wide"
+            }
+          ],
+          "layout": "radio"
+        },
+        "description": "Controls width and overall layout of the article page.",
+        "name": "layoutVariant",
+        "type": "string",
+        "title": "Page layout"
+      },
+      {
+        "initialValue": true,
+        "name": "showRightSidebar",
+        "type": "boolean",
+        "title": "Show sidebar (calendar & signup)"
+      },
+      {
+        "initialValue": "general",
+        "options": {
+          "list": [
+            {
+              "title": "General update",
+              "value": "general"
+            },
+            {
+              "title": "Elections",
+              "value": "elections"
+            },
+            {
+              "title": "Pool update",
+              "value": "pool"
+            },
+            {
+              "title": "Community event",
+              "value": "events"
+            },
+            {
+              "title": "Maintenance",
+              "value": "maintenance"
+            }
+          ],
+          "layout": "radio"
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "valid",
+                "constraint": [
+                  "general",
+                  "elections",
+                  "pool",
+                  "events",
+                  "maintenance"
+                ]
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Controls the badge style on the website.",
+        "name": "topic",
+        "type": "string",
+        "title": "Type of update"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "publishedAt",
+        "type": "datetime",
+        "title": "Publish Date"
+      }
+    ],
+    "name": "post",
+    "type": "document",
+    "title": "Post / News"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "name": "location",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "startDate",
+        "type": "datetime",
+        "title": "Start Date & Time"
+      },
+      {
+        "name": "endDate",
+        "type": "datetime",
+        "title": "End Date & Time"
+      },
+      {
+        "options": {
+          "accept": "image/*,application/pdf"
+        },
+        "name": "flyer",
+        "type": "file",
+        "title": "Flyer (optional)"
+      },
+      {
+        "initialValue": 0,
+        "name": "rsvpYes",
+        "type": "number",
+        "title": "RSVP – Going"
+      },
+      {
+        "initialValue": 0,
+        "name": "rsvpMaybe",
+        "type": "number",
+        "title": "RSVP – Maybe"
+      }
+    ],
+    "name": "event",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string",
+        "title": "Folder name"
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "title": "Description (optional)"
+      },
+      {
+        "description": "Lower numbers show first on the Documents page.",
+        "name": "sortOrder",
+        "type": "number",
+        "title": "Sort order"
+      }
+    ],
+    "name": "documentFolder",
+    "type": "document"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "options": {
+          "list": [
+            {
+              "title": "Governing Documents",
+              "value": "Governing Documents"
+            },
+            {
+              "title": "Neighborhood Plat Maps",
+              "value": "Neighborhood Plat Maps"
+            }
+          ]
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "valid",
+                "constraint": [
+                  "Governing Documents",
+                  "Neighborhood Plat Maps"
+                ]
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "category",
+        "type": "string",
+        "title": "Category / Folder"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "file",
+        "type": "file"
+      }
+    ],
+    "name": "documentFile",
+    "type": "document",
+    "title": "Document (PDF, etc.)"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Example: \"May 2025 – Oak Bend Section\" or similar.",
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Pick any day in the winning month. The website will display this as Month + Year (for example, \"November 2025\").",
+        "name": "month",
+        "type": "date"
+      },
+      {
+        "description": "Optional. Use a street or block instead of a full address for privacy.",
+        "name": "streetOrBlock",
+        "type": "string",
+        "title": "Street / Block (optional)"
+      },
+      {
+        "rows": 3,
+        "description": "Short description of what made this yard stand out (used on the website).",
+        "name": "description",
+        "type": "text",
+        "title": "Notes / Description (optional)"
+      },
+      {
+        "options": {
+          "layout": "grid"
+        },
+        "description": "Upload one or more photos of the winning yard. You can blur the house number if desired.",
+        "of": [
+          {
+            "options": {
+              "hotspot": true
+            },
+            "type": "image"
+          }
+        ],
+        "name": "photos",
+        "type": "array",
+        "title": "Photos (optional)"
+      }
+    ],
+    "name": "yardWinner",
+    "type": "document",
+    "title": "Yard of the Month Winner"
+  },
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string",
+        "title": "Home / Display Title"
+      },
+      {
+        "options": {
+          "list": [
+            {
+              "title": "Christmas",
+              "value": "christmas"
+            },
+            {
+              "title": "Halloween",
+              "value": "halloween"
+            }
+          ],
+          "layout": "radio"
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "valid",
+                "constraint": [
+                  "christmas",
+                  "halloween"
+                ]
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "holiday",
+        "type": "string"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              },
+              {
+                "flag": "min",
+                "constraint": 2025
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "year",
+        "type": "number"
+      },
+      {
+        "options": {
+          "list": [
+            {
+              "title": "1st Place",
+              "value": "1"
+            },
+            {
+              "title": "2nd Place",
+              "value": "2"
+            },
+            {
+              "title": "3rd Place",
+              "value": "3"
+            }
+          ],
+          "layout": "radio"
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "valid",
+                "constraint": [
+                  "1",
+                  "2",
+                  "3"
+                ]
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "place",
+        "type": "string"
+      },
+      {
+        "name": "streetOrBlock",
+        "type": "string",
+        "title": "Street / Block (optional)"
+      },
+      {
+        "rows": 4,
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "name": "photo",
+        "type": "image",
+        "title": "Main Photo"
+      },
+      {
+        "options": {
+          "layout": "grid"
+        },
+        "of": [
+          {
+            "type": "image"
+          }
+        ],
+        "name": "photos",
+        "type": "array",
+        "title": "Additional Photos"
+      }
+    ],
+    "name": "holidayWinner",
+    "type": "document",
+    "title": "Holiday Decorating Winner"
+  }
+]
