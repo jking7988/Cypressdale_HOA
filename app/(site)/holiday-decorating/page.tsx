@@ -1,6 +1,7 @@
 // app/holiday-decorating/page.tsx
 
 import Link from 'next/link';
+import Image from 'next/image'; // ⬅️ add this
 import { ContactLink } from '@/components/ContactLink';
 import { client } from '@/lib/sanity.client';
 import { holidayWinnersQuery } from '@/lib/queries';
@@ -13,7 +14,8 @@ type HolidayWinner = {
   title: string;
   holiday?: 'christmas' | 'halloween' | string;
   year?: number;
-  place?: string; // "1" | "2" | "3"
+  place?: string; // "1" | "2" | "3" | "4"
+  section?: string; // "1" | "2" | "3" | "4" (optional if you add it in Sanity)
   streetOrBlock?: string;
   description?: string;
   photoUrl?: string;
@@ -28,6 +30,8 @@ function placeLabel(place?: string) {
       return '2nd Place';
     case '3':
       return '3rd Place';
+    case '4':
+      return '4th Place';
     default:
       return 'Winner';
   }
@@ -41,6 +45,8 @@ function placeIcon(place?: string) {
       return '🥈';
     case '3':
       return '🥉';
+    case '4':
+      return '🏅';
     default:
       return '🏅';
   }
@@ -50,6 +56,47 @@ function placeRank(place?: string) {
   const n = Number(place);
   return Number.isNaN(n) ? 99 : n;
 }
+
+function placePrize(place?: string) {
+  switch (place) {
+    case '1':
+      return '$75 prize';
+    case '2':
+      return '$50 prize';
+    case '3':
+    case '4':
+      return '$25 prize';
+    default:
+      return null;
+  }
+}
+
+const layoutSections = [
+  {
+    id: 'section-1',
+    label: 'Section 1',
+    description: '',
+    src: '/images/holiday-layout-section-1.png',
+  },
+  {
+    id: 'section-2',
+    label: 'Section 2',
+    description: '',
+    src: '/images/holiday-layout-section-2.png',
+  },
+  {
+    id: 'section-3',
+    label: 'Section 3',
+    description: '',
+    src: '/images/holiday-layout-section-3.png',
+  },
+  {
+    id: 'section-4',
+    label: 'Section 4',
+    description: '',
+    src: '/images/holiday-layout-section-4.png',
+  },
+];
 
 export default async function HolidayDecoratingPage() {
   const winners = await client.fetch<HolidayWinner[]>(holidayWinnersQuery);
@@ -116,6 +163,54 @@ export default async function HolidayDecoratingPage() {
           </p>
         </header>
 
+        {/* NEW: Neighborhood layout / sections */}
+        <section className="rounded-3xl border border-emerald-200/60 bg-emerald-950/40 backdrop-blur-md shadow-lg shadow-black/30 p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-emerald-50">
+              <span className="text-lg">🗺️</span>
+              <h2 className="text-lg font-semibold">
+                Neighborhood judging sections
+              </h2>
+            </div>
+            <span className="text-[11px] rounded-full bg-emerald-100/15 px-3 py-1 font-semibold uppercase tracking-wide text-emerald-50">
+              4 sections for judging
+            </span>
+          </div>
+
+          <p className="text-sm text-emerald-50/90">
+            For holiday decorating contests, Cypressdale is divided into four
+            sections so that judging can be organized and every home is
+            considered. Use the maps below to see which section your home is in.
+          </p>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {layoutSections.map((section) => (
+              <figure
+                key={section.id}
+                className="flex flex-col gap-2 rounded-2xl border border-emerald-200/50 bg-black/25 p-3 shadow-md shadow-black/30"
+              >
+                <div className="rounded-xl border border-emerald-200/40 bg-black/40 p-2">
+                  {/* Use YardLightbox to make the image expandable */}
+                  <YardLightbox
+                    photos={[section.src]}
+                    title={section.label}
+                  />
+                </div>
+                <figcaption className="space-y-1">
+                  <p className="text-sm font-semibold text-emerald-50">
+                    {section.label}
+                  </p>
+                  {section.description && (
+                    <p className="text-xs text-emerald-100/85">
+                      {section.description}
+                    </p>
+                  )}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
         {/* Current Christmas winners */}
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
@@ -150,6 +245,7 @@ export default async function HolidayDecoratingPage() {
                     className="rounded-3xl border border-emerald-200/60 bg-emerald-950/40 backdrop-blur-md shadow-lg shadow-black/30 p-4 flex flex-col gap-2"
                   >
                     <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">
                           {placeIcon(winner.place)}
@@ -158,12 +254,27 @@ export default async function HolidayDecoratingPage() {
                           {placeLabel(winner.place)}
                         </span>
                       </div>
-                      {winner.year && (
-                        <span className="text-[11px] text-emerald-100/80">
-                          {winner.year}
-                        </span>
-                      )}
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        {winner.section && (
+                          <span className="text-[11px] font-medium text-emerald-100/90">
+                            Section {winner.section} winner
+                          </span>
+                        )}
+                        {placePrize(winner.place) && (
+                          <span className="text-[11px] font-semibold text-emerald-50/95">
+                            {placePrize(winner.place)}
+                          </span>
+                        )}
+                      </div>
                     </div>
+
+                    {winner.year && (
+                      <span className="text-[11px] text-emerald-100/80">
+                        {winner.year}
+                      </span>
+                    )}
+                  </div>
 
                     <h3 className="text-sm font-semibold text-emerald-50">
                       {winner.title}
@@ -222,7 +333,10 @@ export default async function HolidayDecoratingPage() {
             <p className="text-sm text-emerald-50/90">
               The Christmas decorating contest celebrates bright lights, classic
               holiday charm, and creative winter themes throughout Cypressdale.
-              The first contest begins Christmas 2025 and will be held annually.
+              The neighborhood is divided into four judging sections. One winner is
+              chosen from each section, then placed 1st through 4th overall with
+              prizes of $75 (1st), $50 (2nd), and $25 for 3rd and 4th place. Final
+              winners will be announced on December 20.
             </p>
             <ul className="space-y-1.5 text-sm text-emerald-50/90">
               <li>Judging focuses on overall curb appeal from the street.</li>
