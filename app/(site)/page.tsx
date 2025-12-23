@@ -806,17 +806,21 @@ function AboutSection() {
 
 /* ---------- Utility functions ---------- */
 
+const DISPLAY_TZ = 'America/Chicago';
+
 function formatDate(dateStr?: string) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString(undefined, {
+
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: DISPLAY_TZ,
     month: 'short',
     day: 'numeric',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-  });
+  }).format(d);
 }
 
 function formatWeatherDayLabel(dateStr: string, index: number) {
@@ -826,17 +830,19 @@ function formatWeatherDayLabel(dateStr: string, index: number) {
   if (index === 0) return 'Today';
   if (index === 1) return 'Tomorrow';
 
-  return d.toLocaleDateString(undefined, {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: DISPLAY_TZ,
     weekday: 'short',
-  });
+  }).format(d);
 }
 
 function formatHourLabel(dateTimeStr: string) {
   const d = new Date(dateTimeStr);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString(undefined, {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: DISPLAY_TZ,
     hour: 'numeric',
-  });
+  }).format(d);
 }
 
 function getWeatherMeta(phrase: string) {
