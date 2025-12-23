@@ -7,6 +7,7 @@ import { postsQuery } from '@/lib/queries';
 import { PortableText } from '@portabletext/react';
 import { NewsCalendar } from '@/components/NewsCalendar';
 import { NewsLetterSignup } from '@/components/NewsLetterSignup';
+import { FormattedDateTime } from '@/components/FormattedDateTime';
 
 type Post = {
   _id: string;
@@ -122,9 +123,7 @@ export default async function NewsPage(props: Props) {
         </header>
 
         {posts.length === 0 && (
-          <p className="muted text-sm">
-            No news posts have been published yet.
-          </p>
+          <p className="muted text-sm">No news posts have been published yet.</p>
         )}
 
         {posts.length > 0 && (
@@ -152,16 +151,11 @@ export default async function NewsPage(props: Props) {
                         <h3 className="text-lg md:text-xl font-semibold text-brand-900">
                           {leadStory.title}
                         </h3>
+
+                        {/* ✅ use shared formatter to avoid TZ day-jump */}
                         {leadStory._createdAt && (
                           <p className="text-[11px] text-gray-500 whitespace-nowrap">
-                            {new Date(leadStory._createdAt).toLocaleDateString(
-                              undefined,
-                              {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              },
-                            )}
+                            <FormattedDateTime value={leadStory._createdAt} />
                           </p>
                         )}
                       </div>
@@ -191,13 +185,8 @@ export default async function NewsPage(props: Props) {
                     {Array.from(postsByDate.entries())
                       .sort(([a], [b]) => (a < b ? 1 : -1)) // newest date first
                       .map(([dateKey, dayPosts]) => {
-                        const d = new Date(`${dateKey}T12:00:00.000Z`);
-                        const heading = d.toLocaleDateString(undefined, {
-                          weekday: 'long',
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        });
+                        // ✅ keep the “midday” trick so the heading doesn't shift days
+                        const headingIso = `${dateKey}T12:00:00.000Z`;
 
                         return (
                           <div key={dateKey} className="space-y-2">
@@ -205,14 +194,11 @@ export default async function NewsPage(props: Props) {
                               id={`news-${dateKey}`}
                               className="scroll-mt-24 text-[11px] font-semibold text-gray-500 uppercase tracking-[0.18em]"
                             >
-                              {heading}
+                              <FormattedDateTime value={headingIso} />
                             </h3>
 
                             <div className="grid gap-3">
                               {dayPosts.map((p) => {
-                                const created = p._createdAt
-                                  ? new Date(p._createdAt)
-                                  : null;
                                 const href = `/news/${p._id}`;
 
                                 return (
@@ -223,18 +209,11 @@ export default async function NewsPage(props: Props) {
                                           <span>📌</span>
                                           <span>{p.title}</span>
                                         </h4>
-                                        {created && (
+
+                                        {/* ✅ use shared formatter here too */}
+                                        {p._createdAt && (
                                           <p className="text-[11px] text-gray-500">
-                                            {created.toLocaleDateString(
-                                              undefined,
-                                              {
-                                                month: 'short',
-                                                day: 'numeric',
-                                                year: 'numeric',
-                                                hour: 'numeric',
-                                                minute: '2-digit',
-                                              },
-                                            )}
+                                            <FormattedDateTime value={p._createdAt} />
                                           </p>
                                         )}
                                       </div>

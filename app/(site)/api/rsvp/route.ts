@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeClient } from '@/lib/sanity.server';
 
+type RSVPResponse = 'yes' | 'maybe'; // keep as-is
+
 export async function POST(req: NextRequest) {
   try {
-    const { eventId, response, name, email } = await req.json();
+    const body = await req.json().catch(() => null);
+    const eventId = body?.eventId as string | undefined;
+    const response = body?.response as RSVPResponse | undefined;
+    const name = (body?.name as string | undefined) ?? '';
+    const email = (body?.email as string | undefined) ?? '';
 
-    if (!eventId || !['yes', 'maybe'].includes(response)) {
+    if (!eventId || !response || !['yes', 'maybe'].includes(response)) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
@@ -16,25 +22,29 @@ export async function POST(req: NextRequest) {
 
     const field = response === 'yes' ? 'rsvpYes' : 'rsvpMaybe';
 
-    // Build the RSVP object that will live on the event
     const rsvpEntry = {
-      _type: 'rsvp', // matches the object type name in the event schema
-      _key: Math.random().toString(36).slice(2), // simple unique key
+      _type: 'rsvp',
+      _key: crypto.randomUUID(), // ✅ strong unique key
       status: response,
-      name: name || '',
-      email: email || '',
+      name: name.trim(),
+      email: email.trim(),
       createdAt: new Date().toISOString(),
     };
 
-    // Patch the event: ensure fields exist, increment count, append RSVP
+    // Transaction = atomic increment + append
     await writeClient
-      .patch(eventId)
-      .setIfMissing({
-        [field]: 0,
-        rsvps: [],
-      })
-      .inc({ [field]: 1 })
-      .append('rsvps', [rsvpEntry])
+      .transaction()
+      .patch(eventId, (p) =>
+        p
+          // Ensure counts exist
+          .setIfMissing({ rsvpYes: 0, rsvpMaybe: 0 })
+          // Ensure rsvps exists AND isn’t null
+          .setIfMissing({ rsvps: [] })
+          // Increment the right counter
+          .inc({ [field]: 1 })
+          // Append RSVP entry
+          .append('rsvps', [rsvpEntry])
+      )
       .commit();
 
     return NextResponse.json({ ok: true });

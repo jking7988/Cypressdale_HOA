@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { groq } from 'next-sanity';
 import { client } from '@/lib/sanity.client';
 import { CalendarDays, MapPin, Users, FileText } from 'lucide-react';
+import { FormattedDateTime } from '@/components/FormattedDateTime';
 
 const eventByIdQuery = groq`
   *[_type == "event" && _id == $id][0]{
@@ -44,56 +45,48 @@ type Props = {
   }>;
 };
 
-function formatDateRange(start?: string, end?: string) {
-  if (!start) return 'Date TBA';
-  const s = new Date(start);
-  if (Number.isNaN(s.getTime())) return 'Date TBA';
+function isSameDayInTz(a: string, b: string, timeZone = 'America/Chicago') {
+  const da = new Date(a);
+  const db = new Date(b);
+  if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return false;
 
-  const startStr = s.toLocaleString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
     year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
+    month: '2-digit',
+    day: '2-digit',
   });
 
-  if (!end) return startStr;
+  return fmt.format(da) === fmt.format(db);
+}
 
-  const e = new Date(end);
-  if (Number.isNaN(e.getTime())) return startStr;
-
-  const sameDay =
-    s.getFullYear() === e.getFullYear() &&
-    s.getMonth() === e.getMonth() &&
-    s.getDate() === e.getDate();
-
-  const endStr = e.toLocaleTimeString(undefined, {
+function formatTimeOnly(dateStr: string, timeZone = 'America/Chicago') {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone,
     hour: 'numeric',
     minute: '2-digit',
-  });
-
-  return sameDay ? `${startStr} – ${endStr}` : `${startStr} → ${e.toLocaleString()}`;
+  }).format(d);
 }
 
 export default async function EventDetailPage(props: Props) {
   const { id } = await props.params;
 
-  if (!id) {
-    return notFound();
-  }
+  if (!id) return notFound();
 
-  const event: Event | null = await client.fetch(eventByIdQuery, {
-    id,
-  });
+  const event: Event | null = await client.fetch(eventByIdQuery, { id });
 
-  if (!event) {
-    return notFound();
-  }
+  if (!event) return notFound();
 
-  const dateLabel = formatDateRange(event.startDate, event.endDate);
   const goingCount = event.rsvpYes ?? 0;
   const maybeCount = event.rsvpMaybe ?? 0;
+
+  const hasStart = !!event.startDate && !Number.isNaN(new Date(event.startDate).getTime());
+  const hasEnd = !!event.endDate && !Number.isNaN(new Date(event.endDate).getTime());
+
+  const sameDay =
+    !!event.startDate && !!event.endDate ? isSameDayInTz(event.startDate, event.endDate) : false;
 
   return (
     <div className="relative min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-50 via-sky-50 to-emerald-50">
@@ -130,26 +123,44 @@ export default async function EventDetailPage(props: Props) {
                 </h1>
               </div>
 
-            {/* Meta pill row */}
-            <div className="flex flex-col items-start md:items-end gap-1 text-[11px] md:text-xs">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900">
-                <CalendarDays className="h-3.5 w-3.5 text-emerald-700" />
-                <span className="font-medium">{dateLabel}</span>
-              </div>
-              {event.location && (
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-100 px-3 py-1 text-sky-900">
-                  <MapPin className="h-3.5 w-3.5 text-sky-700" />
-                  <span className="font-medium">{event.location}</span>
+              {/* Meta pill row */}
+              <div className="flex flex-col items-start md:items-end gap-1 text-[11px] md:text-xs">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900">
+                  <CalendarDays className="h-3.5 w-3.5 text-emerald-700" />
+                  <span className="font-medium">
+                    {!hasStart ? (
+                      'Date TBA'
+                    ) : !hasEnd ? (
+                      <FormattedDateTime value={event.startDate} />
+                    ) : sameDay ? (
+                      <>
+                        <FormattedDateTime value={event.startDate} /> –{' '}
+                        {formatTimeOnly(event.endDate as string)}
+                      </>
+                    ) : (
+                      <>
+                        <FormattedDateTime value={event.startDate} /> →{' '}
+                        <FormattedDateTime value={event.endDate} />
+                      </>
+                    )}
+                  </span>
                 </div>
-              )}
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900">
-                <Users className="h-3.5 w-3.5 text-emerald-700" />
-                <span>
-                  <span className="font-semibold">{goingCount}</span> going ·{' '}
-                  <span className="font-semibold">{maybeCount}</span> maybe
-                </span>
+
+                {event.location && (
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-100 px-3 py-1 text-sky-900">
+                    <MapPin className="h-3.5 w-3.5 text-sky-700" />
+                    <span className="font-medium">{event.location}</span>
+                  </div>
+                )}
+
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900">
+                  <Users className="h-3.5 w-3.5 text-emerald-700" />
+                  <span>
+                    <span className="font-semibold">{goingCount}</span> going ·{' '}
+                    <span className="font-semibold">{maybeCount}</span> maybe
+                  </span>
+                </div>
               </div>
-            </div>
             </div>
           </header>
 
@@ -181,9 +192,7 @@ export default async function EventDetailPage(props: Props) {
                       />
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-900/80">
-                      <span>
-                        {event.flyerName || 'Event flyer'} (PDF)
-                      </span>
+                      <span>{event.flyerName || 'Event flyer'} (PDF)</span>
                       <a
                         href={event.flyerUrl}
                         target="_blank"
@@ -198,9 +207,7 @@ export default async function EventDetailPage(props: Props) {
                 ) : (
                   <div className="flex items-center justify-between gap-2 text-xs text-emerald-900/85">
                     <span>
-                      {event.flyerName
-                        ? `Event file: ${event.flyerName}`
-                        : 'Event file'}
+                      {event.flyerName ? `Event file: ${event.flyerName}` : 'Event file'}
                     </span>
                     <a
                       href={event.flyerUrl}
