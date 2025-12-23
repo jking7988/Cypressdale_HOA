@@ -16,7 +16,7 @@ import {
   Snowflake,
   AlertCircle,
 } from 'lucide-react';
-
+import { FormattedDateTime } from '@/components/FormattedDateTime';
 /* ---------- Types ---------- */
 
 type Post = {
@@ -374,7 +374,7 @@ function HeroHighlightCard({
         <>
           <p className="text-sm font-semibold">{nextEvent.title}</p>
           <p className="text-xs text-gray-600 mt-1">
-            {formatDate(nextEvent.startDate)}
+            <FormattedDateTime value={nextEvent.startDate} />
             {nextEvent.location ? ` • ${nextEvent.location}` : ''}
           </p>
           {nextEvent.description && (
@@ -430,7 +430,7 @@ function LatestNewsTeaser({
       </p>
       {latestPost._createdAt && (
         <p className="text-[11px] text-gray-500 mt-0.5">
-          {formatDate(latestPost._createdAt)}
+          <FormattedDateTime value={latestPost._createdAt} />
         </p>
       )}
       <Link
@@ -638,7 +638,7 @@ function UpcomingEventsSection({ events }: { events: Event[] }) {
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <div className="text-[11px] font-semibold text-brand-600 flex items-center gap-1">
                     <span>📅</span>
-                    <span>{formatDate(e.startDate)}</span>
+                    <span><FormattedDateTime value={e.startDate} /></span>
                   </div>
                 </div>
 
@@ -738,7 +738,7 @@ function LatestNewsSection({ posts }: { posts: Post[] }) {
               {p._createdAt && (
                 <p className="text-[11px] text-gray-500 mb-1 flex items-center gap-1">
                   <span>🗞️</span>
-                  <span>{formatDate(p._createdAt)}</span>
+                  <span><FormattedDateTime value={p._createdAt} /></span>
                 </p>
               )}
               {p.excerpt && (
