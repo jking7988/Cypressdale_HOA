@@ -1,13 +1,5 @@
 {
-  "crons": [
-    {
-      "path": "/api/trash-reminders/send?type=wednesday",
-      "schedule": "0 23 * * 2"
-    },
-    {
-      "path": "/api/trash-reminders/send?type=saturday",
-      "schedule": "0 23 * * 5"
-    },
+  "crons": [   
     {
       "path": "/api/newsletter/send",
       "schedule": "0 23 * * *"
