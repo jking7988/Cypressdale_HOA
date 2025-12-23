@@ -1,7 +1,5 @@
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
-
 export default function NewResidentsPage() {
   return (
     <div className="relative min-h-screen">
@@ -26,7 +24,7 @@ export default function NewResidentsPage() {
               Welcome to the neighborhood!
             </p>
             <p className="text-xs md:text-sm text-amber-900/85">
-              We&apos;re glad you chose Cypressdale. This guide will walk you through
+              We&apos;re glad you chose Cypressdale. This guide walks you through
               the first things to set up so you can settle in quickly and enjoy
               your new home.
             </p>
@@ -47,9 +45,9 @@ export default function NewResidentsPage() {
           </h1>
 
           <p className="muted max-w-2xl text-sm md:text-base text-emerald-900/80">
-            Just moved in? This page walks you through the basics of getting
-            set up in Cypressdale—utilities, trash and recycling, HOA contact
-            info, and where to find important community resources.
+            Just moved in? This page covers the basics of getting set up in
+            Cypressdale—utilities, trash and recycling, HOA info, and where to
+            find community resources.
           </p>
         </header>
 
@@ -60,34 +58,29 @@ export default function NewResidentsPage() {
             <span>First steps after moving in</span>
           </h2>
           <p className="text-sm text-emerald-900/90">
-            Before you move in, we recommend taking care of the
-            following:
+            We recommend taking care of the following:
           </p>
           <ol className="list-decimal pl-5 text-sm text-emerald-900/90 space-y-1.5">
             <li>
-              Set up your{' '}
-              <span className="font-semibold">water service</span> with
-              Cypresswood Utility District.
+              Set up your <span className="font-semibold">water service</span>{' '}
+              with Cypresswood Utility District.
             </li>
             <li>
-              Set up{' '}
-              <span className="font-semibold">trash and recycling</span> service
-              with Texas Pride Disposal.
+              Set up <span className="font-semibold">trash and recycling</span>{' '}
+              with Texas Pride Disposal (new account / move-in).
             </li>
             <li>
-              Review the{' '}
-              <span className="font-semibold">HOA documents</span> and
+              Review <span className="font-semibold">HOA documents</span> and
               community guidelines.
             </li>
             <li>
-              Get connected to our{' '}
-              <span className="font-semibold">website</span> and{' '}
-              <span className="font-semibold">Facebook group</span> for updates.
+              Stay connected through this website and our Facebook group for
+              announcements.
             </li>
           </ol>
           <p className="text-xs text-emerald-900/70">
-            If you have any questions or are unsure where to start, please
-            contact the HOA using the information on the About or Contact page.
+            If you have questions, please contact the HOA using the information
+            on the About or Contact page.
           </p>
         </section>
 
@@ -100,8 +93,8 @@ export default function NewResidentsPage() {
           <p className="text-sm text-sky-950/90">
             Water and sewer service for Cypressdale is provided through{' '}
             <span className="font-semibold">Cypresswood Utility District</span>.
-            New residents will typically need to set up an account in their
-            name and update billing information.
+            New residents will typically need to set up an account in their name
+            and update billing information.
           </p>
           <ul className="list-disc pl-5 text-sm text-sky-950/90 space-y-1">
             <li>Set up or transfer your water/sewer account.</li>
@@ -109,7 +102,7 @@ export default function NewResidentsPage() {
             <li>Review procedures for leaks, outages, or emergencies.</li>
           </ul>
           <p className="text-sm text-sky-950/90">
-            You can find contact information, forms, and online resources here:
+            Contact info and online resources:
           </p>
           <p className="text-sm">
             <a
@@ -123,8 +116,8 @@ export default function NewResidentsPage() {
             </a>
           </p>
           <p className="text-xs text-sky-950/85">
-            If you’re unsure which forms you need, you can contact Cypresswood
-            Utility District directly or reach out to the HOA for guidance.
+            If you’re unsure which forms you need, contact the Utility District
+            directly or reach out to the HOA for guidance.
           </p>
         </section>
 
@@ -137,14 +130,16 @@ export default function NewResidentsPage() {
 
           <p className="text-sm text-emerald-900/90">
             Household trash and recycling collection in Cypressdale is provided
-            by <span className="font-semibold">Texas Pride Disposal</span>.  
-            Service days and specific guidelines may vary, but generally include:
+            by <span className="font-semibold">Texas Pride Disposal</span>.
+            For the most accurate pickup days, holiday changes, acceptable
+            materials, and cart requests, please use Texas Pride’s official
+            resources below.
           </p>
 
           <ul className="list-disc pl-5 text-sm text-emerald-900/90 space-y-1">
-            <li>Regular trash pickup on designated days.</li>
-            <li>Separate recycling collection for approved materials.</li>
-            <li>Information on bulk pickup and holiday schedules.</li>
+            <li>New account / move-in setup</li>
+            <li>Service guidelines (trash, recycling, bulk)</li>
+            <li>Holiday/service alerts and missed pickup reporting</li>
           </ul>
 
           <div className="space-y-1">
@@ -174,9 +169,21 @@ export default function NewResidentsPage() {
           </div>
 
           <p className="text-xs text-emerald-950/85">
-            Please refer to Texas Pride Disposal&apos;s service guide for Cypressdale for
-            the official schedule, list of accepted materials, and how to request new
-            carts or report missed pickups.
+            HOA notices about service disruptions may also be posted on our{' '}
+            <Link
+              href="/news"
+              className="underline underline-offset-2 hover:text-emerald-950"
+            >
+              News
+            </Link>{' '}
+            or{' '}
+            <Link
+              href="/events"
+              className="underline underline-offset-2 hover:text-emerald-950"
+            >
+              Events
+            </Link>{' '}
+            pages.
           </p>
         </section>
 
@@ -213,7 +220,7 @@ export default function NewResidentsPage() {
               page for pool rules, access information, and hours.
             </li>
             <li>
-              Watch the{' '}
+              Watch{' '}
               <Link
                 href="/news"
                 className="text-emerald-900 underline-offset-2 hover:underline"
@@ -227,12 +234,12 @@ export default function NewResidentsPage() {
               >
                 Events
               </Link>{' '}
-              pages for current announcements.
+              for announcements.
             </li>
           </ul>
         </section>
 
-        {/* Stay connected – light, high-contrast card */}
+        {/* Stay connected */}
         <section className="card border border-emerald-100/80 bg-white/95 backdrop-blur-sm space-y-3">
           <h2 className="h2 text-lg flex items-center gap-2 text-emerald-950">
             <span>🌐</span>
@@ -240,13 +247,13 @@ export default function NewResidentsPage() {
           </h2>
 
           <p className="text-sm text-emerald-900/95">
-            We encourage new residents to stay plugged in so you don&apos;t miss
-            important updates or fun community happenings.
+            Stay plugged in so you don&apos;t miss important updates or fun
+            community happenings.
           </p>
 
           <ul className="list-disc pl-5 text-sm text-emerald-900/95 space-y-1">
             <li>
-              Bookmark this website and check{' '}
+              Bookmark this site and check{' '}
               <Link
                 href="/news"
                 className="font-semibold text-emerald-900 underline underline-offset-2 hover:text-emerald-950"
