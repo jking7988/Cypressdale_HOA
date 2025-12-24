@@ -1636,6 +1636,10 @@
             {
               "title": "3rd Place",
               "value": "3"
+            },
+            {
+              "title": "4th Place",
+              "value": "4"
             }
           ],
           "layout": "radio"
@@ -1648,7 +1652,8 @@
                 "constraint": [
                   "1",
                   "2",
-                  "3"
+                  "3",
+                  "4"
                 ]
               },
               {

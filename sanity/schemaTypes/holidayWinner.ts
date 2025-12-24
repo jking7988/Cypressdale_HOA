@@ -41,6 +41,7 @@ export default defineType({
           {title: '1st Place', value: '1'},
           {title: '2nd Place', value: '2'},
           {title: '3rd Place', value: '3'},
+          {title: '4th Place', value: '4'},
         ],
         layout: 'radio',
       },
