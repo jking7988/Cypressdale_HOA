@@ -1,5 +1,4 @@
 // app/holiday-decorating/page.tsx
-export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { draftMode } from "next/headers";
@@ -8,21 +7,34 @@ import { client, previewClient } from "@/lib/sanity.client";
 import { holidayWinnersQuery } from "@/lib/queries";
 import { YardLightbox } from "@/components/YardLightbox";
 
-// OPTIONAL: helps Presentation “Documents on this page” panel populate on an aggregate page
-const holidayPageLocatorQuery = `*[_type == "holidayWinner"]{ _id }`;
+export const dynamic = "force-dynamic";
 
 type HolidayWinner = {
   _id: string;
   title: string;
   holiday?: "christmas" | "halloween" | string;
   year?: number;
-  place?: string; // "1" | "2" | "3" | "4" | "shoutout" | "hm"
+  place?: string;
   section?: string;
   streetOrBlock?: string;
   description?: string;
   photoUrl?: string;
   photoUrls?: string[];
 };
+
+type Props = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+async function getDraftEnabled(): Promise<boolean> {
+  try {
+    const dm: any = (draftMode as any)();
+    const resolved = dm && typeof dm.then === "function" ? await dm : dm;
+    return !!resolved?.isEnabled;
+  } catch {
+    return false;
+  }
+}
 
 function placeLabel(place?: string) {
   switch (place) {
@@ -87,28 +99,24 @@ function mergedPhotos(w: HolidayWinner): string[] {
     .filter((u, i, arr) => arr.indexOf(u) === i);
 }
 
-async function getIsDraftEnabled() {
-  const dm: any = (draftMode as any)();
+export default async function HolidayDecoratingPage(props: Props) {
+  const dmEnabled = await getDraftEnabled();
 
-  // Works whether draftMode() returns an object OR a Promise<object>
-  const resolved = dm && typeof dm.then === "function" ? await dm : dm;
-
-  return !!resolved?.isEnabled;
-}
-
-export default async function HolidayDecoratingPage() {
-  // ✅ draftMode() is NOT async
-  const isEnabled = await getIsDraftEnabled();
-
-  // ✅ sanity is ALWAYS a valid client
-  const sanity = isEnabled ? previewClient : client;
-
-  // Optional locator fetch: safe to ignore failures
-  try {
-    await sanity.fetch(holidayPageLocatorQuery);
-  } catch {
-    // no-op
+  // optional manual override: ?draft=1
+  let draftQueryFlag = false;
+  if (props.searchParams) {
+    const sp = await props.searchParams;
+    const draftParam = sp?.draft;
+    draftQueryFlag =
+      typeof draftParam === "string"
+        ? draftParam === "1"
+        : Array.isArray(draftParam)
+        ? draftParam[0] === "1"
+        : false;
   }
+
+  const usePreview = (dmEnabled || draftQueryFlag) && !!process.env.SANITY_API_READ_TOKEN;
+  const sanity = usePreview ? previewClient : client;
 
   const winners = await sanity.fetch<HolidayWinner[]>(holidayWinnersQuery);
 
@@ -137,12 +145,14 @@ export default async function HolidayDecoratingPage() {
 
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-900 via-emerald-800 to-rose-900 text-emerald-50">
+      {/* Festive glow */}
       <div className="pointer-events-none fixed inset-0 opacity-50 mix-blend-screen z-0">
         <div className="absolute -top-10 -left-16 h-56 w-56 rounded-full bg-emerald-400/40 blur-3xl" />
         <div className="absolute top-24 -right-10 h-40 w-40 rounded-full bg-rose-400/40 blur-3xl" />
         <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-amber-300/35 blur-3xl" />
       </div>
 
+      {/* Snow texture */}
       <div className="pointer-events-none fixed inset-0 opacity-25 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.28),transparent_55%),radial-gradient(circle_at_bottom,_rgba(255,255,255,0.18),transparent_55%)] z-0" />
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 py-10 space-y-8">
@@ -216,9 +226,7 @@ export default async function HolidayDecoratingPage() {
 
                     <h3 className="text-sm font-semibold text-emerald-50">{winner.title}</h3>
 
-                    {winner.streetOrBlock && (
-                      <p className="text-xs text-emerald-100/85">{winner.streetOrBlock}</p>
-                    )}
+                    {winner.streetOrBlock && <p className="text-xs text-emerald-100/85">{winner.streetOrBlock}</p>}
 
                     {photos.length > 0 && (
                       <div className="mt-2 rounded-2xl border border-emerald-200/40 bg-black/20 p-2">
@@ -259,6 +267,7 @@ export default async function HolidayDecoratingPage() {
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {shoutouts.map((home) => {
                 const photos = mergedPhotos(home);
+
                 return (
                   <article
                     key={home._id}
@@ -266,9 +275,7 @@ export default async function HolidayDecoratingPage() {
                   >
                     <h3 className="text-sm font-semibold text-emerald-50">{home.title}</h3>
 
-                    {home.streetOrBlock && (
-                      <p className="text-xs text-emerald-100/85">{home.streetOrBlock}</p>
-                    )}
+                    {home.streetOrBlock && <p className="text-xs text-emerald-100/85">{home.streetOrBlock}</p>}
 
                     {photos.length > 0 && (
                       <div className="mt-2 rounded-2xl border border-emerald-200/40 bg-black/20 p-2">

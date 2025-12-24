@@ -110,6 +110,8 @@ export default async function EventDetailPage(props: Props) {
   const sameDay =
     !!event.startDate && !!event.endDate ? isSameDayInTz(event.startDate, event.endDate) : false;
 
+
+    
   return (
     <div className="relative min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-50 via-sky-50 to-emerald-50">
       {/* Decorative blobs */}
