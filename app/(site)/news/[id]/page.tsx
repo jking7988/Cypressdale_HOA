@@ -1,14 +1,15 @@
 // app/(site)/news/[id]/page.tsx
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { groq } from 'next-sanity';
-import { client, previewClient } from '@/lib/sanity.client';
-import { PortableText } from '@portabletext/react';
-import { portableTextComponents } from '@/components/portableTextComponents';
-import React from 'react';
-import { FormattedDateTime } from '@/components/FormattedDateTime';
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { groq } from "next-sanity";
+import { client, previewClient } from "@/lib/sanity.client";
+import { PortableText } from "@portabletext/react";
+import { portableTextComponents } from "@/components/portableTextComponents";
+import React from "react";
+import { FormattedDateTime } from "@/components/FormattedDateTime";
+import { draftMode } from "next/headers"; // ✅ NEW
 
 type Post = {
   _id: string;
@@ -17,7 +18,7 @@ type Post = {
   excerpt?: any;
   body?: any;
   _createdAt?: string;
-  layoutVariant?: 'standard' | 'narrow' | 'wide';
+  layoutVariant?: "standard" | "narrow" | "wide";
   showRightSidebar?: boolean;
   sections?: any[];
 };
@@ -50,29 +51,29 @@ const postByIdQuery = groq`*[
 
 const topicInfo: Record<string, { icon: string; label: string; color: string }> = {
   elections: {
-    icon: '🗳️',
-    label: 'Elections',
-    color: 'bg-amber-100 text-amber-800 border-amber-200',
+    icon: "🗳️",
+    label: "Elections",
+    color: "bg-amber-100 text-amber-800 border-amber-200",
   },
   pool: {
-    icon: '🌊',
-    label: 'Pool Update',
-    color: 'bg-sky-100 text-sky-800 border-sky-200',
+    icon: "🌊",
+    label: "Pool Update",
+    color: "bg-sky-100 text-sky-800 border-sky-200",
   },
   events: {
-    icon: '📅',
-    label: 'Community Event',
-    color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    icon: "📅",
+    label: "Community Event",
+    color: "bg-emerald-100 text-emerald-800 border-emerald-200",
   },
   maintenance: {
-    icon: '🛠️',
-    label: 'Maintenance',
-    color: 'bg-gray-100 text-gray-800 border-gray-200',
+    icon: "🛠️",
+    label: "Maintenance",
+    color: "bg-gray-100 text-gray-800 border-gray-200",
   },
   general: {
-    icon: '📢',
-    label: 'General Update',
-    color: 'bg-brand-100 text-brand-800 border-brand-200',
+    icon: "📢",
+    label: "General Update",
+    color: "bg-brand-100 text-brand-800 border-brand-200",
   },
 };
 
@@ -83,43 +84,43 @@ const ImportantDateBox = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-type SectionWidth = 'default' | 'narrow' | 'wide' | 'full' | undefined;
-type SectionSpacing = 'tight' | 'normal' | 'spacious' | undefined;
-type SectionBorder = 'none' | 'subtle' | 'strong' | undefined;
+type SectionWidth = "default" | "narrow" | "wide" | "full" | undefined;
+type SectionSpacing = "tight" | "normal" | "spacious" | undefined;
+type SectionBorder = "none" | "subtle" | "strong" | undefined;
 
 function sectionWidthClasses(width: SectionWidth) {
   switch (width) {
-    case 'narrow':
-      return 'max-w-2xl mx-auto';
-    case 'wide':
-      return 'max-w-5xl mx-auto';
-    case 'full':
-      return 'mx-[-1rem] md:mx-[-2rem]';
+    case "narrow":
+      return "max-w-2xl mx-auto";
+    case "wide":
+      return "max-w-5xl mx-auto";
+    case "full":
+      return "mx-[-1rem] md:mx-[-2rem]";
     default:
-      return '';
+      return "";
   }
 }
 
 function sectionSpacingClasses(spacing: SectionSpacing) {
   switch (spacing) {
-    case 'tight':
-      return 'py-2 md:py-3';
-    case 'spacious':
-      return 'py-6 md:py-8';
+    case "tight":
+      return "py-2 md:py-3";
+    case "spacious":
+      return "py-6 md:py-8";
     default:
-      return 'py-4 md:py-5';
+      return "py-4 md:py-5";
   }
 }
 
 function sectionBorderClasses(border: SectionBorder) {
   switch (border) {
-    case 'none':
-      return 'border-none shadow-none';
-    case 'strong':
-      return 'border border-emerald-300 shadow-md';
-    case 'subtle':
+    case "none":
+      return "border-none shadow-none";
+    case "strong":
+      return "border border-emerald-300 shadow-md";
+    case "subtle":
     default:
-      return 'border border-emerald-100 shadow-sm';
+      return "border border-emerald-100 shadow-sm";
   }
 }
 
@@ -139,7 +140,7 @@ function buildSectionStyle(section: BaseSection): React.CSSProperties {
 
   const bg = section.backgroundColor?.hex;
   const bgEnd = section.backgroundColorEnd?.hex;
-  const dir = section.gradientDirection || 'to bottom';
+  const dir = section.gradientDirection || "to bottom";
 
   if (bg && bgEnd) {
     style.backgroundImage = `linear-gradient(${dir}, ${bg}, ${bgEnd})`;
@@ -159,9 +160,9 @@ function buildSectionStyle(section: BaseSection): React.CSSProperties {
       `url(${section.backgroundImageUrl})`,
     ]
       .filter(Boolean)
-      .join(', ');
-    style.backgroundSize = 'cover';
-    style.backgroundPosition = 'center';
+      .join(", ");
+    style.backgroundSize = "cover";
+    style.backgroundPosition = "center";
   }
 
   return style;
@@ -176,28 +177,32 @@ export default async function NewsDetailPage(props: Props) {
   const { id } = await props.params;
   if (!id) return notFound();
 
+  // ✅ Primary source of truth for preview: Draft Mode cookie
+  const { isEnabled } = await draftMode();
+
+  // ✅ Optional fallback for manual testing: ?draft=1
   const searchParams = await props.searchParams;
   const draftParam = searchParams?.draft;
-
-  const isDraft =
-    typeof draftParam === 'string'
-      ? draftParam === '1'
+  const draftQueryFlag =
+    typeof draftParam === "string"
+      ? draftParam === "1"
       : Array.isArray(draftParam)
-      ? draftParam[0] === '1'
+      ? draftParam[0] === "1"
       : false;
 
-  const sanity = isDraft && process.env.SANITY_API_READ_TOKEN ? previewClient : client;
+  const usePreview = (isEnabled || draftQueryFlag) && !!process.env.SANITY_API_READ_TOKEN;
+  const sanity = usePreview ? previewClient : client;
 
   const draftId = `drafts.${id}`;
 
   const post = await sanity.fetch<Post | null>(postByIdQuery, { id, draftId });
   if (!post) return notFound();
 
-  const topic = (post.topic && topicInfo[post.topic]) || topicInfo['general'];
+  const topic = (post.topic && topicInfo[post.topic]) || topicInfo["general"];
 
-  const layout = post.layoutVariant || 'standard';
+  const layout = post.layoutVariant || "standard";
   const widthClass =
-    layout === 'narrow' ? 'max-w-2xl' : layout === 'wide' ? 'max-w-5xl' : 'max-w-3xl';
+    layout === "narrow" ? "max-w-2xl" : layout === "wide" ? "max-w-5xl" : "max-w-3xl";
 
   return (
     <div className="relative min-h-[calc(100vh-5rem)]">
@@ -205,8 +210,8 @@ export default async function NewsDetailPage(props: Props) {
         className="fixed inset-0 -z-30 bg-center bg-repeat opacity-[0.72]"
         style={{
           backgroundImage: "url('/images/newsletter-bg.png')",
-          backgroundSize: '512px 512px',
-          backgroundAttachment: 'fixed',
+          backgroundSize: "512px 512px",
+          backgroundAttachment: "fixed",
         }}
       />
       <div className="fixed inset-0 -z-20 bg-white/92 backdrop-blur-[1.5px]" />
@@ -261,13 +266,13 @@ export default async function NewsDetailPage(props: Props) {
             <div className="space-y-6 pt-4 border-t border-emerald-50">
               {post.sections.map((section: any, idx: number) => {
                 switch (section._type) {
-                  case 'textSection': {
+                  case "textSection": {
                     const alignment =
-                      section.alignment === 'center'
-                        ? 'text-center'
-                        : section.alignment === 'right'
-                        ? 'text-right'
-                        : 'text-left';
+                      section.alignment === "center"
+                        ? "text-center"
+                        : section.alignment === "right"
+                        ? "text-right"
+                        : "text-left";
 
                     const widthClasses = sectionWidthClasses(section.width as SectionWidth);
                     const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
@@ -276,12 +281,12 @@ export default async function NewsDetailPage(props: Props) {
                     const wrapperClasses = [
                       alignment,
                       widthClasses,
-                      'rounded-2xl px-4 md:px-6 mt-2',
+                      "rounded-2xl px-4 md:px-6 mt-2",
                       spacingClasses,
                       borderClasses,
                     ]
                       .filter(Boolean)
-                      .join(' ');
+                      .join(" ");
 
                     const style = buildSectionStyle(section);
 
@@ -297,24 +302,24 @@ export default async function NewsDetailPage(props: Props) {
                     );
                   }
 
-                  case 'imageWithText': {
-                    const imageOnLeft = section.imagePosition === 'left';
+                  case "imageWithText": {
+                    const imageOnLeft = section.imagePosition === "left";
                     const imageUrl = section.imageUrl as string | undefined;
-                    const imageAlt = (section.imageAlt as string | undefined) || '';
+                    const imageAlt = (section.imageAlt as string | undefined) || "";
 
                     const widthClasses = sectionWidthClasses(section.width as SectionWidth);
                     const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
                     const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
 
                     const wrapperClasses = [
-                      'grid gap-4 md:grid-cols-2 items-center',
+                      "grid gap-4 md:grid-cols-2 items-center",
                       widthClasses,
-                      'rounded-2xl px-4 md:px-5 mt-2',
+                      "rounded-2xl px-4 md:px-5 mt-2",
                       spacingClasses,
                       borderClasses,
                     ]
                       .filter(Boolean)
-                      .join(' ');
+                      .join(" ");
 
                     const style = buildSectionStyle(section);
 
@@ -337,13 +342,13 @@ export default async function NewsDetailPage(props: Props) {
                     );
                   }
 
-                  case 'topicSection': {
+                  case "topicSection": {
                     const alignment =
-                      section.alignment === 'center'
-                        ? 'text-center'
-                        : section.alignment === 'right'
-                        ? 'text-right'
-                        : 'text-left';
+                      section.alignment === "center"
+                        ? "text-center"
+                        : section.alignment === "right"
+                        ? "text-right"
+                        : "text-left";
 
                     const widthClasses = sectionWidthClasses(section.width as SectionWidth);
                     const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
@@ -352,12 +357,12 @@ export default async function NewsDetailPage(props: Props) {
                     const wrapperClasses = [
                       alignment,
                       widthClasses,
-                      'rounded-2xl px-4 md:px-6 mt-2',
+                      "rounded-2xl px-4 md:px-6 mt-2",
                       spacingClasses,
                       borderClasses,
                     ]
                       .filter(Boolean)
-                      .join(' ');
+                      .join(" ");
 
                     const style = buildSectionStyle(section);
 

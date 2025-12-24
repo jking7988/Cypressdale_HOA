@@ -1626,6 +1626,33 @@
         "options": {
           "list": [
             {
+              "title": "Section 1",
+              "value": "1"
+            },
+            {
+              "title": "Section 2",
+              "value": "2"
+            },
+            {
+              "title": "Section 3",
+              "value": "3"
+            },
+            {
+              "title": "Section 4",
+              "value": "4"
+            }
+          ],
+          "layout": "radio"
+        },
+        "description": "Use for winners if you want to label Section 1–4 on the site.",
+        "name": "section",
+        "type": "string",
+        "title": "Judging Section (optional)"
+      },
+      {
+        "options": {
+          "list": [
+            {
               "title": "1st Place",
               "value": "1"
             },
@@ -1640,6 +1667,14 @@
             {
               "title": "4th Place",
               "value": "4"
+            },
+            {
+              "title": "Shout-out (Just missed winner)",
+              "value": "shoutout"
+            },
+            {
+              "title": "Honorable Mention",
+              "value": "hm"
             }
           ],
           "layout": "radio"
@@ -1653,7 +1688,9 @@
                   "1",
                   "2",
                   "3",
-                  "4"
+                  "4",
+                  "shoutout",
+                  "hm"
                 ]
               },
               {
@@ -1665,7 +1702,8 @@
           }
         ],
         "name": "place",
-        "type": "string"
+        "type": "string",
+        "title": "Category"
       },
       {
         "name": "streetOrBlock",

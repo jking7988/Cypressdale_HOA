@@ -1,15 +1,17 @@
-// app/(site)/events/[id]/page.tsx (or similar)
-export const dynamic = 'force-dynamic';
+// app/(site)/events/[id]/page.tsx
+export const dynamic = "force-dynamic";
 
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { groq } from 'next-sanity';
-import { client } from '@/lib/sanity.client';
-import { CalendarDays, MapPin, Users, FileText } from 'lucide-react';
-import { FormattedDateTime } from '@/components/FormattedDateTime';
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { groq } from "next-sanity";
+import { client, previewClient } from "@/lib/sanity.client"; // ✅ import previewClient
+import { draftMode } from "next/headers"; // ✅ NEW
+import { CalendarDays, MapPin, Users, FileText } from "lucide-react";
+import { FormattedDateTime } from "@/components/FormattedDateTime";
 
 const eventByIdQuery = groq`
-  *[_type == "event" && _id == $id][0]{
+  *[_type == "event" && (_id == $id || _id == $draftId)]
+  | order(_id desc)[0]{
     _id,
     title,
     description,
@@ -43,40 +45,60 @@ type Props = {
   params: Promise<{
     id: string;
   }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>; // ✅ optional fallback
 };
 
-function isSameDayInTz(a: string, b: string, timeZone = 'America/Chicago') {
+function isSameDayInTz(a: string, b: string, timeZone = "America/Chicago") {
   const da = new Date(a);
   const db = new Date(b);
   if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return false;
 
-  const fmt = new Intl.DateTimeFormat('en-CA', {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   });
 
   return fmt.format(da) === fmt.format(db);
 }
 
-function formatTimeOnly(dateStr: string, timeZone = 'America/Chicago') {
+function formatTimeOnly(dateStr: string, timeZone = "America/Chicago") {
   const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return '';
-  return new Intl.DateTimeFormat('en-US', {
+  if (Number.isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("en-US", {
     timeZone,
-    hour: 'numeric',
-    minute: '2-digit',
+    hour: "numeric",
+    minute: "2-digit",
   }).format(d);
 }
 
 export default async function EventDetailPage(props: Props) {
   const { id } = await props.params;
-
   if (!id) return notFound();
 
-  const event: Event | null = await client.fetch(eventByIdQuery, { id });
+  // ✅ Primary source of truth: Draft Mode cookie (set by /api/preview)
+  const { isEnabled } = await draftMode();
 
+  // ✅ Optional fallback: allow manual testing with ?draft=1
+  let draftQueryFlag = false;
+  if (props.searchParams) {
+    const searchParams = await props.searchParams;
+    const draftParam = searchParams?.draft;
+    draftQueryFlag =
+      typeof draftParam === "string"
+        ? draftParam === "1"
+        : Array.isArray(draftParam)
+        ? draftParam[0] === "1"
+        : false;
+  }
+
+  const usePreview = (isEnabled || draftQueryFlag) && !!process.env.SANITY_API_READ_TOKEN;
+  const sanity = usePreview ? previewClient : client;
+
+  const draftId = `drafts.${id}`;
+
+  const event: Event | null = await sanity.fetch(eventByIdQuery, { id, draftId });
   if (!event) return notFound();
 
   const goingCount = event.rsvpYes ?? 0;
@@ -129,17 +151,17 @@ export default async function EventDetailPage(props: Props) {
                   <CalendarDays className="h-3.5 w-3.5 text-emerald-700" />
                   <span className="font-medium">
                     {!hasStart ? (
-                      'Date TBA'
+                      "Date TBA"
                     ) : !hasEnd ? (
                       <FormattedDateTime value={event.startDate} />
                     ) : sameDay ? (
                       <>
-                        <FormattedDateTime value={event.startDate} /> –{' '}
+                        <FormattedDateTime value={event.startDate} /> –{" "}
                         {formatTimeOnly(event.endDate as string)}
                       </>
                     ) : (
                       <>
-                        <FormattedDateTime value={event.startDate} /> →{' '}
+                        <FormattedDateTime value={event.startDate} /> →{" "}
                         <FormattedDateTime value={event.endDate} />
                       </>
                     )}
@@ -156,7 +178,7 @@ export default async function EventDetailPage(props: Props) {
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900">
                   <Users className="h-3.5 w-3.5 text-emerald-700" />
                   <span>
-                    <span className="font-semibold">{goingCount}</span> going ·{' '}
+                    <span className="font-semibold">{goingCount}</span> going ·{" "}
                     <span className="font-semibold">{maybeCount}</span> maybe
                   </span>
                 </div>
@@ -173,7 +195,7 @@ export default async function EventDetailPage(props: Props) {
               </h2>
 
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 shadow-sm p-3">
-                {event.flyerMime?.startsWith('image/') ? (
+                {event.flyerMime?.startsWith("image/") ? (
                   <div className="relative w-full max-h-[600px] overflow-hidden rounded-xl bg-emerald-900/5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -182,7 +204,7 @@ export default async function EventDetailPage(props: Props) {
                       className="w-full h-full object-contain transition-transform duration-200 hover:scale-[1.02]"
                     />
                   </div>
-                ) : event.flyerMime === 'application/pdf' ? (
+                ) : event.flyerMime === "application/pdf" ? (
                   <div className="space-y-2">
                     <div className="rounded-xl overflow-hidden border border-emerald-100 bg-white">
                       <iframe
@@ -192,7 +214,7 @@ export default async function EventDetailPage(props: Props) {
                       />
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-900/80">
-                      <span>{event.flyerName || 'Event flyer'} (PDF)</span>
+                      <span>{event.flyerName || "Event flyer"} (PDF)</span>
                       <a
                         href={event.flyerUrl}
                         target="_blank"
@@ -206,9 +228,7 @@ export default async function EventDetailPage(props: Props) {
                   </div>
                 ) : (
                   <div className="flex items-center justify-between gap-2 text-xs text-emerald-900/85">
-                    <span>
-                      {event.flyerName ? `Event file: ${event.flyerName}` : 'Event file'}
-                    </span>
+                    <span>{event.flyerName ? `Event file: ${event.flyerName}` : "Event file"}</span>
                     <a
                       href={event.flyerUrl}
                       target="_blank"
@@ -232,8 +252,8 @@ export default async function EventDetailPage(props: Props) {
                 <span>About this event</span>
               </h2>
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm md:text-[15px] text-emerald-900 leading-relaxed">
-                {event.description.split('\n').map((line, idx) => (
-                  <p key={idx} className={idx > 0 ? 'mt-2' : undefined}>
+                {event.description.split("\n").map((line, idx) => (
+                  <p key={idx} className={idx > 0 ? "mt-2" : undefined}>
                     {line}
                   </p>
                 ))}

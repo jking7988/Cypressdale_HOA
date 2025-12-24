@@ -1,8 +1,9 @@
 // app/holiday-decorating/page.tsx
 
 import Link from "next/link";
+import { draftMode } from "next/headers"; // ✅ add
 import { ContactLink } from "@/components/ContactLink";
-import { client } from "@/lib/sanity.client";
+import { client, previewClient } from "@/lib/sanity.client"; // ✅ import both
 import { holidayWinnersQuery } from "@/lib/queries";
 import { YardLightbox } from "@/components/YardLightbox";
 
@@ -14,11 +15,11 @@ type HolidayWinner = {
   holiday?: "christmas" | "halloween" | string;
   year?: number;
   place?: string; // "1" | "2" | "3" | "4" | "shoutout" | "hm"
-  section?: string; // "1" | "2" | "3" | "4" (optional)
+  section?: string;
   streetOrBlock?: string;
   description?: string;
-  photoUrl?: string; // main photo
-  photoUrls?: string[]; // additional photos
+  photoUrl?: string;
+  photoUrls?: string[];
 };
 
 function placeLabel(place?: string) {
@@ -105,7 +106,10 @@ function mergedPhotos(w: HolidayWinner): string[] {
 }
 
 export default async function HolidayDecoratingPage() {
-  const winners = await client.fetch<HolidayWinner[]>(holidayWinnersQuery);
+  const { isEnabled } = await draftMode(); // ✅ draft mode on/off
+  const sanity = isEnabled ? previewClient : client; // ✅ pick correct client
+
+  const winners = await sanity.fetch<HolidayWinner[]>(holidayWinnersQuery);
 
   const christmasWinners = winners.filter((w) => w.holiday === "christmas");
 
@@ -124,12 +128,10 @@ export default async function HolidayDecoratingPage() {
     }
   }
 
-  // ✅ ranked winners for the grid (1–4)
   const rankedChristmas = currentChristmas
     .filter((w) => ["1", "2", "3", "4"].includes(String(w.place ?? "")))
     .sort((a, b) => placeRank(a.place) - placeRank(b.place));
 
-  // ✅ shoutouts (set place to "shoutout" or "hm" in Sanity for these)
   const shoutouts = currentChristmas.filter(
     (w) => w.place === "shoutout" || w.place === "hm"
   );
@@ -307,7 +309,7 @@ export default async function HolidayDecoratingPage() {
                     )}
 
                     {home.description && (
-                      <p className="text-xs text-emerald-100/90 mt-1 line-clamp-3">
+                      <p className="text-xs text-emerald-100/90 mt-2 whitespace-pre-line">
                         {home.description}
                       </p>
                     )}
