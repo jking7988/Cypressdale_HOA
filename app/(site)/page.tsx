@@ -76,56 +76,29 @@ async function getSevenDayForecast(): Promise<DailyForecast[]> {
   const locationKey = process.env.ACCUWEATHER_LOCATION_KEY;
 
   if (!apiKey || !locationKey) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(
-        'Weather: missing ACCUWEATHER_API_KEY or ACCUWEATHER_LOCATION_KEY. apiKey?',
-        !!apiKey,
-        'locationKey?',
-        !!locationKey,
-      );
-    }
+    console.warn("Weather missing env:", { hasApiKey: !!apiKey, hasLocationKey: !!locationKey });
     return [];
   }
 
   const url = `https://dataservice.accuweather.com/forecasts/v1/daily/5day/${locationKey}?apikey=${apiKey}&metric=false`;
 
-  try {
-    const res = await fetch(url, {
-      next: { revalidate: 60 * 30 }, // 30 minutes
-    });
+  const res = await fetch(url, { next: { revalidate: 60 * 30 } });
 
-    if (!res.ok) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(
-          'Weather: failed to fetch forecast',
-          res.status,
-          res.statusText,
-        );
-      }
-      return [];
-    }
-
-    const data = (await res.json()) as AccuWeatherResponse;
-
-    if (!data?.DailyForecasts?.length) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Weather: no DailyForecasts returned from API');
-      }
-      return [];
-    }
-
-    return data.DailyForecasts.map((d) => ({
-      date: d.Date,
-      min: d.Temperature.Minimum.Value,
-      max: d.Temperature.Maximum.Value,
-      phrase: d.Day.IconPhrase,
-    }));
-  } catch (err) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Weather: error calling AccuWeather', err);
-    }
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.warn("Weather fetch failed:", res.status, res.statusText, body.slice(0, 200));
     return [];
   }
+
+  const data = (await res.json()) as AccuWeatherResponse;
+  if (!data?.DailyForecasts?.length) return [];
+
+  return data.DailyForecasts.map((d) => ({
+    date: d.Date,
+    min: d.Temperature.Minimum.Value,
+    max: d.Temperature.Maximum.Value,
+    phrase: d.Day.IconPhrase,
+  }));
 }
 
 async function getTwelveHourForecast(): Promise<HourlyForecast[]> {
@@ -628,9 +601,11 @@ function UpcomingEventsSection({ events }: { events: Event[] }) {
       {featuredEvents.length > 0 ? (
         <div className="grid gap-3 md:grid-cols-2">
           {featuredEvents.map((e) => (
-            <div
+            <Link
               key={e._id}
-              className="card relative overflow-hidden transition hover:-translate-y-[1px] hover:shadow-md"
+              href={`/events/${e._id}`}
+              className="card relative overflow-hidden transition hover:-translate-y-[1px] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+              aria-label={`View event: ${e.title}`}
             >
               <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-500 to-emerald-300" />
 
@@ -638,17 +613,18 @@ function UpcomingEventsSection({ events }: { events: Event[] }) {
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <div className="text-[11px] font-semibold text-brand-600 flex items-center gap-1">
                     <span>📅</span>
-                    <span><FormattedDateTime value={e.startDate} /></span>
+                    <span>
+                      <FormattedDateTime value={e.startDate} />
+                    </span>
                   </div>
                 </div>
 
                 <div className="font-semibold text-brand-900 text-sm mb-0.5">
                   {e.title}
                 </div>
+
                 {e.location && (
-                  <div className="text-xs text-gray-600 mb-1">
-                    {e.location}
-                  </div>
+                  <div className="text-xs text-gray-600 mb-1">{e.location}</div>
                 )}
 
                 {e.description && (
@@ -666,6 +642,7 @@ function UpcomingEventsSection({ events }: { events: Event[] }) {
                           target="_blank"
                           rel="noreferrer"
                           className="inline-block"
+                          onClick={(ev) => ev.stopPropagation()} // don’t navigate card
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -675,7 +652,10 @@ function UpcomingEventsSection({ events }: { events: Event[] }) {
                           />
                         </a>
                       ) : e.flyerMime === 'application/pdf' ? (
-                        <div className="rounded-lg border border-brand-100 overflow-hidden">
+                        <div
+                          className="rounded-lg border border-brand-100 overflow-hidden"
+                          onClick={(ev) => ev.stopPropagation()} // don’t navigate card
+                        >
                           <iframe
                             src={e.flyerUrl}
                             title={e.flyerName || `${e.title} flyer`}
@@ -688,6 +668,7 @@ function UpcomingEventsSection({ events }: { events: Event[] }) {
                           target="_blank"
                           rel="noreferrer"
                           className="text-[11px] text-accent-700 hover:underline"
+                          onClick={(ev) => ev.stopPropagation()} // don’t navigate card
                         >
                           View event file
                           {e.flyerName ? ` (${e.flyerName})` : ''}
@@ -697,13 +678,11 @@ function UpcomingEventsSection({ events }: { events: Event[] }) {
                   </div>
                 )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       ) : (
-        <p className="muted text-sm">
-          No upcoming events have been added yet.
-        </p>
+        <p className="muted text-sm">No upcoming events have been added yet.</p>
       )}
     </section>
   );
