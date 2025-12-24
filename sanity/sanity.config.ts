@@ -8,8 +8,6 @@ import schemaTypes from "./schemaTypes";
 import { deskStructure } from "./deskStructure";
 import { teamChatTool } from "./teamChatTool";
 import { colorInput } from "@sanity/color-input";
-
-// ✅ ADD THIS
 import { presentationTool } from "sanity/presentation";
 
 const frontendHost =
@@ -20,17 +18,9 @@ const SANITY_PREVIEW_SECRET =
   process.env.SANITY_PREVIEW_SECRET ||
   "8f4b1e3c-2f4f-4f6d-9f6e-5e3d6c7b8a9b";
 
-// ✅ Map doc → frontend route
-function resolvePreviewPath(doc: any) {
-  const id = (doc?._id || "").replace(/^drafts\./, "");
-  const type = doc?._type;
-
-  if (type === "post") return `/news/${id}`;
-  if (type === "event") return `/events/${id}`;
-  if (type === "holidayWinner") return `/holiday-decorating`;
-
-  // fallback
-  return "/";
+function baseId(doc: any) {
+  const id = doc?._id || "";
+  return id.startsWith("drafts.") ? id.slice(7) : id;
 }
 
 export default defineConfig({
@@ -41,30 +31,57 @@ export default defineConfig({
   basePath: "/",
 
   plugins: [
-    structureTool({
-      structure: deskStructure,
-    }),
+    structureTool({ structure: deskStructure }),
     visionTool(),
     teamChatTool(),
     colorInput(),
 
-    // ✅ Presentation tool (live preview)
     presentationTool({
       previewUrl: {
         origin: frontendHost,
         previewMode: {
           enable: `/api/draft-mode/enable?secret=${SANITY_PREVIEW_SECRET}`,
-          disable: "/api/draft-mode/disable",
+          disable: `/api/draft-mode/disable`,
         },
+      },
+
+      // ✅ This is what populates “Documents on this page” for non-[id] pages
+      locate: (doc: any) => {
+        const id = baseId(doc);
+        const type = doc?._type;
+
+        if (type === "post") {
+          return [
+            { title: "News list", href: "/news" },
+            { title: `News: ${doc?.title || id}`, href: `/news/${id}` },
+          ];
+        }
+
+        if (type === "event") {
+          return [
+            { title: "Events list", href: "/events" },
+            { title: `Event: ${doc?.title || id}`, href: `/events/${id}` },
+          ];
+        }
+
+        if (type === "holidayWinner") {
+          // Aggregate page – this is the key one
+          return [{ title: "Holiday Decorating", href: "/holiday-decorating" }];
+        }
+
+        if (type === "yardWinner") {
+          return [{ title: "Yard of the Month", href: "/yard-of-the-month" }];
+        }
+
+        if (type === "documentFile" || type === "documentFolder") {
+          return [{ title: "Documents", href: "/documents" }];
+        }
+
+        return [{ title: "Home", href: "/" }];
       },
     }),
   ],
 
-  schema: {
-    types: schemaTypes,
-  },
-
-  document: {
-    actions: (prev) => prev,
-  },
+  schema: { types: schemaTypes },
+  document: { actions: (prev) => prev },
 });

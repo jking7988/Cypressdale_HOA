@@ -1,17 +1,16 @@
-// app/api/draft-mode/disable/route.ts
 import { NextResponse } from "next/server";
 import { draftMode } from "next/headers";
 
-function noContent() {
+function okNoContent() {
   return new NextResponse(null, { status: 204 });
 }
 
 export async function HEAD() {
-  return noContent();
+  return okNoContent();
 }
 
-export async function GET(request: Request) {
-  const url = new URL(request.url);
+export async function GET(req: Request) {
+  const url = new URL(req.url);
   const redirect = url.searchParams.get("redirect") || "/";
 
   (await draftMode()).disable();
