@@ -567,12 +567,24 @@ export default function EventsCalendar({ events }: Props) {
                         <span>{dateLabel}</span>
                       </div>
                     </div>
+
+                    {/* ✅ FIX: title now links to the event detail page */}
                     <div className="font-semibold text-brand-800">
-                      {e.title}
+                      <Link
+                        href={`/events/${e._id}`}
+                        className="hover:underline hover:text-emerald-800"
+                      >
+                        {e.title}
+                      </Link>
+                      <span className="ml-2 text-[11px] font-medium text-emerald-700">
+                        <Link href={`/events/${e._id}`} className="hover:underline">
+                          View details →
+                        </Link>
+                      </span>
                     </div>
-                    <div className="text-xs text-gray-600">
-                      {e.location}
-                    </div>
+
+                    <div className="text-xs text-gray-600">{e.location}</div>
+
                     <div className="flex items-center gap-2 mt-1 text-[11px]">
                       <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-emerald-700">
                         <span className="mr-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -585,9 +597,7 @@ export default function EventsCalendar({ events }: Props) {
                     </div>
 
                     {e.description && (
-                      <p className="text-sm mt-1 text-gray-800">
-                        {e.description}
-                      </p>
+                      <p className="text-sm mt-1 text-gray-800">{e.description}</p>
                     )}
 
                     {e.flyerUrl && (
@@ -666,8 +676,7 @@ export default function EventsCalendar({ events }: Props) {
               RSVP – {modalEvent.title}
             </h3>
             <p className="text-xs text-gray-500 mb-4">
-              You&apos;re responding:{' '}
-              {modalKind === 'yes' ? 'I&apos;m going' : 'Maybe'}
+              You&apos;re responding: {modalKind === 'yes' ? 'I&apos;m going' : 'Maybe'}
             </p>
 
             <div className="space-y-3">
@@ -694,12 +703,8 @@ export default function EventsCalendar({ events }: Props) {
                   placeholder="you@example.com"
                 />
               </div>
-              {errorMsg && (
-                <p className="text-xs text-red-600">{errorMsg}</p>
-              )}
-              {successMsg && (
-                <p className="text-xs text-emerald-600">{successMsg}</p>
-              )}
+              {errorMsg && <p className="text-xs text-red-600">{errorMsg}</p>}
+              {successMsg && <p className="text-xs text-emerald-600">{successMsg}</p>}
             </div>
 
             <div className="flex justify-end gap-2 mt-5">
