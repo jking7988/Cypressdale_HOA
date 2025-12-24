@@ -75,6 +75,21 @@ async function getSevenDayForecast(): Promise<DailyForecast[]> {
   const apiKey = process.env.ACCUWEATHER_API_KEY;
   const locationKey = process.env.ACCUWEATHER_LOCATION_KEY;
 
+  if (process.env.NODE_ENV !== "production") {
+    console.log("Weather env (dev):", {
+      hasKey: !!apiKey,
+      keyTail: apiKey ? apiKey.slice(-4) : null,
+      hasLoc: !!locationKey,
+      loc: locationKey || null,
+    });
+  } else {
+    console.log("Weather env (prod):", {
+      hasKey: !!apiKey,
+      keyTail: apiKey ? apiKey.slice(-4) : null,
+      hasLoc: !!locationKey,
+    });
+  }
+
   if (!apiKey || !locationKey) {
     console.warn("Weather missing env:", { hasApiKey: !!apiKey, hasLocationKey: !!locationKey });
     return [];
