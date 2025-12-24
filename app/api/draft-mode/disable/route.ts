@@ -1,12 +1,13 @@
+// app/api/draft-mode/disable/route.ts
 import { NextResponse } from "next/server";
 import { draftMode } from "next/headers";
 
-function okNoContent() {
+function noContent() {
   return new NextResponse(null, { status: 204 });
 }
 
 export async function HEAD() {
-  return okNoContent();
+  return noContent();
 }
 
 export async function GET(request: Request) {
