@@ -7,88 +7,31 @@ import { visionTool } from "@sanity/vision";
 import schemaTypes from "./schemaTypes";
 import { deskStructure } from "./deskStructure";
 import { teamChatTool } from "./teamChatTool";
-import { Iframe } from "sanity-plugin-iframe-pane";
 import { colorInput } from "@sanity/color-input";
 
-const frontendHost =
-  process.env.NEXT_PUBLIC_PREVIEW_URL || "https://cypressdale-hoa.vercel.app";
+// ✅ ADD THIS
+import { presentationTool } from "sanity/presentation";
 
-// 👇 use this consistently
+const frontendHost =
+  process.env.NEXT_PUBLIC_PREVIEW_URL ||
+  "https://cypressdale-hoa.vercel.app";
+
 const SANITY_PREVIEW_SECRET =
   process.env.SANITY_PREVIEW_SECRET ||
   "8f4b1e3c-2f4f-4f6d-9f6e-5e3d6c7b8a9b";
 
-function getBaseId(doc: any) {
-  const id = doc?._id || "";
-  return id.startsWith("drafts.") ? id.slice(7) : id;
+// ✅ Map doc → frontend route
+function resolvePreviewPath(doc: any) {
+  const id = (doc?._id || "").replace(/^drafts\./, "");
+  const type = doc?._type;
+
+  if (type === "post") return `/news/${id}`;
+  if (type === "event") return `/events/${id}`;
+  if (type === "holidayWinner") return `/holiday-decorating`;
+
+  // fallback
+  return "/";
 }
-
-function resolvePostPreviewUrl(doc: any) {
-  const baseId = getBaseId(doc);
-  if (!baseId) return `${frontendHost}/news`;
-  const rev = doc?._rev ? `&rev=${doc._rev}` : "";
-  return `${frontendHost}/api/preview?secret=${SANITY_PREVIEW_SECRET}&type=post&id=${baseId}${rev}`;
-}
-
-function resolveEventPreviewUrl(doc: any) {
-  const baseId = getBaseId(doc);
-  if (!baseId) return `${frontendHost}/events`;
-  const rev = doc?._rev ? `&rev=${doc._rev}` : "";
-  return `${frontendHost}/api/preview?secret=${SANITY_PREVIEW_SECRET}&type=event&id=${baseId}${rev}`;
-}
-
-// ✅ NEW: Holiday Winner preview URL (points at /holiday-decorating)
-function resolveHolidayWinnerPreviewUrl(doc: any) {
-  const baseId = getBaseId(doc);
-  if (!baseId) return `${frontendHost}/holiday-decorating`;
-
-  const rev = doc?._rev ? `&rev=${doc._rev}` : "";
-  return `${frontendHost}/api/preview?secret=${SANITY_PREVIEW_SECRET}&type=holidayWinner&id=${baseId}${rev}`;
-}
-
-const defaultDocumentNode = (S: any, { schemaType }: { schemaType: string }) => {
-  if (schemaType === "post") {
-    return S.document().views([
-      S.view.form(),
-      S.view
-        .component(Iframe)
-        .options({
-          url: (doc: any) => resolvePostPreviewUrl(doc),
-          reload: { button: true }, // keep the button as backup
-        })
-        .title("Preview"),
-    ]);
-  }
-
-  if (schemaType === "event") {
-    return S.document().views([
-      S.view.form(),
-      S.view
-        .component(Iframe)
-        .options({
-          url: (doc: any) => resolveEventPreviewUrl(doc),
-          reload: { button: true },
-        })
-        .title("Preview"),
-    ]);
-  }
-
-  // ✅ NEW: Holiday Winner live preview pane
-  if (schemaType === "holidayWinner") {
-    return S.document().views([
-      S.view.form(),
-      S.view
-        .component(Iframe)
-        .options({
-          url: (doc: any) => resolveHolidayWinnerPreviewUrl(doc),
-          reload: { button: true },
-        })
-        .title("Preview"),
-    ]);
-  }
-
-  return S.document().views([S.view.form()]);
-};
 
 export default defineConfig({
   name: "default",
@@ -100,11 +43,21 @@ export default defineConfig({
   plugins: [
     structureTool({
       structure: deskStructure,
-      defaultDocumentNode,
     }),
     visionTool(),
     teamChatTool(),
     colorInput(),
+
+    // ✅ Presentation tool (live preview)
+    presentationTool({
+      previewUrl: {
+        origin: frontendHost,
+        previewMode: {
+          enable: "/api/draft-mode/enable",
+          disable: "/api/draft-mode/disable",
+        },
+      },
+    }),
   ],
 
   schema: {

@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "createdAt": "2025-12-24T20:03:09.704Z",
+  "createdAt": "2025-12-24T20:56:27.435Z",
   "workspaces": [
     {
       "name": "default",
@@ -8,13 +8,13 @@
       "basePath": "/",
       "projectId": "nqd1f8zq",
       "dataset": "production",
-      "icon": "<style data-styled=\"true\" data-styled-version=\"6.1.19\">.hfXNsv{font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",\"Liberation Sans\",Helvetica,Arial,system-ui,sans-serif;font-weight:500;font-size:13px;transform:translateY(1px);}/*!sc*/\ndata-styled.g405[id=\"sc-gzpDuk\"]{content:\"hfXNsv,\"}/*!sc*/\n</style><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\"><rect width=\"32\" height=\"32\" rx=\"2\" fill=\"#965908\"></rect><text x=\"50%\" y=\"50%\" text-anchor=\"middle\" alignment-baseline=\"middle\" fill=\"hsla(34, 90%, 0%, 1)\" class=\"sc-gzpDuk hfXNsv\">CH</text></svg>",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\"><rect width=\"32\" height=\"32\" rx=\"2\" fill=\"#965908\"></rect><text x=\"50%\" y=\"50%\" text-anchor=\"middle\" alignment-baseline=\"middle\" fill=\"hsla(34, 90%, 0%, 1)\" style=\"font-family:Inter, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, &quot;Liberation Sans&quot;, Helvetica, Arial, system-ui, sans-serif;font-weight:500;font-size:13px;transform:translateY(1px)\">CH</text></svg>",
       "mediaLibrary": {
         "enabled": false
       },
       "schema": "1b4a19e6.create-schema.json",
-      "tools": "28ee4647.create-tools.json"
+      "tools": "81832c25.create-tools.json"
     }
   ],
-  "studioVersion": "4.15.0"
+  "studioVersion": "4.22.0"
 }

@@ -15,7 +15,12 @@
     "title": "Team Chat",
     "name": "teamChat",
     "type": null,
-    "icon": "<style data-styled=\"true\" data-styled-version=\"6.1.19\">.hfXNsv{font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",\"Liberation Sans\",Helvetica,Arial,system-ui,sans-serif;font-weight:500;font-size:13px;transform:translateY(1px);}/*!sc*/\ndata-styled.g405[id=\"sc-gzpDuk\"]{content:\"hfXNsv,\"}/*!sc*/\n</style><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\"><rect width=\"32\" height=\"32\" rx=\"2\" fill=\"#f77769\"></rect><text x=\"50%\" y=\"50%\" text-anchor=\"middle\" alignment-baseline=\"middle\" fill=\"hsla(6, 90%, 29%, 1)\" class=\"sc-gzpDuk hfXNsv\">TC</text></svg>"
+    "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\"><rect width=\"32\" height=\"32\" rx=\"2\" fill=\"#f77769\"></rect><text x=\"50%\" y=\"50%\" text-anchor=\"middle\" alignment-baseline=\"middle\" fill=\"hsla(6, 90%, 29%, 1)\" style=\"font-family:Inter, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, &quot;Liberation Sans&quot;, Helvetica, Arial, system-ui, sans-serif;font-weight:500;font-size:13px;transform:translateY(1px)\">TC</text></svg>"
+  },
+  {
+    "name": "presentation",
+    "type": "sanity/presentation",
+    "icon": "<svg data-sanity-icon=\"compose\" width=\"1em\" height=\"1em\" viewBox=\"0 0 25 25\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M17 6L19 8M14 5.5H5.5V19.5H19.5V11M9 16L9.5 13.5L19 4L21 6L11.5 15.5L9 16Z\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linejoin=\"round\"></path></svg>"
   },
   {
     "title": "Schedules",
@@ -26,7 +31,7 @@
   {
     "title": "Releases",
     "name": "releases",
-    "type": null,
-    "icon": "<style data-styled=\"true\" data-styled-version=\"6.1.19\">.hfXNsv{font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",\"Liberation Sans\",Helvetica,Arial,system-ui,sans-serif;font-weight:500;font-size:13px;transform:translateY(1px);}/*!sc*/\ndata-styled.g405[id=\"sc-gzpDuk\"]{content:\"hfXNsv,\"}/*!sc*/\n</style><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\"><rect width=\"32\" height=\"32\" rx=\"2\" fill=\"#a8bfff\"></rect><text x=\"50%\" y=\"50%\" text-anchor=\"middle\" alignment-baseline=\"middle\" fill=\"hsla(224, 100%, 43%, 1)\" class=\"sc-gzpDuk hfXNsv\">R</text></svg>"
+    "type": "sanity/schedules",
+    "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\"><rect width=\"32\" height=\"32\" rx=\"2\" fill=\"#a8bfff\"></rect><text x=\"50%\" y=\"50%\" text-anchor=\"middle\" alignment-baseline=\"middle\" fill=\"hsla(224, 100%, 43%, 1)\" style=\"font-family:Inter, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, &quot;Liberation Sans&quot;, Helvetica, Arial, system-ui, sans-serif;font-weight:500;font-size:13px;transform:translateY(1px)\">R</text></svg>"
   }
 ]
