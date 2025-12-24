@@ -53,7 +53,7 @@ export default defineConfig({
       previewUrl: {
         origin: frontendHost,
         previewMode: {
-          enable: "/api/draft-mode/enable",
+          enable: `/api/draft-mode/enable?secret=${SANITY_PREVIEW_SECRET}`,
           disable: "/api/draft-mode/disable",
         },
       },

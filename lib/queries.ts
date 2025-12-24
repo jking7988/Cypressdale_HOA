@@ -126,5 +126,8 @@ export const holidayWinnersQuery = groq`*[_type == "holidayWinner"]
       "photoUrls": photos[].asset->url
     }`;
 
+    export const holidayPageLocatorQuery = `
+  *[_type == "holidayWinner"]{ _id }
+`
 
 
