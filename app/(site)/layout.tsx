@@ -2,7 +2,6 @@ import "../../styles/globals.css";
 import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import { draftMode } from "next/headers";
 import SanityVisualEditing from "@/components/SanityVisualEditing";
 
 export const metadata: Metadata = {
@@ -10,9 +9,7 @@ export const metadata: Metadata = {
   description: "Community info, events, and documents",
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { isEnabled } = await draftMode();
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full">
       <body
@@ -25,8 +22,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Footer />
         </div>
 
-        {/* ✅ Required for Sanity Presentation / Visual Editing */}
-        {isEnabled ? <SanityVisualEditing /> : null}
+        {/* ✅ Mount always. It will only "connect" when preview is enabled. */}
+        <SanityVisualEditing />
       </body>
     </html>
   );
