@@ -13,8 +13,8 @@ type HolidayWinner = {
   title: string;
   holiday?: "christmas" | "halloween" | string;
   year?: number;
-  place?: string; // "1" | "2" | "3" | "4"
-  section?: string; // "1" | "2" | "3" | "4" (optional if you add it in Sanity)
+  place?: string; // "1" | "2" | "3" | "4" | "shoutout" | "hm"
+  section?: string; // "1" | "2" | "3" | "4" (optional)
   streetOrBlock?: string;
   description?: string;
   photoUrl?: string; // main photo
@@ -97,12 +97,11 @@ const layoutSections = [
   },
 ];
 
-// ✅ NEW: merge main + additional photos, filter blanks, de-dupe
-function winnerPhotos(w: HolidayWinner): string[] {
-  const merged = [w.photoUrl, ...(w.photoUrls ?? [])]
+// ✅ merge main + additional photos, filter blanks, de-dupe
+function mergedPhotos(w: HolidayWinner): string[] {
+  return [w.photoUrl, ...(w.photoUrls ?? [])]
     .filter((u): u is string => typeof u === "string" && u.trim().length > 0)
     .filter((u, i, arr) => arr.indexOf(u) === i);
-  return merged;
 }
 
 export default async function HolidayDecoratingPage() {
@@ -121,11 +120,19 @@ export default async function HolidayDecoratingPage() {
     if (years.length > 0) {
       const latestYear = Math.max(...years);
       currentYearLabel = String(latestYear);
-      currentChristmas = christmasWinners
-        .filter((w) => w.year === latestYear)
-        .sort((a, b) => placeRank(a.place) - placeRank(b.place));
+      currentChristmas = christmasWinners.filter((w) => w.year === latestYear);
     }
   }
+
+  // ✅ ranked winners for the grid (1–4)
+  const rankedChristmas = currentChristmas
+    .filter((w) => ["1", "2", "3", "4"].includes(String(w.place ?? "")))
+    .sort((a, b) => placeRank(a.place) - placeRank(b.place));
+
+  // ✅ shoutouts (set place to "shoutout" or "hm" in Sanity for these)
+  const shoutouts = currentChristmas.filter(
+    (w) => w.place === "shoutout" || w.place === "hm"
+  );
 
   return (
     // full-width background (break out of container)
@@ -167,62 +174,26 @@ export default async function HolidayDecoratingPage() {
           </p>
         </header>
 
-        {/* Neighborhood layout / sections */}
-        <section className="rounded-3xl border border-emerald-200/60 bg-emerald-950/40 backdrop-blur-md shadow-lg shadow-black/30 p-5 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-emerald-50">
-              <span className="text-lg">🗺️</span>
-              <h2 className="text-lg font-semibold">Neighborhood judging sections</h2>
-            </div>
-            <span className="text-[11px] rounded-full bg-emerald-100/15 px-3 py-1 font-semibold uppercase tracking-wide text-emerald-50">
-              4 sections for judging
-            </span>
-          </div>
-
-          <p className="text-sm text-emerald-50/90">
-            For holiday decorating contests, Cypressdale is divided into four
-            sections so that judging can be organized and every home is considered.
-            Use the maps below to see which section your home is in.
-          </p>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {layoutSections.map((section) => (
-              <figure
-                key={section.id}
-                className="flex flex-col gap-2 rounded-2xl border border-emerald-200/50 bg-black/25 p-3 shadow-md shadow-black/30"
-              >
-                <div className="rounded-xl border border-emerald-200/40 bg-black/40 p-2">
-                  <YardLightbox photos={[section.src]} title={section.label} />
-                </div>
-                <figcaption className="space-y-1">
-                  <p className="text-sm font-semibold text-emerald-50">{section.label}</p>
-                  {section.description && (
-                    <p className="text-xs text-emerald-100/85">{section.description}</p>
-                  )}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </section>
-
-        {/* Current Christmas winners */}
+        {/* ✅ MOVED UP: Current Christmas winners */}
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-semibold text-emerald-50 flex items-center gap-2">
               <span>🎁</span>
               <span>
-                {currentYearLabel ? `Christmas ${currentYearLabel} Winners` : "Christmas Winners"}
+                {currentYearLabel
+                  ? `Christmas ${currentYearLabel} Winners`
+                  : "Christmas Winners"}
               </span>
             </h2>
             <span className="rounded-full bg-emerald-100/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-50">
-              {currentChristmas.length > 0 ? "Latest results" : "First winners coming soon"}
+              {rankedChristmas.length > 0 ? "Latest results" : "First winners coming soon"}
             </span>
           </div>
 
-          {currentChristmas.length > 0 ? (
+          {rankedChristmas.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-3">
-              {currentChristmas.map((winner) => {
-                const photos = winnerPhotos(winner);
+              {rankedChristmas.map((winner) => {
+                const photos = mergedPhotos(winner);
 
                 return (
                   <article
@@ -233,7 +204,9 @@ export default async function HolidayDecoratingPage() {
                       <div className="flex flex-col gap-0.5">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">{placeIcon(winner.place)}</span>
-                          <span className="text-sm font-semibold">{placeLabel(winner.place)}</span>
+                          <span className="text-sm font-semibold">
+                            {placeLabel(winner.place)}
+                          </span>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
@@ -251,17 +224,22 @@ export default async function HolidayDecoratingPage() {
                       </div>
 
                       {winner.year && (
-                        <span className="text-[11px] text-emerald-100/80">{winner.year}</span>
+                        <span className="text-[11px] text-emerald-100/80">
+                          {winner.year}
+                        </span>
                       )}
                     </div>
 
-                    <h3 className="text-sm font-semibold text-emerald-50">{winner.title}</h3>
+                    <h3 className="text-sm font-semibold text-emerald-50">
+                      {winner.title}
+                    </h3>
 
                     {winner.streetOrBlock && (
-                      <p className="text-xs text-emerald-100/85">{winner.streetOrBlock}</p>
+                      <p className="text-xs text-emerald-100/85">
+                        {winner.streetOrBlock}
+                      </p>
                     )}
 
-                    {/* Lightbox */}
                     {photos.length > 0 && (
                       <div className="mt-2 rounded-2xl border border-emerald-200/40 bg-black/20 p-2">
                         <YardLightbox photos={photos} title={winner.title} />
@@ -279,34 +257,142 @@ export default async function HolidayDecoratingPage() {
             </div>
           ) : (
             <div className="rounded-3xl border border-dashed border-emerald-200/60 bg-emerald-950/30 px-4 py-5 text-sm text-emerald-50/85 text-center">
-              <p className="font-medium mb-1">Christmas decorating winners will be posted here.</p>
+              <p className="font-medium mb-1">
+                Christmas decorating winners will be posted here.
+              </p>
               <p className="text-xs text-emerald-100/80">
-                After the judging period, 1st–3rd place homes will be announced and featured on
-                this page.
+                After the judging period, 1st–3rd place homes will be announced and
+                featured on this page.
               </p>
             </div>
           )}
         </section>
 
-        {/* Two-column: Christmas & Halloween */}
+        {/* ✅ NEW: Shoutouts section (set place="shoutout" or "hm" in Sanity) */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold text-emerald-50 flex items-center gap-2">
+              <span>🌟</span>
+              <span>Shout-outs: Great Decorations</span>
+            </h2>
+            <span className="rounded-full bg-emerald-100/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-50">
+              Just missed the podium
+            </span>
+          </div>
+
+          {shoutouts.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+              {shoutouts.map((home) => {
+                const photos = mergedPhotos(home);
+
+                return (
+                  <article
+                    key={home._id}
+                    className="rounded-3xl border border-emerald-200/60 bg-emerald-950/30 backdrop-blur-md shadow-lg shadow-black/25 p-4 flex flex-col gap-2"
+                  >
+                    <h3 className="text-sm font-semibold text-emerald-50">
+                      {home.title}
+                    </h3>
+
+                    {home.streetOrBlock && (
+                      <p className="text-xs text-emerald-100/85">
+                        {home.streetOrBlock}
+                      </p>
+                    )}
+
+                    {photos.length > 0 && (
+                      <div className="mt-2 rounded-2xl border border-emerald-200/40 bg-black/20 p-2">
+                        <YardLightbox photos={photos} title={home.title} />
+                      </div>
+                    )}
+
+                    {home.description && (
+                      <p className="text-xs text-emerald-100/90 mt-1 line-clamp-3">
+                        {home.description}
+                      </p>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-emerald-200/40 bg-emerald-950/20 px-4 py-5 text-sm text-emerald-50/80">
+              <p className="font-medium">Want to feature more homes?</p>
+              <p className="text-xs text-emerald-100/80 mt-1">
+                Add a Holiday Winner entry in Sanity and set <span className="font-semibold">place</span> to{" "}
+                <span className="font-semibold">"shoutout"</span> (or <span className="font-semibold">"hm"</span>)
+                for the current year.
+              </p>
+            </div>
+          )}
+        </section>
+
+        {/* (MOVED DOWN) Neighborhood layout / sections */}
+        <section className="rounded-3xl border border-emerald-200/60 bg-emerald-950/40 backdrop-blur-md shadow-lg shadow-black/30 p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-emerald-50">
+              <span className="text-lg">🗺️</span>
+              <h2 className="text-lg font-semibold">
+                Neighborhood judging sections
+              </h2>
+            </div>
+            <span className="text-[11px] rounded-full bg-emerald-100/15 px-3 py-1 font-semibold uppercase tracking-wide text-emerald-50">
+              4 sections for judging
+            </span>
+          </div>
+
+          <p className="text-sm text-emerald-50/90">
+            For holiday decorating contests, Cypressdale is divided into four
+            sections so that judging can be organized and every home is
+            considered. Use the maps below to see which section your home is in.
+          </p>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {layoutSections.map((section) => (
+              <figure
+                key={section.id}
+                className="flex flex-col gap-2 rounded-2xl border border-emerald-200/50 bg-black/25 p-3 shadow-md shadow-black/30"
+              >
+                <div className="rounded-xl border border-emerald-200/40 bg-black/40 p-2">
+                  <YardLightbox photos={[section.src]} title={section.label} />
+                </div>
+                <figcaption className="space-y-1">
+                  <p className="text-sm font-semibold text-emerald-50">
+                    {section.label}
+                  </p>
+                  {section.description && (
+                    <p className="text-xs text-emerald-100/85">
+                      {section.description}
+                    </p>
+                  )}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
+        {/* Two-column: Christmas (primary) & Halloween (coming next year) */}
         <section className="grid gap-6 md:grid-cols-2 items-start">
           {/* Christmas */}
           <div className="rounded-3xl border border-emerald-200/60 bg-emerald-900/55 backdrop-blur-md shadow-lg shadow-black/30 p-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-emerald-50">
                 <span className="text-lg">🎄</span>
-                <h2 className="text-lg font-semibold">Christmas Decorating Contest</h2>
+                <h2 className="text-lg font-semibold">
+                  Christmas Decorating Contest
+                </h2>
               </div>
               <span className="rounded-full bg-emerald-100/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-50">
                 Starts 2025
               </span>
             </div>
             <p className="text-sm text-emerald-50/90">
-              The Christmas decorating contest celebrates bright lights, classic holiday charm,
-              and creative winter themes throughout Cypressdale. The neighborhood is divided
-              into four judging sections. One winner is chosen from each section, then placed
-              1st through 4th overall with prizes of $75 (1st), $50 (2nd), and $25 for 3rd and
-              4th place. Final winners will be announced on December 20.
+              The Christmas decorating contest celebrates bright lights, classic
+              holiday charm, and creative winter themes throughout Cypressdale.
+              The neighborhood is divided into four judging sections. One winner is
+              chosen from each section, then placed 1st through 4th overall with
+              prizes of $75 (1st), $50 (2nd), and $25 for 3rd and 4th place. Final
+              winners will be announced on December 20.
             </p>
             <ul className="space-y-1.5 text-sm text-emerald-50/90">
               <li>Judging focuses on overall curb appeal from the street.</li>
@@ -315,8 +401,9 @@ export default async function HolidayDecoratingPage() {
               <li>Safe, neat, and respectful of neighbors and HOA rules.</li>
             </ul>
             <p className="text-xs text-emerald-100/80">
-              Each year&apos;s specific judging dates and any additional guidelines will be posted
-              in the News section and may be emailed or mailed to residents.
+              Each year&apos;s specific judging dates and any additional
+              guidelines will be posted in the News section and may be emailed
+              or mailed to residents.
             </p>
           </div>
 
@@ -325,15 +412,17 @@ export default async function HolidayDecoratingPage() {
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-amber-50">
                 <span className="text-lg">🎃</span>
-                <h2 className="text-lg font-semibold">Halloween Decorating Contest</h2>
+                <h2 className="text-lg font-semibold">
+                  Halloween Decorating Contest
+                </h2>
               </div>
               <span className="rounded-full bg-amber-100/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-50">
                 Coming 2026
               </span>
             </div>
             <p className="text-sm text-amber-50/90">
-              Beginning in 2026, Cypressdale will host a Halloween decorating contest,
-              highlighting spooky, fun, and family-friendly displays.
+              Beginning in 2026, Cypressdale will host a Halloween decorating
+              contest, highlighting spooky, fun, and family-friendly displays.
             </p>
             <ul className="space-y-1.5 text-sm text-amber-50/90">
               <li>Judging focuses on creativity and overall nighttime impact.</li>
@@ -342,8 +431,8 @@ export default async function HolidayDecoratingPage() {
               <li>Displays should be appropriate for a family neighborhood.</li>
             </ul>
             <p className="text-xs text-amber-100/80">
-              As with Christmas, detailed dates and judging windows will be shared via the HOA
-              website and communications each year.
+              As with Christmas, detailed dates and judging windows will be
+              shared via the HOA website and communications each year.
             </p>
           </div>
         </section>
@@ -356,19 +445,26 @@ export default async function HolidayDecoratingPage() {
           </div>
           <ul className="space-y-1.5 text-sm text-emerald-50/90">
             <li>
-              A committee or representatives designated by the HOA will drive the neighborhood
-              during the published judging dates.
+              A committee or representatives designated by the HOA will drive
+              the neighborhood during the published judging dates.
             </li>
-            <li>Homes are viewed from the street only; judges do not enter yards or walkways.</li>
             <li>
-              Decorations should be visible during the published judging timeframe (typically
-              evening hours for lighting displays).
+              Homes are viewed from the street only; judges do not enter yards
+              or walkways.
             </li>
-            <li>Winners are selected based on overall impression, creativity, theme, and neatness.</li>
+            <li>
+              Decorations should be visible during the published judging
+              timeframe (typically evening hours for lighting displays).
+            </li>
+            <li>
+              Winners are selected based on overall impression, creativity,
+              theme, and neatness.
+            </li>
           </ul>
           <p className="text-xs text-emerald-100/80">
-            The HOA may update judging procedures, categories, or criteria as the program evolves.
-            Any changes will be noted in the annual News announcement.
+            The HOA may update judging procedures, categories, or criteria as
+            the program evolves. Any changes will be noted in the annual News
+            announcement.
           </p>
         </section>
 
@@ -376,19 +472,21 @@ export default async function HolidayDecoratingPage() {
         <section className="rounded-3xl border border-emerald-200/50 bg-emerald-900/50 backdrop-blur-md shadow-lg shadow-black/30 p-5 space-y-3">
           <div className="flex items-center gap-2 text-emerald-50">
             <span className="text-lg">❓</span>
-            <h2 className="text-lg font-semibold">Questions about holiday contests?</h2>
+            <h2 className="text-lg font-semibold">
+              Questions about holiday contests?
+            </h2>
           </div>
           <p className="text-sm text-emerald-50/90">
-            If you have questions about the Christmas or Halloween decorating contests, or need
-            clarification on rules, judging, or eligibility, please contact the HOA using the
-            general email address:
+            If you have questions about the Christmas or Halloween decorating
+            contests, or need clarification on rules, judging, or eligibility,
+            please contact the HOA using the general email address:
           </p>
           <p className="text-sm">
             <ContactLink role="general" showIcon />
           </p>
           <p className="text-xs text-emerald-100/80">
-            You can also watch the News section of the website for each year&apos;s official
-            announcement, judging dates, and prize information.
+            You can also watch the News section of the website for each year&apos;s
+            official announcement, judging dates, and prize information.
           </p>
         </section>
 
