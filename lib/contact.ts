@@ -12,25 +12,29 @@ export type ContactEntry = {
   description?: string;
 };
 
+const spectrumEmail =
+  process.env.SPECTRUM_CONTACT_EMAIL?.trim() ||
+  'cypressdalehoa@spectrumam.com';
+
 export const CONTACTS: Record<ContactRole, ContactEntry> = {
   general: {
-    label: 'General HOA Email',
-    email: 'info@cypressdalehoa.com',
-    description: 'General questions, dues, notices, or website assistance.',
+    label: 'Spectrum HOA Contact',
+    email: spectrumEmail,
+    description: 'All general questions, dues, notices, or website assistance.',
   },
   board: {
-    label: 'Board of Directors',
-    email: 'board@cypressdalehoa.com',
+    label: 'Spectrum HOA Contact',
+    email: spectrumEmail,
     description: 'Questions for the HOA board or community issues.',
   },
   management: {
-    label: 'Management / Admin',
-    email: 'admin@cypressdalehoa.com',
+    label: 'Spectrum HOA Contact',
+    email: spectrumEmail,
     description: 'Administrative issues or official documentation.',
   },
   pool: {
-    label: 'Pool & Amenities',
-    email: 'pool@cypressdalehoa.com',
+    label: 'Spectrum HOA Contact',
+    email: spectrumEmail,
     description: 'Pool passes, issues, or availability questions.',
   },
 };
