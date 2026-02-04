@@ -170,18 +170,6 @@ export default function EventsCalendar({ events }: Props) {
       setPendingEventId(modalEvent._id);
       setErrorMsg(null);
 
-      // optimistic update
-      setRsvpState((prev) => {
-        const current = prev[modalEvent._id] || { yes: 0, maybe: 0 };
-        return {
-          ...prev,
-          [modalEvent._id]: {
-            yes: current.yes + (modalKind === 'yes' ? 1 : 0),
-            maybe: current.maybe + (modalKind === 'maybe' ? 1 : 0),
-          },
-        };
-      });
-
       const res = await fetch('/api/rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -196,6 +184,17 @@ export default function EventsCalendar({ events }: Props) {
       if (!res.ok) {
         throw new Error('RSVP failed');
       }
+
+      setRsvpState((prev) => {
+        const current = prev[modalEvent._id] || { yes: 0, maybe: 0 };
+        return {
+          ...prev,
+          [modalEvent._id]: {
+            yes: current.yes + (modalKind === 'yes' ? 1 : 0),
+            maybe: current.maybe + (modalKind === 'maybe' ? 1 : 0),
+          },
+        };
+      });
 
       setSuccessMsg('RSVP received, thank you!');
       setTimeout(() => {
@@ -676,7 +675,7 @@ export default function EventsCalendar({ events }: Props) {
               RSVP – {modalEvent.title}
             </h3>
             <p className="text-xs text-gray-500 mb-4">
-              You&apos;re responding: {modalKind === 'yes' ? 'I&apos;m going' : 'Maybe'}
+              You're responding: {modalKind === 'yes' ? "I'm going" : 'Maybe'}
             </p>
 
             <div className="space-y-3">
