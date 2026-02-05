@@ -4,6 +4,7 @@ import post from './post';
 import event from './event';
 import documentFile from './documentFile';
 import documentFolder from './documentFolder';
+import eventComment from './eventComment';
 // If you still want the old standalone RSVP docs, you *can* keep this,
 // but based on what you said, we DON'T want them anymore:
 // import rsvpResponse from './rsvpResponse';
@@ -16,6 +17,7 @@ const schemaTypes = [
   event,
   documentFolder,   // 👈 this was missing and caused the error
   documentFile,
+  eventComment,
   yardWinner,
   holidayWinner,
   // rsvpResponse,   // 👈 leave this OUT if RSVPs live inside events now

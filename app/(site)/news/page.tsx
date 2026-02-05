@@ -8,6 +8,7 @@ import { PortableText } from '@portabletext/react';
 import { NewsCalendar } from '@/components/NewsCalendar';
 import { NewsLetterSignup } from '@/components/NewsLetterSignup';
 import { FormattedDateTime } from '@/components/FormattedDateTime';
+import { DeletePostButton } from '@/components/DeletePostButton';
 
 type Post = {
   _id: string;
@@ -70,6 +71,8 @@ export default async function NewsPage(props: Props) {
   const todayKey = new Date().toISOString().slice(0, 10);
 
   const dateKeys = Array.from(postsByDate.keys()).sort(); // ascending
+  const adminDeleteEnabled =
+    process.env.NEXT_PUBLIC_ENABLE_ADMIN_DELETE === '1';
   const baseDateKey = dateKeys.length ? dateKeys[dateKeys.length - 1] : todayKey;
 
   // feed the calendar a datetime in the middle of that day so TZ can't shift it
@@ -132,7 +135,7 @@ export default async function NewsPage(props: Props) {
             <div className="space-y-6">
               {/* Lead story */}
               {leadStory && (
-                <section className="space-y-3">
+                <section className="relative space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <h2 className="text-sm font-semibold tracking-[0.18em] uppercase text-emerald-700">
                       Lead Story
@@ -171,6 +174,12 @@ export default async function NewsPage(props: Props) {
                       </p>
                     </article>
                   </Link>
+
+                  {adminDeleteEnabled && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <DeletePostButton postId={leadStory._id} />
+                    </div>
+                  )}
                 </section>
               )}
 
@@ -202,33 +211,44 @@ export default async function NewsPage(props: Props) {
                                 const href = `/news/${p._id}`;
 
                                 return (
-                                  <Link key={p._id} href={href} className="group">
-                                    <article className="card flex flex-col gap-2 border border-emerald-50 shadow-sm bg-white/95 transition hover:-translate-y-[1px] hover:shadow-md hover:border-emerald-100">
-                                      <div>
-                                        <h4 className="text-sm md:text-base font-semibold text-brand-900 mb-0.5 flex items-center gap-1.5">
-                                          <span>📌</span>
-                                          <span>{p.title}</span>
-                                        </h4>
+                                  <div key={p._id} className="relative group">
+                                    <Link
+                                      href={href}
+                                      className="group block"
+                                    >
+                                      <article className="card flex flex-col gap-2 border border-emerald-50 shadow-sm bg-white/95 transition hover:-translate-y-[1px] hover:shadow-md hover:border-emerald-100">
+                                        <div>
+                                          <h4 className="text-sm md:text-base font-semibold text-brand-900 mb-0.5 flex items-center gap-1.5">
+                                            <span>📌</span>
+                                            <span>{p.title}</span>
+                                          </h4>
 
-                                        {/* ✅ use shared formatter here too */}
-                                        {p._createdAt && (
-                                          <p className="text-[11px] text-gray-500">
-                                            <FormattedDateTime value={p._createdAt} />
-                                          </p>
-                                        )}
-                                      </div>
-
-                                      {p.excerpt && (
-                                        <div className="text-[13px] text-gray-700 mt-1 line-clamp-3">
-                                          <PortableText value={p.excerpt} />
+                                          {/* ✅ use shared formatter here too */}
+                                          {p._createdAt && (
+                                            <p className="text-[11px] text-gray-500">
+                                              <FormattedDateTime value={p._createdAt} />
+                                            </p>
+                                          )}
                                         </div>
-                                      )}
 
-                                      <p className="mt-1 text-[11px] font-medium text-emerald-700 group-hover:underline">
-                                        Read full update →
-                                      </p>
-                                    </article>
-                                  </Link>
+                                        {p.excerpt && (
+                                          <div className="text-[13px] text-gray-700 mt-1 line-clamp-3">
+                                            <PortableText value={p.excerpt} />
+                                          </div>
+                                        )}
+
+                                        <p className="mt-1 text-[11px] font-medium text-emerald-700 group-hover:underline">
+                                          Read full update →
+                                        </p>
+                                      </article>
+                                    </Link>
+
+                                    {adminDeleteEnabled && (
+                                      <div className="absolute top-3 right-3 z-10">
+                                        <DeletePostButton postId={p._id} />
+                                      </div>
+                                    )}
+                                  </div>
                                 );
                               })}
                             </div>

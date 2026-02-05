@@ -34,3 +34,14 @@ npm run dev
 - To prevent duplicate emails when multiple documents change in a single day, the newsletter now runs on a once-daily cron (`/api/newsletter/send` is executed by Vercel every day at 12:00 UTC). Keep the webhook if you still want to trigger a manual check, but rely on the scheduled job for the daily send.
 - Make sure `NEWSLETTER_SITE_URL` points to the public Cypressdale HOA domain (e.g., `https://cypressdalehoa.com`). That value is now the canonical base URL used inside outgoing emails, so the newsletter links resolve to the HOA site instead of the Vercel project hostname.
 - All contact links now share a single Spectrum-managed inbox. Set `SPECTRUM_CONTACT_EMAIL` (default: `cypressdalehoa@spectrumam.com`) in each environment so the general/board/management/pool sections all point at the same address.
+
+## Event comments
+
+- There is a “Leave a comment” form on each upcoming event card under the Events page. Comments are persisted as `eventComment` documents in Sanity, so the board can review questions within the Studio.
+- No extra configuration is required beyond the existing `SANITY_WRITE_TOKEN`, but make sure that token has permission to create documents (it already does for RSVPs).
+- Admin users can also purge a comment from the thread by enabling `NEXT_PUBLIC_ENABLE_ADMIN_DELETE=1` and providing the delete passphrase when prompted; the API checks `EVENT_COMMENT_DELETE_SECRET` (or falls back to `NEWS_DELETE_SECRET`) before removing the Sanity document, so keep that secret safe.
+
+## Admin news delete
+
+- When you need the delete button on each news card, set `NEXT_PUBLIC_ENABLE_ADMIN_DELETE=1` so the control appears. Remove that flag when you want to hide the delete UI for regular visitors.
+- `NEWS_DELETE_SECRET` secures the deletion API. When the button is clicked you’ll be prompted for that passphrase; the route rejects requests that don’t present the matching secret, so keep it secret and store it server-side (it is read-only and is already used to guard the client/delete flow).

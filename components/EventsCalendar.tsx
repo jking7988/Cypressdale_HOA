@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { CalendarPlus, Download } from 'lucide-react';
 import Link from 'next/link';
+import { EventCommentForm } from '@/components/EventCommentForm';
 
 type Event = {
   _id: string;
@@ -659,6 +660,8 @@ export default function EventsCalendar({ events }: Props) {
                         </span>
                       </button>
                     </div>
+
+                    <EventCommentForm eventId={e._id} />
                   </div>
                 </div>
               );
