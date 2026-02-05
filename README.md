@@ -39,6 +39,7 @@ npm run dev
 
 - There is a “Leave a comment” form on each upcoming event card under the Events page. Comments are persisted as `eventComment` documents in Sanity, so the board can review questions within the Studio.
 - No extra configuration is required beyond the existing `SANITY_WRITE_TOKEN`, but make sure that token has permission to create documents (it already does for RSVPs).
+- The Team Notes board now mimics a cork wall with each note styled like a sticky. You can customize the cork texture by setting `NEXT_PUBLIC_TEAM_NOTES_CORK` to a URL (or keep the default gradient).  
 - Admin users can also purge a comment from the thread by enabling `NEXT_PUBLIC_ENABLE_ADMIN_DELETE=1` and providing the delete passphrase when prompted; the API checks `EVENT_COMMENT_DELETE_SECRET` (or falls back to `NEWS_DELETE_SECRET`) before removing the Sanity document, so keep that secret safe.
 
 ## Admin news delete

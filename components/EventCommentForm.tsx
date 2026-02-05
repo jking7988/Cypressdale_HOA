@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 
 type EventCommentFormProps = {
@@ -26,6 +27,7 @@ export function EventCommentForm({ eventId }: EventCommentFormProps) {
 
   const adminDeleteEnabled =
     process.env.NEXT_PUBLIC_ENABLE_ADMIN_DELETE === '1';
+  const router = useRouter();
 
   const canSubmit = message.trim().length > 0 && status !== 'submitting';
 
@@ -72,6 +74,7 @@ export function EventCommentForm({ eventId }: EventCommentFormProps) {
       setMessage('');
       setStatus('success');
       await fetchComments();
+      router.refresh();
     } catch (err) {
       console.error(err);
       setStatus('error');
@@ -140,15 +143,17 @@ export function EventCommentForm({ eventId }: EventCommentFormProps) {
 
                       setDeletingCommentId(comment._id);
                       try {
-                        const response = await fetch(
-                          `/api/events/comments/${comment._id}`,
-                          {
-                            method: 'DELETE',
-                            headers: {
-                              'x-event-comment-delete-secret': secret,
-                            },
+                      const response = await fetch(
+                        `/api/events/comments/${comment._id}`,
+                        {
+                          method: 'DELETE',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'x-event-comment-delete-secret': secret,
                           },
-                        );
+                          body: JSON.stringify({ commentId: comment._id }),
+                        },
+                      );
 
                         if (!response.ok) {
                           const payload = await response

@@ -1,6 +1,6 @@
-// TeamChatView.tsx 
-// @ts-nocheck
-import React, {useEffect, useState, useRef} from 'react';
+﻿'use client';
+
+import React, {useEffect, useMemo, useState} from 'react';
 import {useCurrentUser} from 'sanity';
 import {supabase} from './studioSupabaseClient';
 
@@ -10,96 +10,32 @@ type Message = {
   author_name: string;
   text: string;
   created_at: string;
-  file_url?: string | null;
-  file_name?: string | null;
-  file_type?: string | null;
-
-  edited_at?: string | null;
-  deleted?: boolean | null;
-  deleted_at?: string | null;
 };
 
 const ROOM_ID = 'global:board-chat';
 const CHANNEL_NAME = 'team-chat';
+const NOTE_COLORS = ['#FEF3C7', '#FDE7C7', '#F1F5F9', '#E0E7FF', '#FCE7F3'];
+const PIN_COLORS = ['#EF4444', '#F97316', '#22C55E', '#2563EB'];
+const NOTE_DESCRIPTION_LIMIT = 220;
 
-const REACTION_OPTIONS = ['👍', '❤️', '🎉', '👀', '🤔', '✅'];
+const CORKBOARD_IMAGE = new URL('./corkboard.jpg', import.meta.url).href;
 
-const EMOJI_PICKER = [
-  '👍', '👎', '❤️', '💚', '💛', '💙', '💜', '🤍',
-  '😂', '🤣', '😊', '😅', '😇', '🙃', '😉', '😍',
-  '🤔', '🤨', '😐', '😴', '🥱', '🤯', '😬', '😮',
-  '🎉', '✨', '💥', '✅', '❌', '⚠️', '🚀', '📌',
-  '🙏', '👏', '🙌', '🤝', '🤙', '🤘', '☕', '🍕',
-];
-
-type ReactionsState = Record<string, Record<string, string[]>>;
-
-const quoteLineStyle: React.CSSProperties = {
-  borderLeft: '2px solid rgba(148,163,184,0.6)',
-  paddingLeft: 8,
-  marginBottom: 4,
-  color: '#9CA3AF',
-  fontSize: 13,
-};
+const corkBoardBackground =
+  process.env.NEXT_PUBLIC_TEAM_NOTES_CORK ||
+  `linear-gradient(180deg, rgba(177, 138, 84, 0.75) 0%, rgba(156, 104, 42, 0.85) 60%), url("${CORKBOARD_IMAGE}")`;
 
 function nowIso() {
   return new Date().toISOString();
 }
 
-function renderWithMentions(text: string): React.ReactNode {
-  const lines = text.split('\n');
-
-  return lines.map((line, lineIndex) => {
-    const trimmed = line.trim();
-    const isQuote = trimmed.startsWith('>');
-    const content = isQuote ? line.replace(/^\s*>\s?/, '') : line;
-
-    const parts = content.split(/(\s+)/);
-    const children = parts.map((part, idx) => {
-      if (part.startsWith('@') && part.length > 1 && !part.includes('\n')) {
-        return (
-          <span key={idx} style={{color: '#A5B4FC', fontWeight: 500}}>
-            {part}
-          </span>
-        );
-      }
-      return <React.Fragment key={idx}>{part}</React.Fragment>;
-    });
-
-    if (isQuote) {
-      return (
-        <div key={lineIndex} style={quoteLineStyle}>
-          {children}
-        </div>
-      );
-    }
-
-    return (
-      <div key={lineIndex} style={{marginBottom: 2}}>
-        {children}
-      </div>
-    );
-  });
-}
-
-function formatDayLabel(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-
-  const today = new Date();
-  const oneDay = 24 * 60 * 60 * 1000;
-
-  const dayIndex = Math.floor(d.setHours(0, 0, 0, 0) / oneDay);
-  const todayIndex = Math.floor(today.setHours(0, 0, 0, 0) / oneDay);
-  const diff = dayIndex - todayIndex;
-
-  if (diff === 0) return 'Today';
-  if (diff === -1) return 'Yesterday';
-
-  return d.toLocaleDateString(undefined, {
+function formatTimestamp(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
-    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
   });
 }
 
@@ -108,581 +44,94 @@ const TeamChatView = () => {
 
   if (!supabase) {
     return (
-      <div style={{padding: 16, fontSize: 14, color: '#9CA3AF'}}>
-        <div style={{fontWeight: 600, marginBottom: 6}}>
-          Team chat not configured
-        </div>
-        <div style={{marginBottom: 6}}>
-          Supabase credentials are missing in the Studio environment.
-        </div>
-        <div>
-          Set{' '}
-          <code
-            style={{
-              fontFamily: 'monospace',
-              fontSize: 12,
-              background: '#111827',
-              padding: '2px 6px',
-              borderRadius: 4,
-            }}
-          >
-            SANITY_STUDIO_SUPABASE_URL
-          </code>{' '}
-          and{' '}
-          <code
-            style={{
-              fontFamily: 'monospace',
-              fontSize: 12,
-              background: '#111827',
-              padding: '2px 6px',
-              borderRadius: 4,
-            }}
-          >
-            SANITY_STUDIO_SUPABASE_ANON_KEY
-          </code>{' '}
-          to enable live chat.
-        </div>
+      <div className="p-6 text-sm text-gray-500 text-center">
+        <p className="font-semibold text-gray-800 mb-2">Team Notes not configured</p>
+        <p className="mb-1">
+          Supabase credentials are missing in this Studio environment.
+        </p>
+        <p>
+          Set <code className="font-mono text-xs px-2 py-0.5 rounded bg-slate-900 text-white">SANITY_STUDIO_SUPABASE_URL</code> and{' '}
+          <code className="font-mono text-xs px-2 py-0.5 rounded bg-slate-900 text-white">SANITY_STUDIO_SUPABASE_ANON_KEY</code> to enable the board.
+        </p>
       </div>
     );
   }
 
-  const displayName = user?.name || user?.email || 'Unknown user';
-  const userId = user?._id || displayName;
-  const initials =
-    (user?.name &&
-      user.name
-        .split(' ')
-        .map((p) => p[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase()) ||
-    (user?.email?.[0]?.toUpperCase() ?? '?');
-
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const displayName = user?.name || user?.email || 'Cypressdale teammate';
+  const [notes, setNotes] = useState<Message[]>([]);
+  const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [typingUsers, setTypingUsers] = useState<
-    Record<string, {name: string; last: number}>
-  >({});
-  const [onlineUsers, setOnlineUsers] = useState<
-    Record<string, {name: string; last: number}>
-  >({});
-  const [reactions, setReactions] = useState<ReactionsState>({});
+  const [expandedNote, setExpandedNote] = useState<Message | null>(null);
+  const TOOL_BODY_CLASS = 'team-notes-corkboard';
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingText, setEditingText] = useState('');
-  const [replyTo, setReplyTo] = useState<Message | null>(null);
-
-  const [emojiPickerFor, setEmojiPickerFor] = useState<string | null>(null);
-  const [composerEmojiOpen, setComposerEmojiOpen] = useState(false);
-
-  // Soft delete + undo
-  const [pendingDelete, setPendingDelete] = useState<Message | null>(null);
-  const deleteTimerRef = useRef<number | null>(null);
-
-  // Search
-  const [search, setSearch] = useState('');
-
-  // Upload status / error
-  const [uploadingFile, setUploadingFile] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
-  // Show controls only on hover
-  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
-
-  const bottomRef = useRef<HTMLDivElement | null>(null);
-  const channelRef = useRef<any>(null);
-  const lastTypingSentRef = useRef<number>(0);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  // Scroll container ref + "jump to latest"
-  const messagesScrollRef = useRef<HTMLDivElement | null>(null);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-
-  const [isWindowFocused, setIsWindowFocused] = useState(
-    typeof document !== 'undefined' ? !document.hidden : true,
-  );
-  const [originalTitle] = useState(
-    typeof document !== 'undefined' ? document.title : 'Team Chat',
-  );
-
-  // focus / visibility tracking for unread count
-  useEffect(() => {
-    function handleFocus() {
-      setIsWindowFocused(true);
-      setUnreadCount(0);
-    }
-
-    function handleBlur() {
-      setIsWindowFocused(false);
-    }
-
-    function handleVisibility() {
-      if (document.hidden) {
-        setIsWindowFocused(false);
-      } else {
-        setIsWindowFocused(true);
-        setUnreadCount(0);
-      }
-    }
-
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('blur', handleBlur);
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('blur', handleBlur);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, []);
-
-  // tab title
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    if (unreadCount > 0 && !isWindowFocused) {
-      document.title = `(${unreadCount}) Team Chat – Cypressdale CMS`;
-    } else {
-      document.title = originalTitle;
-    }
-  }, [unreadCount, isWindowFocused, originalTitle]);
-
-  function scrollToBottomInstant() {
-    if (!bottomRef.current) return;
-    bottomRef.current.scrollIntoView({behavior: 'auto', block: 'end'});
-  }
-
-  function scrollToBottomSmooth() {
-    if (!bottomRef.current) return;
-    setTimeout(() => {
-      bottomRef.current?.scrollIntoView({behavior: 'smooth', block: 'end'});
-    }, 0);
-  }
-
-  // Track scroll to show "jump to latest" button
-  useEffect(() => {
-    const el = messagesScrollRef.current;
-    if (!el) return;
-
-    function handleScroll() {
-      const threshold = 80;
-      const distanceFromBottom =
-        el.scrollHeight - el.scrollTop - el.clientHeight;
-      const atBottom = distanceFromBottom < threshold;
-      setShowScrollToBottom(!atBottom);
-    }
-
-    el.addEventListener('scroll', handleScroll);
-    // Initialize state
-    handleScroll();
-
-    return () => {
-      el.removeEventListener('scroll', handleScroll);
-    };
-  }, [messages.length]);
-
-  // load history + realtime channel
   useEffect(() => {
     let active = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    async function loadMessages() {
+    async function loadNotes() {
       setLoading(true);
       const {data, error} = await supabase
         .from('messages')
         .select('*')
         .eq('room_id', ROOM_ID)
-        // don't load soft-deleted rows
-        .or('deleted.is.null,deleted.eq.false')
-        .order('created_at', {ascending: true});
+        .order('created_at', {ascending: false})
+        .limit(100);
 
       if (!active) return;
       if (!error && data) {
-        setMessages(data as Message[]);
-        scrollToBottomInstant();
+        const items = (data as Message[]).sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+        setNotes(items);
       }
       setLoading(false);
     }
 
-    loadMessages();
+    loadNotes();
 
-    const channel = supabase
+    channel = supabase
       .channel(CHANNEL_NAME)
       .on('broadcast', {event: 'message'}, (payload) => {
-        const msg = payload.payload as Message;
-        setMessages((prev) => [...prev, msg]);
-        if (!isWindowFocused) {
-          setUnreadCount((prev) => prev + 1);
-        } else {
-          scrollToBottomSmooth();
-        }
-      })
-      .on('broadcast', {event: 'typing'}, (payload) => {
-        const {userId: typingId, name} = payload.payload as {
-          userId: string;
-          name: string;
-        };
-        const now = Date.now();
-        setTypingUsers((prev) => ({
-          ...prev,
-          [typingId]: {name, last: now},
-        }));
-      })
-      .on('broadcast', {event: 'presence'}, (payload) => {
-        const {userId: presenceId, name} = payload.payload as {
-          userId: string;
-          name: string;
-        };
-        const now = Date.now();
-        setOnlineUsers((prev) => ({
-          ...prev,
-          [presenceId]: {name, last: now},
-        }));
-      })
-      .on('broadcast', {event: 'reaction'}, (payload) => {
-        const {messageId, emoji, userId: reactor} = payload.payload as {
-          messageId: string;
-          emoji: string;
-          userId: string;
-        };
-
-        setReactions((prev) => {
-          const next: ReactionsState = {...prev};
-          const msgReacts = {...(next[messageId] || {})};
-          const currentUsers = msgReacts[emoji] ? [...msgReacts[emoji]] : [];
-          const idx = currentUsers.indexOf(reactor);
-
-          if (idx === -1) {
-            currentUsers.push(reactor);
-          } else {
-            currentUsers.splice(idx, 1);
+        const payloadNote = payload.payload as Message;
+        setNotes((prev) => {
+          if (prev.some((note) => note.id === payloadNote.id)) {
+            return prev;
           }
-
-          if (currentUsers.length === 0) {
-            delete msgReacts[emoji];
-          } else {
-            msgReacts[emoji] = currentUsers;
-          }
-
-          if (Object.keys(msgReacts).length === 0) {
-            delete next[messageId];
-          } else {
-            next[messageId] = msgReacts;
-          }
-
-          return next;
+          const next = [payloadNote, ...prev];
+          return next.slice(0, 100);
         });
-      })
-      .on('broadcast', {event: 'edit'}, (payload) => {
-        const updated = payload.payload as Message;
-        setMessages((prev) =>
-          prev.map((m) => (m.id === updated.id ? {...m, ...updated} : m)),
-        );
-      })
-      .on('broadcast', {event: 'delete'}, (payload) => {
-        const {id} = payload.payload as {id: string};
-        // Remove from local list when a final delete is broadcast
-        setMessages((prev) => prev.filter((m) => m.id !== id));
       })
       .subscribe();
 
-    channelRef.current = channel;
-
-    function sendPresence() {
-      if (!channelRef.current) return;
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'presence',
-        payload: {userId, name: displayName},
-      });
-    }
-    sendPresence();
-    const presenceInterval = setInterval(sendPresence, 20_000);
-
-    const pruneInterval = setInterval(() => {
-      const cutoffTyping = Date.now() - 3_000;
-      const cutoffPresence = Date.now() - 30_000;
-
-      setTypingUsers((prev) => {
-        const next: typeof prev = {};
-        for (const [id, info] of Object.entries(prev)) {
-          if (info.last > cutoffTyping) next[id] = info;
-        }
-        return next;
-      });
-
-      setOnlineUsers((prev) => {
-        const next: typeof prev = {};
-        for (const [id, info] of Object.entries(prev)) {
-          if (info.last > cutoffPresence) next[id] = info;
-        }
-        return next;
-      });
-    }, 3_000);
-
     return () => {
       active = false;
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-      clearInterval(presenceInterval);
-      clearInterval(pruneInterval);
-
-      if (deleteTimerRef.current !== null) {
-        clearTimeout(deleteTimerRef.current);
+      if (channel) {
+        supabase.removeChannel(channel);
       }
     };
-  }, [isWindowFocused, userId, displayName]);
+  }, []);
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value;
-    setInput(value);
+  async function handleSend(event?: React.FormEvent) {
+    if (event) {
+      event.preventDefault();
+    }
 
-    const now = Date.now();
-    if (!channelRef.current) return;
-    if (now - lastTypingSentRef.current < 800) return;
-    lastTypingSentRef.current = now; // ✅ correct
-
-    channelRef.current.send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: {userId, name: displayName},
-    });
-  }
-
-  function startEdit(message: Message) {
-    setEditingId(message.id);
-    setEditingText(message.text || '');
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditingText('');
-  }
-
-  async function saveEdit(message: Message) {
-    const newText = editingText.trim();
-    if (!newText) {
-      cancelEdit();
+    const text = draft.trim();
+    if (!text) {
       return;
     }
 
-    const updated: Message = {
-      ...message,
-      text: newText,
-      edited_at: nowIso(),
-    };
-
-    setMessages((prev) =>
-      prev.map((m) => (m.id === message.id ? updated : m)),
-    );
-    cancelEdit();
-
-    if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'edit',
-        payload: updated,
-      });
-    }
-
-    const {error} = await supabase
-      .from('messages')
-      .update({
-        text: newText,
-        edited_at: updated.edited_at,
-      })
-      .eq('id', message.id);
-
-    if (error) {
-      console.error('edit error', error.message);
-    }
-  }
-
-  // Finalize delete after undo window expires
-  async function finalizeDelete(message: Message) {
-    const id = message.id;
-
-    // Notify other clients to remove
-    if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'delete',
-        payload: {id},
-      });
-    }
-
-    // Try hard delete first
-    const {error} = await supabase.from('messages').delete().eq('id', id);
-
-    if (error) {
-      console.error('hard delete failed, trying soft delete:', error.message);
-
-      // Fallback: soft delete so it never shows up in future loads
-      const {error: softError} = await supabase
-        .from('messages')
-        .update({deleted: true, deleted_at: nowIso()})
-        .eq('id', id);
-
-      if (softError) {
-        console.error('soft delete also failed:', softError.message);
-      }
-    }
-  }
-
-  // Start soft delete with undo window
-function deleteMessage(message: Message) {
-  const id = message.id;
-
-  // If there's already a pending delete, cancel it
-  if (deleteTimerRef.current !== null) {
-    clearTimeout(deleteTimerRef.current);
-    deleteTimerRef.current = null;
-  }
-
-  // Remove from local UI immediately and track for undo
-  setMessages((prev) => prev.filter((m) => m.id !== id));
-  setPendingDelete(message);
-
-  const deletedAt = nowIso();
-
-  // Immediately soft-delete in DB so it does NOT come back on reload
-  supabase
-    .from('messages')
-    .update({deleted: true, deleted_at: deletedAt})
-    .eq('id', id)
-    .then(({error}) => {
-      if (error) {
-        console.error('soft delete failed:', error.message);
-      }
-    });
-
-  // Tell other clients to drop it from their list
-  if (channelRef.current) {
-    channelRef.current.send({
-      type: 'broadcast',
-      event: 'delete',
-      payload: {id},
-    });
-  }
-
-  // After 5s, hard delete if not undone
-  deleteTimerRef.current = window.setTimeout(() => {
-    deleteTimerRef.current = null;
-    setPendingDelete((current) => {
-      // If user already undid, current will be null
-      if (!current || current.id !== id) {
-        return current;
-      }
-
-      supabase
-        .from('messages')
-        .delete()
-        .eq('id', id)
-        .then(({error}) => {
-          if (error) {
-            console.error('hard delete failed:', error.message);
-          }
-        });
-
-      return null;
-    });
-  }, 5000);
-}
-
-  // Undo soft delete – restore message locally and clear deleted flag in DB
-  function undoDelete() {
-    if (!pendingDelete) return;
-
-    const original = pendingDelete;
-
-    // Clear timer and pending state
-    if (deleteTimerRef.current !== null) {
-      clearTimeout(deleteTimerRef.current);
-      deleteTimerRef.current = null;
-    }
-    setPendingDelete(null);
-
-    // Build a "restored" version with deleted flags cleared
-    const restored: Message = {
-      ...original,
-      deleted: false,
-      deleted_at: null,
-    };
-
-    // Restore in local UI
-    setMessages((prev) => {
-      const next = [...prev, restored];
-      next.sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() -
-          new Date(b.created_at).getTime(),
-      );
-      return next;
-    });
-
-    // Clear deleted flag in DB
-    supabase
-      .from('messages')
-      .update({deleted: false, deleted_at: null})
-      .eq('id', restored.id)
-      .then(({error}) => {
-        if (error) {
-          console.error('undo delete failed:', error.message);
-        }
-      });
-
-    // Rebroadcast as a normal message so any other open Studio tabs update
-    if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'message',
-        payload: restored,
-      });
-    }
-
-    // Nice UX: scroll down to where the restored message is
-    scrollToBottomSmooth();
-  }
-
-  function startReply(message: Message) {
-    setReplyTo(message);
-    if (inputRef.current) inputRef.current.focus();
-  }
-
-  async function handleSend(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    let text = input.trim();
-    if (!text) return;
-
-    // If we're replying, prepend a nice "Reply to ..." quote block
-    if (replyTo) {
-      const base = (replyTo.text || '').replace(/\s+/g, ' ').trim();
-      const snippet =
-        base.length > 160 ? base.slice(0, 157).trimEnd() + '…' : base;
-
-      const header = replyTo.author_name
-        ? `Reply to "${replyTo.author_name}"`
-        : 'Reply';
-
-      const quoteLine = snippet ? `${header}: ${snippet}` : header;
-
-      // This ends up rendered inside the grey quote bar
-      const quoteBlock = `> ${quoteLine}\n\n`;
-
-      text = quoteBlock + text;
-    }
+    setSending(true);
+    setDraft('');
 
     const createdAt = nowIso();
     const messageId =
       typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
-        : `local-${Date.now()}`;
+        : `note-${Date.now()}`;
 
-    const msg: Message = {
+    const note: Message = {
       id: messageId,
       room_id: ROOM_ID,
       author_name: displayName,
@@ -690,1173 +139,243 @@ function deleteMessage(message: Message) {
       created_at: createdAt,
     };
 
-    setMessages((prev) => [...prev, msg]);
-    setInput('');
-    setReplyTo(null);
-    setSending(true);
-    scrollToBottomSmooth();
+    setNotes((prev) => [note, ...prev].slice(0, 100));
 
-    if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'message',
-        payload: msg,
-      });
-    }
-
-    const {error} = await supabase.from('messages').insert({
-      id: messageId,
-      room_id: ROOM_ID,
-      author_name: displayName,
-      text,
-      created_at: createdAt,
-    });
-
+    const {error} = await supabase.from('messages').insert(note);
     setSending(false);
 
     if (error) {
-      setMessages((prev) => prev.filter((m) => m.id !== messageId));
-      console.error('Supabase insert error:', error.message);
+      console.error('Team notes insert error', error.message);
     }
   }
 
-  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const boardNotes = useMemo(() => notes, [notes]);
 
-    setUploadError(null);
-
-    try {
-      setUploadingFile(true);
-
-      const path = `${userId}/${Date.now()}-${file.name}`;
-      const {error: uploadErrorRaw} = await supabase.storage
-        .from('chat-uploads')
-        .upload(path, file);
-
-      if (uploadErrorRaw) {
-        console.error(uploadErrorRaw);
-        setUploadError(
-          `Upload failed: ${uploadErrorRaw.message ?? 'Unknown error'}`,
-        );
-        return;
-      }
-
-      const {
-        data: {publicUrl},
-      } = supabase.storage.from('chat-uploads').getPublicUrl(path);
-
-      const createdAt = nowIso();
-      const messageId =
-        typeof crypto !== 'undefined' && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `file-${Date.now()}`;
-
-      const msg: Message = {
-        id: messageId,
-        room_id: ROOM_ID,
-        author_name: displayName,
-        text: file.name,
-        created_at: createdAt,
-        file_url: publicUrl,
-        file_name: file.name,
-        file_type: file.type,
-      };
-
-      setMessages((prev) => [...prev, msg]);
-      scrollToBottomSmooth();
-
-      if (channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'message',
-          payload: msg,
-        });
-      }
-
-      const {error: insertError} = await supabase.from('messages').insert({
-        id: messageId,
-        room_id: ROOM_ID,
-        author_name: displayName,
-        text: file.name,
-        created_at: createdAt,
-        file_url: publicUrl,
-        file_name: file.name,
-        file_type: file.type,
-      });
-
-      if (insertError) {
-        setMessages((prev) => prev.filter((m) => m.id !== messageId));
-        console.error(insertError);
-        setUploadError(
-          `Upload saved to storage but DB insert failed: ${insertError.message}`,
-        );
-      }
-    } finally {
-      setUploadingFile(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
     }
-  }
 
-  function handleReaction(messageId: string, emoji: string) {
-    setReactions((prev) => {
-      const next: ReactionsState = {...prev};
-      const msgReacts = {...(next[messageId] || {})};
-      const currentUsers = msgReacts[emoji] ? [...msgReacts[emoji]] : [];
-      const myIndex = currentUsers.indexOf(userId);
+    const html = document.documentElement;
+    const boardStyle = `url("${CORKBOARD_IMAGE}")`;
+    const prev = {
+      body: {
+        backgroundImage: document.body.style.backgroundImage,
+        backgroundRepeat: document.body.style.backgroundRepeat,
+        backgroundSize: document.body.style.backgroundSize,
+        backgroundPosition: document.body.style.backgroundPosition,
+        backgroundAttachment: document.body.style.backgroundAttachment,
+      },
+      html: {
+        backgroundImage: html.style.backgroundImage,
+        backgroundRepeat: html.style.backgroundRepeat,
+        backgroundSize: html.style.backgroundSize,
+        backgroundPosition: html.style.backgroundPosition,
+        backgroundAttachment: html.style.backgroundAttachment,
+      },
+    };
 
-      if (myIndex === -1) {
-        currentUsers.push(userId);
-      } else {
-        currentUsers.splice(myIndex, 1);
-      }
-
-      if (currentUsers.length === 0) {
-        delete msgReacts[emoji];
-      } else {
-        msgReacts[emoji] = currentUsers;
-      }
-
-      if (Object.keys(msgReacts).length === 0) {
-        delete next[messageId];
-      } else {
-        next[messageId] = msgReacts;
-      }
-
-      return next;
+    [document.body, html].forEach((el) => {
+      el.style.backgroundImage = boardStyle;
+      el.style.backgroundRepeat = 'repeat';
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.style.backgroundAttachment = 'fixed';
     });
 
-    if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'reaction',
-        payload: {messageId, emoji, userId},
-      });
+    return () => {
+      document.body.style.backgroundImage = prev.body.backgroundImage;
+      document.body.style.backgroundRepeat = prev.body.backgroundRepeat;
+      document.body.style.backgroundSize = prev.body.backgroundSize;
+      document.body.style.backgroundPosition = prev.body.backgroundPosition || '';
+      document.body.style.backgroundAttachment = prev.body.backgroundAttachment || '';
+
+      html.style.backgroundImage = prev.html.backgroundImage;
+      html.style.backgroundRepeat = prev.html.backgroundRepeat;
+      html.style.backgroundSize = prev.html.backgroundSize;
+      html.style.backgroundPosition = prev.html.backgroundPosition || '';
+      html.style.backgroundAttachment = prev.html.backgroundAttachment || '';
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
     }
-  }
 
-  function insertEmojiIntoComposer(emoji: string) {
-    if (!inputRef.current) {
-      setInput((prev) => prev + emoji);
-      return;
-    }
-
-    const el = inputRef.current;
-    const start = el.selectionStart ?? input.length;
-    const end = el.selectionEnd ?? input.length;
-
-    const before = input.slice(0, start);
-    const after = input.slice(end);
-
-    const nextValue = before + emoji + after;
-    const cursorPos = start + emoji.length;
-
-    setInput(nextValue);
-
-    setTimeout(() => {
-      if (!inputRef.current) return;
-      inputRef.current.focus();
-      try {
-        inputRef.current.setSelectionRange(cursorPos, cursorPos);
-      } catch {
-        // ignore
+    const body = document.body;
+    const style = document.createElement('style');
+    style.textContent = `
+      body.${TOOL_BODY_CLASS} .sanity-default-layout__content,
+      body.${TOOL_BODY_CLASS} .sanity-default-layout__tool-content {
+        background: transparent !important;
       }
-    }, 0);
-  }
+    `;
+    document.head.appendChild(style);
+    body.classList.add(TOOL_BODY_CLASS);
 
-  const typingList = Object.values(typingUsers)
-    .map((t) => t.name)
-    .filter((n) => n && n !== displayName);
-
-  const onlineList = Object.entries(onlineUsers).filter(
-    ([id]) => id !== userId,
-  );
-
-  // Search-filtered messages
-  const lowerSearch = search.trim().toLowerCase();
-  const filteredMessages =
-    !lowerSearch
-      ? messages
-      : messages.filter((m) => {
-          const text = (m.text || '').toLowerCase();
-          const author = (m.author_name || '').toLowerCase();
-          return text.includes(lowerSearch) || author.includes(lowerSearch);
-        });
-
-  // --- styles ---
-  const containerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    background: '#030712',
-    color: '#E5E7EB',
-    fontSize: 14,
-    fontFamily:
-      'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  };
-
-  const headerOuterStyle: React.CSSProperties = {
-    padding: '10px 16px',
-    borderBottom: '1px solid rgba(148, 163, 184, 0.3)',
-  };
-
-  const headerInnerStyle: React.CSSProperties = {
-    maxWidth: 1024,
-    margin: '0 auto',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 16,
-  };
-
-  const headerLeftStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-  };
-
-  const avatarStyle: React.CSSProperties = {
-    width: 30,
-    height: 30,
-    borderRadius: '999px',
-    background: '#10B981',
-    color: '#022C22',
-    fontSize: 14,
-    fontWeight: 600,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
-
-  const headerTextStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-  };
-
-  const subTextStyle: React.CSSProperties = {
-    fontSize: 12,
-    color: '#9CA3AF',
-  };
-
-  const onlinePillStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    padding: '3px 10px',
-    borderRadius: 999,
-    background: 'rgba(31, 41, 55, 0.85)',
-    border: '1px solid rgba(55, 65, 81, 0.9)',
-    fontSize: 12,
-    color: '#D1D5DB',
-  };
-
-  const searchInputStyle: React.CSSProperties = {
-    width: 220,
-    borderRadius: 999,
-    border: '1px solid rgba(75,85,99,0.9)',
-    background: 'rgba(15,23,42,0.95)',
-    color: '#E5E7EB',
-    fontSize: 12,
-    padding: '6px 10px',
-    outline: 'none',
-    marginTop: 6,
-  };
-
-  const messagesContainerStyle: React.CSSProperties = {
-    flex: 1,
-    overflowY: 'auto',
-    padding: '10px 16px 6px 16px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
-    position: 'relative',
-  };
-
-  const messagesInnerStyle: React.CSSProperties = {
-    maxWidth: 1024,
-    margin: '0 auto',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
-  };
-
-  const bubbleBase: React.CSSProperties = {
-    maxWidth: '100%',
-    borderRadius: 18,
-    padding: '12px 16px',
-    border: '1px solid rgba(55,65,81,0.9)',
-    background: 'rgba(31, 41, 55, 0.9)',
-  };
-
-  const bubbleMe: React.CSSProperties = {
-    ...bubbleBase,
-    background: 'rgba(5, 150, 105, 0.2)',
-    borderColor: 'rgba(16,185,129,0.8)',
-  };
-
-  const bubbleMention: React.CSSProperties = {
-    ...bubbleBase,
-    borderColor: 'rgba(129,140,248,0.9)',
-    boxShadow: '0 0 0 1px rgba(129,140,248,0.4)',
-  };
-
-  const bubbleMetaRow: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    gap: 6,
-    marginBottom: 4,
-  };
-
-  const bubbleAuthor: React.CSSProperties = {
-    fontWeight: 600,
-    fontSize: 13,
-    color: '#E5E7EB',
-  };
-
-  const bubbleTimeRow: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'baseline',
-    gap: 8,
-  };
-
-  const bubbleTime: React.CSSProperties = {
-    fontSize: 12,
-    color: '#9CA3AF',
-  };
-
-  const bubbleText: React.CSSProperties = {
-    fontSize: 14,
-    color: '#E5E7EB',
-  };
-
-  const mentionPillStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 4,
-    padding: '2px 8px',
-    borderRadius: 999,
-    fontSize: 11,
-    background: 'rgba(30,64,175,0.7)',
-    color: '#E0ECFF',
-  };
-
-  const reactionsRowStyle: React.CSSProperties = {
-    marginTop: 6,
-    display: 'flex',
-    flexWrap: 'nowrap',
-    gap: 6,
-  };
-
-  const reactionBadgeStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 999,
-    padding: '2px 8px',
-    fontSize: 12,
-    background: 'rgba(15, 23, 42, 0.9)',
-    border: '1px solid rgba(55,65,81,0.9)',
-  };
-
-  const reactionButtonStyle: React.CSSProperties = {
-    borderRadius: 999,
-    border: '1px solid rgba(55,65,81,0.7)',
-    background: 'rgba(15,23,42,0.95)',
-    color: '#E5E7EB',
-    fontSize: 13,
-    padding: '4px 9px',
-    cursor: 'pointer',
-  };
-
-  const reactionButtonActiveStyle: React.CSSProperties = {
-    background: 'rgba(16,185,129,0.2)',
-    borderColor: 'rgba(16,185,129,0.9)',
-  };
-
-  const footerOuterStyle: React.CSSProperties = {
-    borderTop: '1px solid rgba(148, 163, 184, 0.3)',
-    padding: '8px 16px 10px 16px',
-  };
-
-  const footerInnerStyle: React.CSSProperties = {
-    maxWidth: 1024,
-    margin: '0 auto',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 6,
-  };
-
-  const inputRowStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-  };
-
-  const attachButtonStyle: React.CSSProperties = {
-    borderRadius: 999,
-    border: '1px solid rgba(75,85,99,0.9)',
-    background: 'rgba(15,23,42,0.95)',
-    color: '#E5E7EB',
-    fontSize: 13,
-    padding: '6px 14px',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-  };
-
-  const emojiToggleButtonStyle: React.CSSProperties = {
-    borderRadius: 999,
-    border: '1px solid rgba(75,85,99,0.9)',
-    background: 'rgba(15,23,42,0.95)',
-    color: '#E5E7EB',
-    fontSize: 16,
-    padding: '6px 10px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
-
-  const textInputStyle: React.CSSProperties = {
-    flex: 1,
-    borderRadius: 999,
-    border: '1px solid rgba(75,85,99,0.9)',
-    background: 'rgba(15,23,42,0.95)',
-    color: '#E5E7EB',
-    fontSize: 14,
-    padding: '8px 16px',
-    outline: 'none',
-  };
-
-  const sendButtonStyle: React.CSSProperties = {
-    borderRadius: 999,
-    border: 'none',
-    background: sending ? 'rgba(16,185,129,0.3)' : '#10B981',
-    color: '#022C22',
-    fontSize: 13,
-    fontWeight: 600,
-    padding: '7px 18px',
-    cursor: sending ? 'default' : 'pointer',
-  };
-
-  const typingStyle: React.CSSProperties = {
-    fontSize: 12,
-    color: '#9CA3AF',
-    paddingTop: 2,
-  };
-
-  const replyBannerStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    padding: '6px 10px',
-    borderRadius: 10,
-    background: 'rgba(15,23,42,0.9)',
-    border: '1px solid rgba(55,65,81,0.8)',
-    fontSize: 12,
-    color: '#D1D5DB',
-  };
-
-  const emojiPickerStyle: React.CSSProperties = {
-    marginTop: 6,
-    padding: 8,
-    borderRadius: 12,
-    background: 'rgba(15,23,42,0.97)',
-    border: '1px solid rgba(55,65,81,0.9)',
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 4,
-    maxWidth: 260,
-  };
-
-  const emojiPickerButtonStyle: React.CSSProperties = {
-    border: 'none',
-    background: 'transparent',
-    padding: '4px 5px',
-    cursor: 'pointer',
-    fontSize: 18,
-  };
-
-  const composerEmojiPickerStyle: React.CSSProperties = {
-    marginTop: 6,
-    padding: 8,
-    borderRadius: 12,
-    background: 'rgba(15,23,42,0.97)',
-    border: '1px solid rgba(55,65,81,0.9)',
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 4,
-    maxWidth: 320,
-  };
-
-  const undoBannerStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    padding: '6px 10px',
-    borderRadius: 8,
-    background: 'rgba(30,64,75,0.9)',
-    border: '1px solid rgba(148,163,184,0.7)',
-    fontSize: 12,
-    color: '#E5E7EB',
-  };
-
-  const errorBannerStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    padding: '6px 10px',
-    borderRadius: 8,
-    background: 'rgba(127,29,29,0.9)',
-    border: '1px solid rgba(248,113,113,0.8)',
-    fontSize: 12,
-    color: '#FEE2E2',
-  };
-
-  const scrollToBottomButtonStyle: React.CSSProperties = {
-    position: 'absolute',
-    right: 24,
-    bottom: 16,
-    border: '1px solid rgba(55,65,81,0.9)',
-    background: 'rgba(15,23,42,0.95)',
-    borderRadius: 999,
-    padding: '6px 12px',
-    fontSize: 12,
-    color: '#E5E7EB',
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-    boxShadow: '0 8px 18px rgba(0,0,0,0.35)',
-  };
-
-  const typingStr =
-    typingList.length === 0
-      ? ''
-      : typingList.length === 1
-        ? `${typingList[0]} is typing…`
-        : 'Several people are typing…';
+    return () => {
+      body.classList.remove(TOOL_BODY_CLASS);
+      document.head.removeChild(style);
+    };
+  }, []);
 
   return (
-    <div style={containerStyle}>
-      {/* Header */}
-      <div style={headerOuterStyle}>
-        <div style={headerInnerStyle}>
-          <div style={headerLeftStyle}>
-            <div style={avatarStyle}>{initials}</div>
-            <div style={headerTextStyle}>
-              <div style={{fontSize: 15, fontWeight: 600}}>
-                Board / Team chat
-              </div>
-              <div style={subTextStyle}>Online as {displayName}</div>
-              {onlineList.length > 0 && (
-                <div
-                  style={{
-                    marginTop: 2,
-                    display: 'flex',
-                    gap: 4,
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  {onlineList.map(([id, info]) => (
-                    <span key={id} style={onlinePillStyle}>
-                      <span
-                        style={{
-                          width: 7,
-                          height: 7,
-                          borderRadius: 999,
-                          background: '#22C55E',
-                        }}
-                      />
-                      <span
-                        style={{
-                          maxWidth: 140,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {info.name}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <div style={{textAlign: 'right'}}>
-            <div style={{fontSize: 12, color: '#9CA3AF'}}>
-              Room:{' '}
-              <span style={{fontFamily: 'monospace'}}>{ROOM_ID}</span>
-            </div>
-            {unreadCount > 0 && (
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: '#22C55E',
-                  marginTop: 2,
-                }}
-              >
-                • {unreadCount} new message{unreadCount > 1 ? 's' : ''}
-              </div>
-            )}
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search messages…"
-              style={searchInputStyle}
-            />
-          </div>
-        </div>
-      </div>
+    <>
+      <div
+      className="flex min-h-screen flex-col bg-cover bg-center"
+      style={{
+        backgroundImage: corkBoardBackground,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'repeat',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      <div
+        className="fixed inset-0 -z-10 pointer-events-none"
+        style={{
+          backgroundImage: `url("${CORKBOARD_IMAGE}")`,
+          backgroundSize: 'cover',
+          backgroundRepeat: 'repeat',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      />
+      <header className="px-6 py-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.4em] text-emerald-600">
+          Team Notes
+        </p>
+        <h1 className="mt-2 text-xl font-semibold text-slate-900">
+          Sticky ideas for the board
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Drop a note, a reminder, or a quick question for the group.
+        </p>
+      </header>
 
-      {/* Messages */}
-      <div style={messagesContainerStyle} ref={messagesScrollRef}>
-        <div style={messagesInnerStyle}>
-          {loading ? (
-            <div style={{fontSize: 13, color: '#9CA3AF'}}>
-              Loading messages…
-            </div>
-          ) : messages.length === 0 ? (
-            <div style={{fontSize: 13, color: '#9CA3AF'}}>
-              No messages yet. Start the conversation!
-            </div>
-          ) : filteredMessages.length === 0 ? (
-            <div style={{fontSize: 13, color: '#9CA3AF'}}>
-              No messages match your search.
-            </div>
-          ) : (
-            filteredMessages.map((m, index) => {
-              const isMe = m.author_name === displayName;
-
-              const mentionsYou =
-                !isMe &&
-                m.text &&
-                displayName &&
-                m.text.toLowerCase().includes(
-                  '@' + displayName.toLowerCase(),
-                );
-
-              const alignmentStyle: React.CSSProperties = {
-                display: 'flex',
-                justifyContent: isMe ? 'flex-end' : 'flex-start',
-              };
-              const bubbleStyle = isMe
-                ? bubbleMe
-                : mentionsYou
-                  ? bubbleMention
-                  : bubbleBase;
-              const msgReactions = reactions[m.id] || {};
-
-              const currentDay = formatDayLabel(m.created_at);
-              const prev =
-                index > 0 ? filteredMessages[index - 1] : null;
-              const prevDay = prev ? formatDayLabel(prev.created_at) : null;
-              const showDaySeparator = currentDay && currentDay !== prevDay;
-
-              const showHeader = true;
-              const isHovered =
-                hoveredMessageId === m.id || editingId === m.id;
+      <div className="flex-1 overflow-y-auto px-6 py-5">
+        {loading ? (
+          <div className="text-sm text-gray-500">Loading notes…</div>
+        ) : boardNotes.length === 0 ? (
+          <div className="text-sm text-gray-500">No notes yet—leave the first one below.</div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {boardNotes.map((note, index) => {
+              const exceedsLimit = note.text.length > NOTE_DESCRIPTION_LIMIT;
+              const truncatedText = exceedsLimit
+                ? `${note.text.slice(0, NOTE_DESCRIPTION_LIMIT).trim()}…`
+                : note.text;
+              const rotation =
+                index % 4 === 0
+                  ? '-2deg'
+                  : index % 4 === 1
+                  ? '-0.5deg'
+                  : index % 4 === 2
+                  ? '0.5deg'
+                  : '1.75deg';
 
               return (
-                <React.Fragment key={m.id}>
-                  {showDaySeparator && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        margin: '10px 0 4px',
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 12,
-                          color: '#9CA3AF',
-                          padding: '3px 10px',
-                          borderRadius: 999,
-                          background: 'rgba(15,23,42,0.95)',
-                          border: '1px solid rgba(55,65,81,0.9)',
-                        }}
-                      >
-                        {currentDay}
-                      </span>
-                    </div>
-                  )}
-
-                  <div
-                    style={alignmentStyle}
-                    onMouseEnter={() => setHoveredMessageId(m.id)}
-                    onMouseLeave={() =>
-                      setHoveredMessageId((prev) =>
-                        prev === m.id ? null : prev,
-                      )
-                    }
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: isMe ? 'flex-end' : 'flex-start',
-                        gap: 4,
-                        width: '100%',
-                      }}
-                    >
-                      <div style={bubbleStyle}>
-                        {showHeader && (
-                          <div style={bubbleMetaRow}>
-                            <div style={bubbleAuthor}>{m.author_name}</div>
-                            <div style={bubbleTimeRow}>
-                              <div style={bubbleTime}>
-                                {new Date(
-                                  m.created_at,
-                                ).toLocaleTimeString(undefined, {
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                })}
-                              </div>
-                              {m.edited_at && (
-                                <span
-                                  style={{
-                                    fontSize: 11,
-                                    color: '#9CA3AF',
-                                  }}
-                                >
-                                  (edited)
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {mentionsYou && (
-                          <div style={mentionPillStyle}>
-                            <span>Mentions you</span>
-                          </div>
-                        )}
-
-                        {m.text ? (
-                          <div style={bubbleText}>
-                            {renderWithMentions(m.text)}
-                          </div>
-                        ) : null}
-
-                        {editingId === m.id && (
-                          <div style={{marginTop: 8}}>
-                            <input
-                              type="text"
-                              value={editingText}
-                              onChange={(e) =>
-                                setEditingText(e.target.value)
-                              }
-                              style={{
-                                width: '100%',
-                                borderRadius: 10,
-                                border:
-                                  '1px solid rgba(75,85,99,0.9)',
-                                background: 'rgba(15,23,42,0.95)',
-                                color: '#E5E7EB',
-                                fontSize: 13,
-                                padding: '6px 10px',
-                                outline: 'none',
-                              }}
-                            />
-                          </div>
-                        )}
-
-                        {m.file_url && (
-                          <div style={{marginTop: 6}}>
-                            {m.file_type?.startsWith('image/') ? (
-                              <a
-                                href={m.file_url}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <img
-                                  src={m.file_url}
-                                  alt={m.file_name || 'Attachment'}
-                                  style={{
-                                    maxHeight: 220,
-                                    borderRadius: 10,
-                                    border:
-                                      '1px solid rgba(75,85,99,0.8)',
-                                  }}
-                                />
-                              </a>
-                            ) : (
-                              <a
-                                href={m.file_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{
-                                  fontSize: 13,
-                                  color: '#6EE7B7',
-                                  textDecoration: 'underline',
-                                }}
-                              >
-                                {m.file_name || 'Download file'}
-                              </a>
-                            )}
-                          </div>
-                        )}
-
-                        {Object.keys(msgReactions).length > 0 && (
-                          <div style={reactionsRowStyle}>
-                            {Object.entries(msgReactions).map(
-                              ([emoji, users]) => {
-                                const arr = users || [];
-                                const count = arr.length;
-                                const iReacted = arr.includes(userId);
-                                if (count === 0) return null;
-                                return (
-                                  <span
-                                    key={emoji}
-                                    style={{
-                                      ...reactionBadgeStyle,
-                                      ...(iReacted
-                                        ? {
-                                            borderColor:
-                                              'rgba(16,185,129,0.9)',
-                                            background:
-                                              'rgba(16,185,129,0.18)',
-                                          }
-                                        : {}),
-                                    }}
-                                  >
-                                    <span>{emoji}</span>
-                                    <span style={{color: '#9CA3AF'}}>
-                                      {count}
-                                    </span>
-                                  </span>
-                                );
-                              },
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Controls row */}
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 8,
-                          marginTop: 2,
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        {/* Reactions always visible */}
-                        <div style={{display: 'flex', gap: 6, flexWrap: 'wrap'}}>
-                          {REACTION_OPTIONS.map((emoji) => {
-                            const users = msgReactions[emoji] || [];
-                            const iReacted = users.includes(userId);
-                            return (
-                              <button
-                                key={emoji}
-                                type="button"
-                                onClick={() =>
-                                  handleReaction(m.id, emoji)
-                                }
-                                style={{
-                                  ...reactionButtonStyle,
-                                  ...(iReacted
-                                    ? reactionButtonActiveStyle
-                                    : {}),
-                                }}
-                              >
-                                {emoji}
-                              </button>
-                            );
-                          })}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setEmojiPickerFor(
-                                emojiPickerFor === m.id ? null : m.id,
-                              )
-                            }
-                            style={{
-                              ...reactionButtonStyle,
-                              padding: '4px 10px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
-                            }}
-                          >
-                            <span>😀</span>
-                            <span style={{fontSize: 11}}>More</span>
-                          </button>
-                        </div>
-
-                        {/* Reply / Edit / Delete – only on hover / editing */}
-                        <div
-                          style={{
-                            display: isHovered ? 'flex' : 'none',
-                            gap: 8,
-                            fontSize: 12,
-                            flexShrink: 0,
-                          }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => startReply(m)}
-                            style={{
-                              border: 'none',
-                              background: 'transparent',
-                              color: '#9CA3AF',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Reply
-                          </button>
-
-                          {isMe && (
-                            <>
-                              {editingId === m.id ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => saveEdit(m)}
-                                    style={{
-                                      border: 'none',
-                                      background: 'transparent',
-                                      color: '#10B981',
-                                      cursor: 'pointer',
-                                    }}
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={cancelEdit}
-                                    style={{
-                                      border: 'none',
-                                      background: 'transparent',
-                                      color: '#9CA3AF',
-                                      cursor: 'pointer',
-                                    }}
-                                  >
-                                    Cancel
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => startEdit(m)}
-                                    style={{
-                                      border: 'none',
-                                      background: 'transparent',
-                                      color: '#9CA3AF',
-                                      cursor: 'pointer',
-                                    }}
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      deleteMessage(m)
-                                    }
-                                    style={{
-                                      border: 'none',
-                                      background: 'transparent',
-                                      color: '#F97373',
-                                      cursor: 'pointer',
-                                    }}
-                                  >
-                                    Delete
-                                  </button>
-                                </>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {emojiPickerFor === m.id && (
-                        <div style={emojiPickerStyle}>
-                          {EMOJI_PICKER.map((emoji) => (
-                            <button
-                              key={emoji}
-                              type="button"
-                              onClick={() => {
-                                handleReaction(m.id, emoji);
-                                setEmojiPickerFor(null);
-                              }}
-                              style={emojiPickerButtonStyle}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                <article
+                  key={note.id}
+                  className="relative max-w-xs space-y-2 rounded-[28px] border border-slate-200 bg-white/70 p-5 text-left shadow-[0_18px_30px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5"
+                  style={{
+                    background: NOTE_COLORS[index % NOTE_COLORS.length],
+                    minHeight: 180,
+                    transformOrigin: 'top center',
+                    rotate: rotation,
+                  }}
+                >
+                  <span
+                    className="absolute left-1/2 top-3 block h-3 w-3 rounded-full shadow-md"
+                    style={{
+                      background: PIN_COLORS[index % PIN_COLORS.length],
+                      transform: 'translateX(-50%)',
+                    }}
+                  />
+                  <p className="text-sm text-slate-900" style={{whiteSpace: 'pre-line'}}>
+                    {truncatedText}
+                  </p>
+                  <div className="text-[13px] font-semibold text-slate-900">{note.author_name}</div>
+                  <div className="text-[11px] uppercase tracking-[0.3em] text-slate-500">
+                    {formatTimestamp(note.created_at)}
                   </div>
-                </React.Fragment>
+                  {exceedsLimit && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedNote(note)}
+                      className="inline-flex items-center rounded-full border border-slate-400 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-700 transition hover:border-slate-600 hover:text-slate-900"
+                    >
+                      Read more
+                    </button>
+                  )}
+                </article>
               );
-            })
-          )}
-
-          <div ref={bottomRef} />
-        </div>
-
-        {showScrollToBottom && (
-          <button
-            type="button"
-            onClick={scrollToBottomSmooth}
-            style={scrollToBottomButtonStyle}
-          >
-            <span>Jump to latest</span>
-          </button>
+            })}
+          </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div style={footerOuterStyle}>
-        <div style={footerInnerStyle}>
-          {uploadError && (
-            <div style={errorBannerStyle}>
-              <span>{uploadError}</span>
-              <button
-                type="button"
-                onClick={() => setUploadError(null)}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  color: '#FCA5A5',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: 600,
-                }}
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
-
-          {typingStr && <div style={typingStyle}>{typingStr}</div>}
-
-          {replyTo && (
-            <div style={replyBannerStyle}>
-              <div>
-                <span style={{color: '#9CA3AF', marginRight: 4}}>
-                  Replying to
-                </span>
-                <span style={{fontWeight: 600}}>
-                  {replyTo.author_name}
-                </span>
-                {replyTo.text && (
-                  <span style={{marginLeft: 6, opacity: 0.8}}>
-                    ·{' '}
-                    {replyTo.text.length > 80
-                      ? replyTo.text.slice(0, 77).trimEnd() + '…'
-                      : replyTo.text}
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => setReplyTo(null)}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  color: '#9CA3AF',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-
-          {pendingDelete && (
-            <div style={undoBannerStyle}>
-              <span>Message deleted.</span>
-              <button
-                type="button"
-                onClick={undoDelete}
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  color: '#6EE7B7',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: 600,
-                }}
-              >
-                Undo
-              </button>
-            </div>
-          )}
-
-          <form onSubmit={handleSend} style={inputRowStyle}>
-            <input
-              type="file"
-              ref={fileInputRef}
-              style={{display: 'none'}}
-              onChange={handleFileSelected}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              style={attachButtonStyle}
-              disabled={sending || uploadingFile}
-            >
-              {uploadingFile ? 'Uploading…' : 'Attach'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setComposerEmojiOpen((prev) => !prev)
-              }
-              style={emojiToggleButtonStyle}
-            >
-              😊
-            </button>
-
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Type a message for the team…"
-              value={input}
-              onChange={handleInputChange}
-              style={textInputStyle}
-            />
-
-            <button
-              type="submit"
-              disabled={sending || !input.trim()}
-              style={sendButtonStyle}
-            >
-              Send
-            </button>
-          </form>
-
-          {composerEmojiOpen && (
-            <div style={composerEmojiPickerStyle}>
-              {EMOJI_PICKER.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => insertEmojiIntoComposer(emoji)}
-                  style={emojiPickerButtonStyle}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
+      <form
+        className="border-t border-emerald-200 bg-white px-6 py-5 shadow-inner"
+        onSubmit={handleSend}
+      >
+        <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
+          Add a note
+        </label>
+        <textarea
+          className="mt-3 w-full rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-gray-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          rows={3}
+          placeholder="Remember to follow up on pool keys or plan the next board meeting recap"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+        />
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <span className="text-[11px] text-gray-500">
+            {displayName} — {boardNotes.length} note{boardNotes.length === 1 ? '' : 's'}
+          </span>
+          <button
+            type="submit"
+            disabled={sending || !draft.trim()}
+            className="rounded-full bg-emerald-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {sending ? 'Saving…' : 'Post note'}
+          </button>
         </div>
+      </form>
+
+      {expandedNote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10">
+          <div
+            className="absolute inset-0 bg-slate-900/60"
+            onClick={() => setExpandedNote(null)}
+          />
+          <div
+            className="relative w-full max-w-xl rounded-[32px] border border-slate-300 bg-yellow-50/95 p-6 text-slate-900 shadow-[0_35px_80px_rgba(15,23,42,0.35)]"
+            style={{
+              background: NOTE_COLORS[boardNotes.indexOf(expandedNote) % NOTE_COLORS.length],
+            }}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Sticky note</h2>
+              <button
+                type="button"
+                onClick={() => setExpandedNote(null)}
+                className="text-sm font-semibold text-slate-700 underline"
+              >
+                Close
+              </button>
+            </div>
+            <p className="mb-4 whitespace-pre-line text-base text-slate-900">{expandedNote.text}</p>
+            <div className="text-sm font-semibold text-slate-900">{expandedNote.author_name}</div>
+            <div className="text-[11px] uppercase tracking-[0.3em] text-slate-500">
+              {formatTimestamp(expandedNote.created_at)}
+            </div>
+          </div>
+        </div>
+      )}
       </div>
-    </div>
+    </>
   );
 };
 

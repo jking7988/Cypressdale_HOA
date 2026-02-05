@@ -19,7 +19,8 @@ export async function DELETE(
     );
   }
 
-  const commentId = params?.id;
+  const body = await req.json().catch(() => null);
+  const commentId = params?.id || (body?.commentId as string | undefined);
   if (!commentId) {
     return NextResponse.json(
       { error: 'Comment ID is required' },
