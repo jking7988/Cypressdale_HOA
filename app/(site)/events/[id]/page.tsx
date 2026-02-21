@@ -153,6 +153,18 @@ function buildSectionStyle(section: BaseSection): React.CSSProperties {
   return style;
 }
 
+function sectionTextAlign(alignment?: string): React.CSSProperties {
+  if (alignment === "center") return { textAlign: "center" };
+  if (alignment === "right") return { textAlign: "right" };
+  return { textAlign: "left" };
+}
+
+function topicLabelJustifyClass(alignment?: string) {
+  if (alignment === "center") return "justify-center";
+  if (alignment === "right") return "justify-end";
+  return "justify-start";
+}
+
 function isSameDayInTz(a: string, b: string, timeZone = "America/Chicago") {
   const da = new Date(a);
   const db = new Date(b);
@@ -333,15 +345,7 @@ export default async function EventDetailPage(props: Props) {
               {event.sections.map((section: any, idx: number) => {
                 switch (section._type) {
                   case "textSection": {
-                    const alignment =
-                      section.alignment === "center"
-                        ? "text-center"
-                        : section.alignment === "right"
-                        ? "text-right"
-                        : "text-left";
-
                     const wrapperClasses = [
-                      alignment,
                       sectionWidthClasses(section.width as SectionWidth),
                       "rounded-2xl px-4 md:px-6 mt-2",
                       sectionSpacingClasses(section.spacing as SectionSpacing),
@@ -350,8 +354,10 @@ export default async function EventDetailPage(props: Props) {
                       .filter(Boolean)
                       .join(" ");
 
+                    const alignedStyle = { ...buildSectionStyle(section), ...sectionTextAlign(section.alignment) };
+
                     return (
-                      <section key={idx} className={wrapperClasses} style={buildSectionStyle(section)}>
+                      <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {section.title && <h2 className="text-lg font-semibold text-emerald-900 mb-2">{section.title}</h2>}
                         {section.body && (
                           <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
@@ -377,14 +383,22 @@ export default async function EventDetailPage(props: Props) {
                       .filter(Boolean)
                       .join(" ");
 
+                    const alignedStyle = {
+                      ...buildSectionStyle(section),
+                      ...sectionTextAlign(section.alignment),
+                    };
+
                     return (
-                      <section key={idx} className={wrapperClasses} style={buildSectionStyle(section)}>
+                      <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {imageOnLeft && imageUrl && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={imageUrl} alt={imageAlt} className="rounded-2xl shadow-sm" />
                         )}
 
-                        <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
+                        <div
+                          className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3"
+                          style={sectionTextAlign(section.alignment)}
+                        >
                           <PortableText value={section.body} components={portableTextComponents} />
                         </div>
 
@@ -397,15 +411,7 @@ export default async function EventDetailPage(props: Props) {
                   }
 
                   case "topicSection": {
-                    const alignment =
-                      section.alignment === "center"
-                        ? "text-center"
-                        : section.alignment === "right"
-                        ? "text-right"
-                        : "text-left";
-
                     const wrapperClasses = [
-                      alignment,
                       sectionWidthClasses(section.width as SectionWidth),
                       "rounded-2xl px-4 md:px-6 mt-2",
                       sectionSpacingClasses(section.spacing as SectionSpacing),
@@ -414,10 +420,12 @@ export default async function EventDetailPage(props: Props) {
                       .filter(Boolean)
                       .join(" ");
 
+                    const alignedStyle = { ...buildSectionStyle(section), ...sectionTextAlign(section.alignment) };
+
                     const content = (
-                      <section key={idx} className={wrapperClasses} style={buildSectionStyle(section)}>
+                      <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {section.topicLabel && (
-                          <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold tracking-wide uppercase opacity-80 justify-start">
+                          <div className={`mb-1 flex items-center gap-1 text-[11px] font-semibold tracking-wide uppercase opacity-80 ${topicLabelJustifyClass(section.alignment)}`}>
                             {section.icon && <span>{section.icon}</span>}
                             <span>{section.topicLabel}</span>
                           </div>

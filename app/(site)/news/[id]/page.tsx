@@ -160,6 +160,18 @@ function buildSectionStyle(section: BaseSection): React.CSSProperties {
   return style;
 }
 
+function sectionTextAlign(alignment?: string): React.CSSProperties {
+  if (alignment === "center") return { textAlign: "center" };
+  if (alignment === "right") return { textAlign: "right" };
+  return { textAlign: "left" };
+}
+
+function topicLabelJustifyClass(alignment?: string) {
+  if (alignment === "center") return "justify-center";
+  if (alignment === "right") return "justify-end";
+  return "justify-start";
+}
+
 type Props = {
   params: Promise<{ id: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -236,19 +248,11 @@ export default async function NewsDetailPage(props: Props) {
               {post.sections.map((section: any, idx: number) => {
                 switch (section._type) {
                   case "textSection": {
-                    const alignment =
-                      section.alignment === "center"
-                        ? "text-center"
-                        : section.alignment === "right"
-                        ? "text-right"
-                        : "text-left";
-
                     const widthClasses = sectionWidthClasses(section.width as SectionWidth);
                     const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
                     const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
 
                     const wrapperClasses = [
-                      alignment,
                       widthClasses,
                       "rounded-2xl px-4 md:px-6 mt-2",
                       spacingClasses,
@@ -258,9 +262,10 @@ export default async function NewsDetailPage(props: Props) {
                       .join(" ");
 
                     const style = buildSectionStyle(section);
+                    const alignedStyle = { ...style, ...sectionTextAlign(section.alignment) };
 
                     return (
-                      <section key={idx} className={wrapperClasses} style={style}>
+                      <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {section.title && <h2 className="text-lg font-semibold text-brand-900 mb-2">{section.title}</h2>}
                         {section.body && (
                           <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
@@ -291,15 +296,19 @@ export default async function NewsDetailPage(props: Props) {
                       .join(" ");
 
                     const style = buildSectionStyle(section);
+                    const alignedStyle = { ...style, ...sectionTextAlign(section.alignment) };
 
                     return (
-                      <section key={idx} className={wrapperClasses} style={style}>
+                      <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {imageOnLeft && imageUrl && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={imageUrl} alt={imageAlt} className="rounded-2xl shadow-sm" />
                         )}
 
-                        <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
+                        <div
+                          className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3"
+                          style={sectionTextAlign(section.alignment)}
+                        >
                           <PortableText value={section.body} components={portableTextComponents} />
                         </div>
 
@@ -312,19 +321,11 @@ export default async function NewsDetailPage(props: Props) {
                   }
 
                   case "topicSection": {
-                    const alignment =
-                      section.alignment === "center"
-                        ? "text-center"
-                        : section.alignment === "right"
-                        ? "text-right"
-                        : "text-left";
-
                     const widthClasses = sectionWidthClasses(section.width as SectionWidth);
                     const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);
                     const borderClasses = sectionBorderClasses(section.borderStyle as SectionBorder);
 
                     const wrapperClasses = [
-                      alignment,
                       widthClasses,
                       "rounded-2xl px-4 md:px-6 mt-2",
                       spacingClasses,
@@ -334,11 +335,12 @@ export default async function NewsDetailPage(props: Props) {
                       .join(" ");
 
                     const style = buildSectionStyle(section);
+                    const alignedStyle = { ...style, ...sectionTextAlign(section.alignment) };
 
                     const content = (
-                      <section key={idx} className={wrapperClasses} style={style}>
+                      <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {section.topicLabel && (
-                          <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold tracking-wide uppercase opacity-80 justify-start">
+                          <div className={`mb-1 flex items-center gap-1 text-[11px] font-semibold tracking-wide uppercase opacity-80 ${topicLabelJustifyClass(section.alignment)}`}>
                             {section.icon && <span>{section.icon}</span>}
                             <span>{section.topicLabel}</span>
                           </div>
