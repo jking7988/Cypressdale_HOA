@@ -328,33 +328,6 @@ export default async function EventDetailPage(props: Props) {
             </section>
           )}
 
-          {event.excerpt && (
-            <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900">
-              <PortableText value={event.excerpt} components={portableTextComponents} />
-            </section>
-          )}
-
-          {event.body && (
-            <section className="text-sm md:text-[15px] leading-relaxed text-gray-800">
-              <div className="md:border-l md:border-emerald-100 md:pl-6 space-y-3">
-                <PortableText value={event.body} components={portableTextComponents} />
-              </div>
-            </section>
-          )}
-
-          {!event.body && event.description && (
-            <section className="space-y-2">
-              <h2 className="text-sm md:text-base font-semibold text-emerald-950">About this event</h2>
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm md:text-[15px] text-emerald-900 leading-relaxed">
-                {event.description.split("\n").map((line, idx) => (
-                  <p key={idx} className={idx > 0 ? "mt-2" : undefined}>
-                    {line}
-                  </p>
-                ))}
-              </div>
-            </section>
-          )}
-
           {event.sections && event.sections.length > 0 && (
             <div className="space-y-6 pt-4 border-t border-emerald-50">
               {event.sections.map((section: any, idx: number) => {

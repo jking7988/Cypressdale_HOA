@@ -21,9 +21,10 @@ export default defineType({
     }),
     defineField({
       name: 'description',
-      title: 'Description',
+      title: 'Description (deprecated)',
       type: 'text',
       group: 'details',
+      hidden: true,
     }),
     defineField({
       name: 'location',
@@ -47,23 +48,30 @@ export default defineType({
 
     defineField({
       name: 'excerpt',
-      title: 'Excerpt',
+      title: 'Excerpt (deprecated)',
       type: 'array',
       of: [{type: 'block'}],
       group: 'content',
+      hidden: true,
     }),
     defineField({
       name: 'body',
-      title: 'Body',
+      title: 'Body (deprecated)',
       type: 'array',
       of: [{type: 'block'}],
       group: 'content',
+      hidden: true,
     }),
     defineField({
       name: 'sections',
       title: 'Page sections',
       type: 'array',
       group: 'content',
+      validation: (rule) =>
+        rule
+          .required()
+          .min(1)
+          .error('Add at least one section. Content is now section-based.'),
       of: [
         {
           type: 'object',

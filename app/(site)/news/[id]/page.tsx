@@ -76,13 +76,6 @@ const topicInfo: Record<string, { icon: string; label: string; color: string }> 
   },
 };
 
-const ImportantDateBox = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900 flex items-start gap-2">
-    <span className="text-lg">⏰</span>
-    <div>{children}</div>
-  </div>
-);
-
 type SectionWidth = "default" | "narrow" | "wide" | "full" | undefined;
 type SectionSpacing = "tight" | "normal" | "spacious" | undefined;
 type SectionBorder = "none" | "subtle" | "strong" | undefined;
@@ -237,20 +230,6 @@ export default async function NewsDetailPage(props: Props) {
           </div>
 
           <h1 className="text-xl md:text-2xl font-semibold leading-snug text-brand-900">{post.title}</h1>
-
-          {post.excerpt && (
-            <ImportantDateBox>
-              <PortableText value={post.excerpt} components={portableTextComponents} />
-            </ImportantDateBox>
-          )}
-
-          {post.body && (
-            <section className="text-sm md:text-[15px] leading-relaxed text-gray-800">
-              <div className="md:border-l md:border-emerald-100 md:pl-6 space-y-3">
-                <PortableText value={post.body} components={portableTextComponents} />
-              </div>
-            </section>
-          )}
 
           {post.sections && post.sections.length > 0 && (
             <div className="space-y-6 pt-4 border-t border-emerald-50">

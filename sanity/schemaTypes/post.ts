@@ -43,18 +43,20 @@ export default defineType({
 
     defineField({
       name: 'excerpt',
-      title: 'Excerpt',
+      title: 'Excerpt (deprecated)',
       type: 'array',
       of: [{ type: 'block' }],
       group: 'content',
+      hidden: true,
     }),
 
     defineField({
       name: 'body',
-      title: 'Body',
+      title: 'Body (deprecated)',
       type: 'array',
       of: [{ type: 'block' }],
       group: 'content',
+      hidden: true,
     }),
 
     // PAGE SECTIONS
@@ -63,6 +65,11 @@ export default defineType({
       title: 'Page sections',
       type: 'array',
       group: 'content',
+      validation: (rule) =>
+        rule
+          .required()
+          .min(1)
+          .error('Add at least one section. Content is now section-based.'),
       of: [
         //
         // TEXT SECTION
