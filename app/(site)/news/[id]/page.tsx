@@ -126,6 +126,7 @@ type BaseSection = {
   backgroundColorEnd?: ColorField;
   gradientDirection?: string;
   borderColor?: ColorField;
+  titleColor?: ColorField;
   backgroundImageUrl?: string;
   backgroundImageOpacity?: number;
 };
@@ -190,6 +191,11 @@ function sectionTextAlign(alignment?: string): React.CSSProperties {
   if (value === "center") return { textAlign: "center" };
   if (value === "right") return { textAlign: "right" };
   return { textAlign: "left" };
+}
+
+function sectionTitleStyle(section: BaseSection): React.CSSProperties {
+  const color = section.titleColor?.hex ? stegaClean(section.titleColor.hex) : "";
+  return color ? { color } : {};
 }
 
 function sectionTextAlignClass(alignment?: string) {
@@ -305,7 +311,11 @@ export default async function NewsDetailPage(props: Props) {
 
                     return (
                       <section key={idx} className={wrapperClasses} style={alignedStyle}>
-                        {section.title && <h2 className="text-lg font-semibold text-brand-900 mb-2">{section.title}</h2>}
+                        {section.title && (
+                          <h2 className="text-lg font-semibold text-brand-900 mb-2" style={sectionTitleStyle(section)}>
+                            {section.title}
+                          </h2>
+                        )}
                         {section.body && (
                           <div
                             className={`text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3 ${sectionTextAlignClass(section.alignment)}`}
@@ -389,7 +399,11 @@ export default async function NewsDetailPage(props: Props) {
                           </div>
                         )}
 
-                        {section.title && <h2 className="text-lg font-semibold text-brand-900 mb-2">{section.title}</h2>}
+                        {section.title && (
+                          <h2 className="text-lg font-semibold text-brand-900 mb-2" style={sectionTitleStyle(section)}>
+                            {section.title}
+                          </h2>
+                        )}
 
                         {section.body && (
                           <div

@@ -123,6 +123,7 @@ export default defineType({
           title: 'Text section',
           fields: [
             {name: 'title', type: 'string', title: 'Section title'},
+            {name: 'titleColor', title: 'Section title color', type: 'color'},
             {
               name: 'alignment',
               type: 'string',
@@ -395,6 +396,7 @@ export default defineType({
               },
             },
             {name: 'title', title: 'Section title', type: 'string'},
+            {name: 'titleColor', title: 'Section title color', type: 'color'},
             {
               name: 'body',
               type: 'array',
