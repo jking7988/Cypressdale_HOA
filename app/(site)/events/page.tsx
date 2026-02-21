@@ -1,13 +1,17 @@
 // app/(site)/events/page.tsx
 export const dynamic = 'force-dynamic';
 
-import { client } from '@/lib/sanity.client';
 import { eventsQuery } from '@/lib/queries';
 import EventsCalendar from '@/components/EventsCalendar';
 import { NewsLetterSignup } from '@/components/NewsLetterSignup';
+import { sanityFetch } from '@/lib/live';
 
 export default async function EventsPage() {
-  const events = await client.fetch(eventsQuery);
+  const { data } = await sanityFetch({
+    query: eventsQuery,
+    stega: true,
+  });
+  const events = (data ?? []) as any[];
 
   return (
     <div className="space-y-6">

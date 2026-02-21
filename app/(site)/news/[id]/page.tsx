@@ -4,12 +4,11 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { groq } from "next-sanity";
-import { client, previewClient } from "@/lib/sanity.client";
+import { sanityFetch } from "@/lib/live";
 import { PortableText } from "@portabletext/react";
 import { portableTextComponents } from "@/components/portableTextComponents";
 import React from "react";
 import { FormattedDateTime } from "@/components/FormattedDateTime";
-import { draftMode } from "next/headers"; // ✅ NEW
 
 type Post = {
   _id: string;
@@ -170,32 +169,23 @@ function buildSectionStyle(section: BaseSection): React.CSSProperties {
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function NewsDetailPage(props: Props) {
   const { id } = await props.params;
   if (!id) return notFound();
 
-  // ✅ Primary source of truth for preview: Draft Mode cookie
-  const { isEnabled } = await draftMode();
-
-  // ✅ Optional fallback for manual testing: ?draft=1
-  const searchParams = await props.searchParams;
-  const draftParam = searchParams?.draft;
-  const draftQueryFlag =
-    typeof draftParam === "string"
-      ? draftParam === "1"
-      : Array.isArray(draftParam)
-      ? draftParam[0] === "1"
-      : false;
-
-  const usePreview = (isEnabled || draftQueryFlag) && !!process.env.SANITY_API_READ_TOKEN;
-  const sanity = usePreview ? previewClient : client;
+  if (props.searchParams) await props.searchParams;
 
   const draftId = `drafts.${id}`;
 
-  const post = await sanity.fetch<Post | null>(postByIdQuery, { id, draftId });
+  const { data } = await sanityFetch({
+    query: postByIdQuery,
+    params: { id, draftId },
+    stega: true,
+  });
+  const post = data as Post | null;
   if (!post) return notFound();
 
   const topic = (post.topic && topicInfo[post.topic]) || topicInfo["general"];
@@ -414,3 +404,6 @@ export default async function NewsDetailPage(props: Props) {
     </div>
   );
 }
+
+
+
