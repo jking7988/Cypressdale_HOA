@@ -123,6 +123,21 @@ export default defineType({
           title: 'Text section',
           fields: [
             {name: 'title', type: 'string', title: 'Section title'},
+            {
+              name: 'titleSize',
+              title: 'Section title size',
+              type: 'string',
+              initialValue: 'md',
+              options: {
+                list: [
+                  {title: 'Small', value: 'sm'},
+                  {title: 'Medium', value: 'md'},
+                  {title: 'Large', value: 'lg'},
+                  {title: 'Extra Large', value: 'xl'},
+                ],
+                layout: 'radio',
+              },
+            },
             {name: 'titleColor', title: 'Section title color', type: 'color'},
             {
               name: 'alignment',
@@ -396,6 +411,21 @@ export default defineType({
               },
             },
             {name: 'title', title: 'Section title', type: 'string'},
+            {
+              name: 'titleSize',
+              title: 'Section title size',
+              type: 'string',
+              initialValue: 'md',
+              options: {
+                list: [
+                  {title: 'Small', value: 'sm'},
+                  {title: 'Medium', value: 'md'},
+                  {title: 'Large', value: 'lg'},
+                  {title: 'Extra Large', value: 'xl'},
+                ],
+                layout: 'radio',
+              },
+            },
             {name: 'titleColor', title: 'Section title color', type: 'color'},
             {
               name: 'body',

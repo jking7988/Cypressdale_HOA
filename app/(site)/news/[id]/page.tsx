@@ -127,6 +127,7 @@ type BaseSection = {
   gradientDirection?: string;
   borderColor?: ColorField;
   titleColor?: ColorField;
+  titleSize?: string;
   backgroundImageUrl?: string;
   backgroundImageOpacity?: number;
 };
@@ -196,6 +197,21 @@ function sectionTextAlign(alignment?: string): React.CSSProperties {
 function sectionTitleStyle(section: BaseSection): React.CSSProperties {
   const color = section.titleColor?.hex ? stegaClean(section.titleColor.hex) : "";
   return color ? { color } : {};
+}
+
+function sectionTitleSizeClass(section: BaseSection) {
+  const value = section.titleSize ? stegaClean(section.titleSize).trim().toLowerCase() : "md";
+  switch (value) {
+    case "sm":
+      return "text-base md:text-lg";
+    case "lg":
+      return "text-xl md:text-2xl";
+    case "xl":
+      return "text-2xl md:text-3xl";
+    case "md":
+    default:
+      return "text-lg md:text-xl";
+  }
 }
 
 function sectionTextAlignClass(alignment?: string) {
@@ -312,7 +328,7 @@ export default async function NewsDetailPage(props: Props) {
                     return (
                       <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {section.title && (
-                          <h2 className="text-lg font-semibold text-brand-900 mb-2" style={sectionTitleStyle(section)}>
+                          <h2 className={`${sectionTitleSizeClass(section)} font-semibold text-brand-900 mb-2`} style={sectionTitleStyle(section)}>
                             {section.title}
                           </h2>
                         )}
@@ -400,7 +416,7 @@ export default async function NewsDetailPage(props: Props) {
                         )}
 
                         {section.title && (
-                          <h2 className="text-lg font-semibold text-brand-900 mb-2" style={sectionTitleStyle(section)}>
+                          <h2 className={`${sectionTitleSizeClass(section)} font-semibold text-brand-900 mb-2`} style={sectionTitleStyle(section)}>
                             {section.title}
                           </h2>
                         )}
