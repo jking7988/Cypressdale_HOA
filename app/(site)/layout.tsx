@@ -29,7 +29,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         <SanityVisualEditing />
-        <SanityLive revalidateSyncTags={refreshOnLiveEvent} />
+        <SanityLive
+          refreshOnMount
+          refreshOnReconnect
+          refreshOnFocus
+          revalidateSyncTags={refreshOnLiveEvent}
+        />
       </body>
     </html>
   );

@@ -127,12 +127,32 @@ type BaseSection = {
   backgroundImageOpacity?: number;
 };
 
+function resolveGradientDirection(direction?: string) {
+  const value = direction?.trim().toLowerCase();
+  if (!value) return "to bottom";
+
+  const directionMap: Record<string, string> = {
+    "to bottom": "to bottom",
+    vertical: "to bottom",
+    "top to bottom": "to bottom",
+    "to right": "to right",
+    horizontal: "to right",
+    "left to right": "to right",
+    "to top": "to top",
+    "bottom to top": "to top",
+    "to left": "to left",
+    "right to left": "to left",
+  };
+
+  return directionMap[value] || value;
+}
+
 function buildSectionStyle(section: BaseSection): React.CSSProperties {
   const style: React.CSSProperties = {};
 
   const bg = section.backgroundColor?.hex;
   const bgEnd = section.backgroundColorEnd?.hex;
-  const dir = section.gradientDirection || "to bottom";
+  const dir = resolveGradientDirection(section.gradientDirection);
 
   if (bg && bgEnd) {
     style.backgroundImage = `linear-gradient(${dir}, ${bg}, ${bgEnd})`;
