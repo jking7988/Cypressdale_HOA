@@ -1,5 +1,6 @@
 // src/components/portableTextComponents.tsx
 import React, { ReactNode } from 'react';
+import { stegaClean } from 'next-sanity';
 // If this type import causes issues, you can delete the line and the type annotation below.
 // import type { PortableTextComponents } from '@portabletext/react';
 
@@ -53,6 +54,30 @@ const StrongMark = ({ children }: BlockProps) => (
   <span className="font-semibold text-gray-900">{children}</span>
 );
 
+type TextColorValue = {
+  color?: string | { hex?: string };
+};
+
+const TextColorMark = ({
+  children,
+  value,
+}: {
+  children?: ReactNode;
+  value?: TextColorValue;
+}) => {
+  const raw =
+    typeof value?.color === 'string'
+      ? value.color
+      : value?.color && typeof value.color === 'object'
+      ? value.color.hex
+      : undefined;
+
+  const color = raw ? stegaClean(raw).trim() : '';
+  if (!color) return <>{children}</>;
+
+  return <span style={{ color }}>{children}</span>;
+};
+
 // If the type causes an error, remove `: PortableTextComponents`
 export const portableTextComponents /* : PortableTextComponents */ = {
   block: {
@@ -71,5 +96,6 @@ export const portableTextComponents /* : PortableTextComponents */ = {
   },
   marks: {
     strong: StrongMark,
+    textColor: TextColorMark,
   },
 };

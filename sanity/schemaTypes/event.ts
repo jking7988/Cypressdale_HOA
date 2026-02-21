@@ -1,5 +1,21 @@
 import {defineField, defineType} from 'sanity';
 
+const portableTextWithTextColor = [
+  {
+    type: 'block',
+    marks: {
+      annotations: [
+        {
+          name: 'textColor',
+          title: 'Text color',
+          type: 'object',
+          fields: [{name: 'color', title: 'Color', type: 'color'}],
+        },
+      ],
+    },
+  },
+];
+
 export default defineType({
   name: 'event',
   title: 'Event',
@@ -78,7 +94,7 @@ export default defineType({
       name: 'excerpt',
       title: 'Excerpt (deprecated)',
       type: 'array',
-      of: [{type: 'block'}],
+      of: portableTextWithTextColor,
       group: 'content',
       hidden: true,
     }),
@@ -86,7 +102,7 @@ export default defineType({
       name: 'body',
       title: 'Body (deprecated)',
       type: 'array',
-      of: [{type: 'block'}],
+      of: portableTextWithTextColor,
       group: 'content',
       hidden: true,
     }),
@@ -181,7 +197,7 @@ export default defineType({
                 layout: 'radio',
               },
             },
-            {name: 'body', type: 'array', of: [{type: 'block'}]},
+            {name: 'body', type: 'array', of: portableTextWithTextColor},
           ],
         },
         {
@@ -269,7 +285,7 @@ export default defineType({
                 layout: 'radio',
               },
             },
-            {name: 'body', type: 'array', of: [{type: 'block'}]},
+            {name: 'body', type: 'array', of: portableTextWithTextColor},
           ],
         },
         {
@@ -383,7 +399,7 @@ export default defineType({
               name: 'body',
               type: 'array',
               title: 'Text',
-              of: [{type: 'block'}],
+              of: portableTextWithTextColor,
             },
           ],
         },
