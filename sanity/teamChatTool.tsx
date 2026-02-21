@@ -3,11 +3,11 @@ import {definePlugin} from 'sanity';
 import TeamChatView from './TeamChatView';
 
 export const teamChatTool = definePlugin({
-  name: 'team-notes-tool',
+  name: 'team-chat-tool',
   tools: [
     {
-      name: 'teamNotes',
-      title: 'Team Notes',
+      name: 'teamChat',
+      title: 'Team Chat',
       component: TeamChatView,
     },
   ],

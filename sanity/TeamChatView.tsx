@@ -1,6 +1,6 @@
-ï»¿'use client';
-
-import React, {useEffect, useMemo, useState} from 'react';
+// TeamChatView.tsx
+// @ts-nocheck
+import React, {useEffect, useState, useRef} from 'react';
 import {useCurrentUser} from 'sanity';
 import {supabase} from './studioSupaBaseClient';
 
@@ -10,373 +10,591 @@ type Message = {
   author_name: string;
   text: string;
   created_at: string;
+  file_url?: string | null;
+  file_name?: string | null;
+  file_type?: string | null;
 };
 
 const ROOM_ID = 'global:board-chat';
 const CHANNEL_NAME = 'team-chat';
-const NOTE_COLORS = ['#FEF3C7', '#FDE7C7', '#F1F5F9', '#E0E7FF', '#FCE7F3'];
-const PIN_COLORS = ['#EF4444', '#F97316', '#22C55E', '#2563EB'];
-const NOTE_DESCRIPTION_LIMIT = 220;
 
-const CORKBOARD_IMAGE = '/corkboard.jpg';
-
-const corkBoardBackground =
-  process.env.NEXT_PUBLIC_TEAM_NOTES_CORK ||
-  `linear-gradient(180deg, rgba(177, 138, 84, 0.75) 0%, rgba(156, 104, 42, 0.85) 60%), url("${CORKBOARD_IMAGE}")`;
-
+// small helper
 function nowIso() {
   return new Date().toISOString();
 }
 
-function formatTimestamp(iso: string) {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
+const REACTION_OPTIONS = ['??', '??', '??'];
 
 const TeamChatView = () => {
   const user = useCurrentUser();
 
   if (!supabase) {
     return (
-      <div className="p-6 text-sm text-gray-500 text-center">
-        <p className="font-semibold text-gray-800 mb-2">Team Notes not configured</p>
+      <div className="p-3 text-xs text-gray-600">
+        <p className="font-semibold mb-1">Team chat not configured</p>
         <p className="mb-1">
-          Supabase credentials are missing in this Studio environment.
+          Supabase credentials are missing in the Studio environment.
         </p>
         <p>
-          Set <code className="font-mono text-xs px-2 py-0.5 rounded bg-slate-900 text-white">SANITY_STUDIO_SUPABASE_URL</code> and{' '}
-          <code className="font-mono text-xs px-2 py-0.5 rounded bg-slate-900 text-white">SANITY_STUDIO_SUPABASE_ANON_KEY</code> to enable the board.
+          Set{' '}
+          <code className="font-mono text-[11px] bg-gray-100 px-1 rounded">
+            SANITY_STUDIO_SUPABASE_URL
+          </code>{' '}
+          and{' '}
+          <code className="font-mono text-[11px] bg-gray-100 px-1 rounded">
+            SANITY_STUDIO_SUPABASE_ANON_KEY
+          </code>{' '}
+          to enable live chat.
         </p>
       </div>
     );
   }
 
-  const displayName = user?.name || user?.email || 'Cypressdale teammate';
-  const [notes, setNotes] = useState<Message[]>([]);
-  const [draft, setDraft] = useState('');
+  const displayName = user?.name || user?.email || 'Unknown user';
+  const userId = user?._id || displayName; // simple stable id
+  const initials =
+    (user?.name &&
+      user.name
+        .split(' ')
+        .map((p) => p[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()) ||
+    (user?.email?.[0]?.toUpperCase() ?? '?');
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [expandedNote, setExpandedNote] = useState<Message | null>(null);
-  const TOOL_BODY_CLASS = 'team-notes-corkboard';
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [typingUsers, setTypingUsers] = useState<
+    Record<string, {name: string; last: number}>
+  >({});
+  const [onlineUsers, setOnlineUsers] = useState<
+    Record<string, {name: string; last: number}>
+  >({});
+  const [reactions, setReactions] = useState<
+    Record<string, Record<string, number>>
+  >({});
 
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const channelRef = useRef<any>(null);
+  const lastTypingSentRef = useRef<number>(0);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isWindowFocused, setIsWindowFocused] = useState(
+    typeof document !== 'undefined' ? !document.hidden : true,
+  );
+
+  const [lastReadAt, setLastReadAt] = useState<number>(() => Date.now());
+
+  // Scroll to bottom on message changes
+  useEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({behavior: 'smooth', block: 'end'});
+    }
+  }, [messages]);
+
+  // Track focus / visibility for "unread" logic
+  useEffect(() => {
+    function handleVisibility() {
+      const visible = !document.hidden;
+      setIsWindowFocused(visible);
+      if (visible) {
+        setLastReadAt(Date.now());
+        setUnreadCount(0);
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleVisibility);
+    };
+  }, []);
+
+  // Load history + setup broadcast channel (messages, typing, presence, reactions)
   useEffect(() => {
     let active = true;
-    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    async function loadNotes() {
+    async function loadMessages() {
       setLoading(true);
       const {data, error} = await supabase
         .from('messages')
         .select('*')
         .eq('room_id', ROOM_ID)
-        .order('created_at', {ascending: false})
-        .limit(100);
+        .order('created_at', {ascending: true});
 
       if (!active) return;
       if (!error && data) {
-        const items = (data as Message[]).sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        );
-        setNotes(items);
+        setMessages(data as Message[]);
       }
       setLoading(false);
     }
 
-    loadNotes();
+    loadMessages();
 
-    channel = supabase
+    const channel = supabase
       .channel(CHANNEL_NAME)
-      .on('broadcast', {event: 'message'}, (payload: {payload: unknown}) => {
-        const payloadNote = payload.payload as Message;
-        setNotes((prev) => {
-          if (prev.some((note) => note.id === payloadNote.id)) {
-            return prev;
-          }
-          const next = [payloadNote, ...prev];
-          return next.slice(0, 100);
+      .on('broadcast', {event: 'message'}, (payload) => {
+        const msg = payload.payload as Message;
+        setMessages((prev) => [...prev, msg]);
+        const createdTime = new Date(msg.created_at).getTime();
+        // increment unread if we're not focused
+        setUnreadCount((prev) =>
+          isWindowFocused || createdTime <= lastReadAt ? prev : prev + 1,
+        );
+      })
+      .on('broadcast', {event: 'typing'}, (payload) => {
+        const {userId: typingId, name} = payload.payload as {
+          userId: string;
+          name: string;
+        };
+        const now = Date.now();
+        setTypingUsers((prev) => ({
+          ...prev,
+          [typingId]: {name, last: now},
+        }));
+      })
+      .on('broadcast', {event: 'presence'}, (payload) => {
+        const {userId: presenceId, name} = payload.payload as {
+          userId: string;
+          name: string;
+        };
+        const now = Date.now();
+        setOnlineUsers((prev) => ({
+          ...prev,
+          [presenceId]: {name, last: now},
+        }));
+      })
+      .on('broadcast', {event: 'reaction'}, (payload) => {
+        const {messageId, emoji} = payload.payload as {
+          messageId: string;
+          emoji: string;
+        };
+        setReactions((prev) => {
+          const current = {...prev};
+          const forMsg = {...(current[messageId] || {})};
+          forMsg[emoji] = (forMsg[emoji] || 0) + 1;
+          current[messageId] = forMsg;
+          return current;
         });
       })
       .subscribe();
 
+    channelRef.current = channel;
+
+    // announce presence immediately and then ping every 20s
+    function sendPresence() {
+      if (!channelRef.current) return;
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'presence',
+        payload: {userId, name: displayName},
+      });
+    }
+    sendPresence();
+    const presenceInterval = setInterval(sendPresence, 20_000);
+
+    // periodically prune stale typing / presence
+    const pruneInterval = setInterval(() => {
+      const cutoffTyping = Date.now() - 3_000; // 3s
+      const cutoffPresence = Date.now() - 30_000; // 30s
+
+      setTypingUsers((prev) => {
+        const next: typeof prev = {};
+        for (const [id, info] of Object.entries(prev)) {
+          if (info.last > cutoffTyping) next[id] = info;
+        }
+        return next;
+      });
+
+      setOnlineUsers((prev) => {
+        const next: typeof prev = {};
+        for (const [id, info] of Object.entries(prev)) {
+          if (info.last > cutoffPresence) next[id] = info;
+        }
+        return next;
+      });
+    }, 3_000);
+
     return () => {
       active = false;
-      if (channel) {
-        supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
+      clearInterval(presenceInterval);
+      clearInterval(pruneInterval);
     };
-  }, []);
+  }, [isWindowFocused, lastReadAt, userId, displayName]);
 
-  async function handleSend(event?: React.FormEvent) {
-    if (event) {
-      event.preventDefault();
-    }
+  // Typing broadcast on input change (debounced)
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setInput(value);
 
-    const text = draft.trim();
-    if (!text) {
-      return;
-    }
+    const now = Date.now();
+    if (!channelRef.current) return;
+    if (now - lastTypingSentRef.current < 800) return; // throttle
+    lastTypingSentRef.current = now;
 
-    setSending(true);
-    setDraft('');
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: {userId, name: displayName},
+    });
+  }
+
+  async function handleSend(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    const text = input.trim();
+    if (!text) return;
 
     const createdAt = nowIso();
-    const messageId =
-      typeof crypto !== 'undefined' && crypto.randomUUID
+    const localId =
+      (typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
-        : `note-${Date.now()}`;
+        : `local-${Date.now()}`);
 
-    const note: Message = {
-      id: messageId,
+    const msg: Message = {
+      id: localId,
       room_id: ROOM_ID,
       author_name: displayName,
       text,
       created_at: createdAt,
     };
 
-    setNotes((prev) => [note, ...prev].slice(0, 100));
+    // optimistic + broadcast
+    setMessages((prev) => [...prev, msg]);
+    setInput('');
+    setSending(true);
 
-    const {error} = await supabase.from('messages').insert(note);
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'message',
+        payload: msg,
+      });
+    }
+
+    // persist
+    const {error} = await supabase.from('messages').insert({
+      room_id: ROOM_ID,
+      author_name: displayName,
+      text,
+      created_at: createdAt,
+    });
+
     setSending(false);
 
     if (error) {
-      console.error('Team notes insert error', error.message);
+      // rollback optimistic if insert fails
+      setMessages((prev) => prev.filter((m) => m.id !== localId));
+      console.error('Supabase insert error:', error.message);
     }
   }
 
-  const boardNotes = useMemo(() => notes, [notes]);
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return undefined;
+    try {
+      setSending(true);
+      const path = `${userId}/${Date.now()}-${file.name}`;
+      const {error: uploadError} = await supabase.storage
+        .from('chat-uploads')
+        .upload(path, file);
+
+      if (uploadError) {
+        console.error(uploadError);
+        setSending(false);
+        return;
+      }
+
+      const {
+        data: {publicUrl},
+      } = supabase.storage.from('chat-uploads').getPublicUrl(path);
+
+      const createdAt = nowIso();
+      const localId =
+        (typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `file-${Date.now()}`);
+
+      const msg: Message = {
+        id: localId,
+        room_id: ROOM_ID,
+        author_name: displayName,
+        text: file.name,
+        created_at: createdAt,
+        file_url: publicUrl,
+        file_name: file.name,
+        file_type: file.type,
+      };
+
+      // optimistic + broadcast
+      setMessages((prev) => [...prev, msg]);
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'message',
+          payload: msg,
+        });
+      }
+
+      const {error: insertError} = await supabase.from('messages').insert({
+        room_id: ROOM_ID,
+        author_name: displayName,
+        text: file.name,
+        created_at: createdAt,
+        file_url: publicUrl,
+        file_name: file.name,
+        file_type: file.type,
+      });
+
+      if (insertError) {
+        // rollback if necessary
+        setMessages((prev) => prev.filter((m) => m.id !== localId));
+        console.error(insertError);
+      }
+    } finally {
+      setSending(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  }
 
-    const html = document.documentElement;
-    const boardStyle = `url("${CORKBOARD_IMAGE}")`;
-    const prev = {
-      body: {
-        backgroundImage: document.body.style.backgroundImage,
-        backgroundRepeat: document.body.style.backgroundRepeat,
-        backgroundSize: document.body.style.backgroundSize,
-        backgroundPosition: document.body.style.backgroundPosition,
-        backgroundAttachment: document.body.style.backgroundAttachment,
-      },
-      html: {
-        backgroundImage: html.style.backgroundImage,
-        backgroundRepeat: html.style.backgroundRepeat,
-        backgroundSize: html.style.backgroundSize,
-        backgroundPosition: html.style.backgroundPosition,
-        backgroundAttachment: html.style.backgroundAttachment,
-      },
-    };
-
-    [document.body, html].forEach((el) => {
-      el.style.backgroundImage = boardStyle;
-      el.style.backgroundRepeat = 'repeat';
-      el.style.backgroundSize = 'cover';
-      el.style.backgroundPosition = 'center';
-      el.style.backgroundAttachment = 'fixed';
+  function handleReaction(messageId: string, emoji: string) {
+    // local
+    setReactions((prev) => {
+      const current = {...prev};
+      const forMsg = {...(current[messageId] || {})};
+      forMsg[emoji] = (forMsg[emoji] || 0) + 1;
+      current[messageId] = forMsg;
+      return current;
     });
 
-    return () => {
-      document.body.style.backgroundImage = prev.body.backgroundImage;
-      document.body.style.backgroundRepeat = prev.body.backgroundRepeat;
-      document.body.style.backgroundSize = prev.body.backgroundSize;
-      document.body.style.backgroundPosition = prev.body.backgroundPosition || '';
-      document.body.style.backgroundAttachment = prev.body.backgroundAttachment || '';
-
-      html.style.backgroundImage = prev.html.backgroundImage;
-      html.style.backgroundRepeat = prev.html.backgroundRepeat;
-      html.style.backgroundSize = prev.html.backgroundSize;
-      html.style.backgroundPosition = prev.html.backgroundPosition || '';
-      html.style.backgroundAttachment = prev.html.backgroundAttachment || '';
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return undefined;
+    // broadcast
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'reaction',
+        payload: {messageId, emoji},
+      });
     }
+  }
 
-    const body = document.body;
-    const style = document.createElement('style');
-    style.textContent = `
-      body.${TOOL_BODY_CLASS} .sanity-default-layout__content,
-      body.${TOOL_BODY_CLASS} .sanity-default-layout__tool-content {
-        background: transparent !important;
-      }
-    `;
-    document.head.appendChild(style);
-    body.classList.add(TOOL_BODY_CLASS);
-
-    return () => {
-      body.classList.remove(TOOL_BODY_CLASS);
-      document.head.removeChild(style);
-    };
-  }, []);
+  const typingList = Object.values(typingUsers)
+    .map((t) => t.name)
+    .filter((n) => n && n !== displayName);
+  const onlineList = Object.entries(onlineUsers);
 
   return (
-    <>
-      <div
-      className="flex min-h-screen flex-col bg-cover bg-center"
-      style={{
-        backgroundImage: corkBoardBackground,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'repeat',
-        backgroundAttachment: 'fixed',
-      }}
-    >
-      <div
-        className="fixed inset-0 -z-10 pointer-events-none"
-        style={{
-          backgroundImage: `url("${CORKBOARD_IMAGE}")`,
-          backgroundSize: 'cover',
-          backgroundRepeat: 'repeat',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
-        }}
-      />
-      <header className="px-6 py-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.4em] text-emerald-600">
-          Team Notes
-        </p>
-        <h1 className="mt-2 text-xl font-semibold text-slate-900">
-          Sticky ideas for the board
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Drop a note, a reminder, or a quick question for the group.
-        </p>
-      </header>
-
-      <div className="flex-1 overflow-y-auto px-6 py-5">
-        {loading ? (
-          <div className="text-sm text-gray-500">Loading notesâ€¦</div>
-        ) : boardNotes.length === 0 ? (
-          <div className="text-sm text-gray-500">No notes yetâ€”leave the first one below.</div>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {boardNotes.map((note, index) => {
-              const exceedsLimit = note.text.length > NOTE_DESCRIPTION_LIMIT;
-              const truncatedText = exceedsLimit
-                ? `${note.text.slice(0, NOTE_DESCRIPTION_LIMIT).trim()}â€¦`
-                : note.text;
-              const rotation =
-                index % 4 === 0
-                  ? '-2deg'
-                  : index % 4 === 1
-                  ? '-0.5deg'
-                  : index % 4 === 2
-                  ? '0.5deg'
-                  : '1.75deg';
-
-              return (
-                <article
-                  key={note.id}
-                  className="relative max-w-xs space-y-2 rounded-[28px] border border-slate-200 bg-white/70 p-5 text-left shadow-[0_18px_30px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5"
-                  style={{
-                    background: NOTE_COLORS[index % NOTE_COLORS.length],
-                    minHeight: 180,
-                    transformOrigin: 'top center',
-                    rotate: rotation,
-                  }}
-                >
-                  <span
-                    className="absolute left-1/2 top-3 block h-3 w-3 rounded-full shadow-md"
-                    style={{
-                      background: PIN_COLORS[index % PIN_COLORS.length],
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
-                  <p className="text-sm text-slate-900" style={{whiteSpace: 'pre-line'}}>
-                    {truncatedText}
-                  </p>
-                  <div className="text-[13px] font-semibold text-slate-900">{note.author_name}</div>
-                  <div className="text-[11px] uppercase tracking-[0.3em] text-slate-500">
-                    {formatTimestamp(note.created_at)}
-                  </div>
-                  {exceedsLimit && (
-                    <button
-                      type="button"
-                      onClick={() => setExpandedNote(note)}
-                      className="inline-flex items-center rounded-full border border-slate-400 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-700 transition hover:border-slate-600 hover:text-slate-900"
-                    >
-                      Read more
-                    </button>
-                  )}
-                </article>
-              );
-            })}
+    <div className="flex flex-col h-full rounded-2xl border border-gray-200 bg-white">
+      {/* Header */}
+      <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <div>
+            <p className="text-xs font-semibold text-gray-800">
+              Board / Team chat
+            </p>
+            <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-[9px]">
+                {initials}
+              </span>
+              <span>Online as {displayName}</span>
+            </p>
           </div>
-        )}
+          {onlineList.length > 0 && (
+            <div className="hidden md:flex items-center gap-1 text-[10px] text-gray-500">
+              <span className="mr-1">Also online:</span>
+              {onlineList.map(([id, info]) => (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-50 border border-gray-200"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span className="truncate max-w-[90px]">{info.name}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="text-[10px] text-gray-400 text-right">
+          <div>
+            Room:{' '}
+            <span className="font-mono">
+              {ROOM_ID}
+            </span>
+          </div>
+          {unreadCount > 0 && (
+            <div className="text-[10px] text-emerald-700 font-semibold mt-0.5">
+              • {unreadCount} new message{unreadCount > 1 ? 's' : ''}
+            </div>
+          )}
+        </div>
       </div>
 
-      <form
-        className="border-t border-emerald-200 bg-white px-6 py-5 shadow-inner"
-        onSubmit={handleSend}
-      >
-        <label className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
-          Add a note
-        </label>
-        <textarea
-          className="mt-3 w-full rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-gray-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-          rows={3}
-          placeholder="Remember to follow up on pool keys or plan the next board meeting recap"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-        />
-        <div className="mt-4 flex items-center justify-between gap-4">
-          <span className="text-[11px] text-gray-500">
-            {displayName} â€” {boardNotes.length} note{boardNotes.length === 1 ? '' : 's'}
-          </span>
-          <button
-            type="submit"
-            disabled={sending || !draft.trim()}
-            className="rounded-full bg-emerald-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.4em] text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {sending ? 'Savingâ€¦' : 'Post note'}
-          </button>
-        </div>
-      </form>
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 text-xs">
+        {loading ? (
+          <p className="text-gray-500 text-[11px]">Loading messages…</p>
+        ) : messages.length === 0 ? (
+          <p className="text-gray-500 text-[11px]">
+            No messages yet. Start the conversation!
+          </p>
+        ) : (
+          messages.map((m) => {
+            const isMe = m.author_name === displayName;
+            const createdTime = new Date(m.created_at).getTime();
+            const isNew = createdTime > lastReadAt && !isMe;
+            const msgReactions = reactions[m.id] || {};
 
-      {expandedNote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10">
-          <div
-            className="absolute inset-0 bg-slate-900/60"
-            onClick={() => setExpandedNote(null)}
-          />
-          <div
-            className="relative w-full max-w-xl rounded-[32px] border border-slate-300 bg-yellow-50/95 p-6 text-slate-900 shadow-[0_35px_80px_rgba(15,23,42,0.35)]"
-            style={{
-              background: NOTE_COLORS[boardNotes.indexOf(expandedNote) % NOTE_COLORS.length],
-            }}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Sticky note</h2>
-              <button
-                type="button"
-                onClick={() => setExpandedNote(null)}
-                className="text-sm font-semibold text-slate-700 underline"
+            return (
+              <div
+                key={m.id}
+                className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
               >
-                Close
-              </button>
-            </div>
-            <p className="mb-4 whitespace-pre-line text-base text-slate-900">{expandedNote.text}</p>
-            <div className="text-sm font-semibold text-slate-900">{expandedNote.author_name}</div>
-            <div className="text-[11px] uppercase tracking-[0.3em] text-slate-500">
-              {formatTimestamp(expandedNote.created_at)}
-            </div>
-          </div>
+                <div className="flex flex-col items-stretch max-w-[80%]">
+                  <div
+                    className={`space-y-0.5 rounded-2xl px-3 py-1.5 border ${
+                      isMe
+                        ? 'bg-emerald-50 border-emerald-100 text-gray-900'
+                        : 'bg-gray-50 border-gray-200 text-gray-900'
+                    }`}
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="font-semibold text-[11px] text-gray-800 truncate">
+                        {m.author_name}
+                      </span>
+                      <span className="text-[10px] text-gray-400">
+                        {new Date(m.created_at).toLocaleTimeString(undefined, {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+
+                    {/* Message text */}
+                    {m.text && (
+                      <p className="text-[11px] text-gray-800">{m.text}</p>
+                    )}
+
+                    {/* Attachment preview/link */}
+                    {m.file_url && (
+                      <div className="mt-1">
+                        {m.file_type?.startsWith('image/') ? (
+                          <a
+                            href={m.file_url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <img
+                              src={m.file_url}
+                              alt={m.file_name || 'Attachment'}
+                              className="max-h-40 rounded-lg border border-gray-200"
+                            />
+                          </a>
+                        ) : (
+                          <a
+                            href={m.file_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-emerald-700 underline"
+                          >
+                            {m.file_name || 'Download file'}
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Reactions row */}
+                    {Object.keys(msgReactions).length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {Object.entries(msgReactions).map(([emoji, count]) => (
+                          <span
+                            key={emoji}
+                            className="inline-flex items-center gap-1 rounded-full bg-white/70 border border-gray-200 px-2 py-0.5 text-[10px]"
+                          >
+                            <span>{emoji}</span>
+                            <span className="text-gray-600">{count}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Reaction buttons */}
+                  <div className="mt-1 flex gap-1">
+                    {REACTION_OPTIONS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => handleReaction(m.id, emoji)}
+                        className="text-[10px] px-1.5 py-0.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                    {isNew && (
+                      <span className="ml-1 text-[10px] text-emerald-600">
+                        • New
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Typing indicator */}
+      {typingList.length > 0 && (
+        <div className="px-3 pb-1 text-[10px] text-gray-500">
+          {typingList.length === 1
+            ? `${typingList[0]} is typing…`
+            : 'Several people are typing…'}
         </div>
       )}
-      </div>
-    </>
+
+      {/* Input + Attach */}
+      <form
+        onSubmit={handleSend}
+        className="border-t border-gray-200 flex items-center gap-2 px-3 py-2"
+      >
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileSelected}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="text-[10px] px-2 py-1 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
+          disabled={sending}
+        >
+          Attach
+        </button>
+        <input
+          type="text"
+          className="flex-1 rounded-full border border-gray-300 px-3 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          placeholder="Type a message for the team…"
+          value={input}
+          onChange={handleInputChange}
+        />
+        <button
+          type="submit"
+          disabled={sending || !input.trim()}
+          className="text-xs font-semibold text-emerald-700 disabled:opacity-50"
+        >
+          Send
+        </button>
+      </form>
+    </div>
   );
 };
 
 export default TeamChatView;
+

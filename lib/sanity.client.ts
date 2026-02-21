@@ -10,6 +10,12 @@ export const client = createClient({
   dataset,
   apiVersion,
   useCdn: true,
+  stega: {
+    enabled: false,
+    studioUrl:
+      process.env.NEXT_PUBLIC_SANITY_STUDIO_URL ||
+      "https://cypressdale-admin.sanity.studio",
+  },
 });
 
 export const previewClient = createClient({
