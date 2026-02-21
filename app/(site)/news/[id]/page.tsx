@@ -84,7 +84,7 @@ function sectionWidthClasses(width: SectionWidth) {
   const value = width ? stegaClean(width).trim().toLowerCase() : "default";
   switch (value) {
     case "narrow":
-      return "max-w-2xl mx-auto";
+      return "max-w-xl mx-auto";
     case "wide":
       return "max-w-5xl mx-auto";
     case "full":
