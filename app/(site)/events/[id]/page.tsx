@@ -193,6 +193,23 @@ function sectionTextAlign(alignment?: string): React.CSSProperties {
   return { textAlign: "left" };
 }
 
+function sectionBodyTextStyle(section: { bodyTextSize?: number | string }): React.CSSProperties {
+  const raw = section.bodyTextSize;
+  const parsed =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string" && raw
+      ? Number(stegaClean(raw))
+      : NaN;
+
+  if (!Number.isFinite(parsed)) return {};
+  const clamped = Math.min(28, Math.max(12, parsed));
+  return {
+    fontSize: `${clamped}px`,
+    lineHeight: 1.65,
+  };
+}
+
 function sectionTitleStyle(section: BaseSection): React.CSSProperties {
   const color = section.titleColor?.hex ? stegaClean(section.titleColor.hex) : "";
   return color ? { color } : {};
@@ -476,6 +493,7 @@ export default async function EventDetailPage(props: Props) {
                         {section.body && (
                           <div
                             className={`text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3 ${sectionTextAlignClass(section.alignment)}`}
+                            style={sectionBodyTextStyle(section)}
                           >
                             <PortableText value={section.body} components={portableTextComponents} />
                           </div>
@@ -514,7 +532,7 @@ export default async function EventDetailPage(props: Props) {
 
                         <div
                           className={`text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3 ${sectionTextAlignClass(section.alignment)}`}
-                          style={sectionTextAlign(section.alignment)}
+                          style={{ ...sectionTextAlign(section.alignment), ...sectionBodyTextStyle(section) }}
                         >
                           <PortableText value={section.body} components={portableTextComponents} />
                         </div>
@@ -558,6 +576,7 @@ export default async function EventDetailPage(props: Props) {
                         {section.body && (
                           <div
                             className={`text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3 ${sectionTextAlignClass(section.alignment)}`}
+                            style={sectionBodyTextStyle(section)}
                           >
                             <PortableText value={section.body} components={portableTextComponents} />
                           </div>

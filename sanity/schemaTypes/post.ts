@@ -101,6 +101,11 @@ export default defineType({
               options: {collapsible: true, collapsed: true},
             },
             {
+              name: 'textSettings',
+              title: 'Section text controls',
+              options: {collapsible: true, collapsed: true},
+            },
+            {
               name: 'borderSettings',
               title: 'Section border controls',
               options: {collapsible: true, collapsed: true},
@@ -252,6 +257,15 @@ export default defineType({
               },
             },
 
+            {
+              name: 'bodyTextSize',
+              title: 'Body text size (px)',
+              type: 'number',
+              fieldset: 'textSettings',
+              initialValue: 16,
+              options: {range: {min: 12, max: 28, step: 1}},
+              validation: (rule) => rule.min(12).max(28),
+            },
             {name: 'body', type: 'array', of: portableTextWithTextColor},
           ],
         },
@@ -264,6 +278,11 @@ export default defineType({
           name: 'imageWithText',
           title: 'Image + text',
           fieldsets: [
+            {
+              name: 'textSettings',
+              title: 'Section text controls',
+              options: {collapsible: true, collapsed: true},
+            },
             {
               name: 'borderSettings',
               title: 'Section border controls',
@@ -381,6 +400,15 @@ export default defineType({
               },
             },
 
+            {
+              name: 'bodyTextSize',
+              title: 'Body text size (px)',
+              type: 'number',
+              fieldset: 'textSettings',
+              initialValue: 16,
+              options: {range: {min: 12, max: 28, step: 1}},
+              validation: (rule) => rule.min(12).max(28),
+            },
             {name: 'body', type: 'array', of: portableTextWithTextColor},
           ],
         },
@@ -396,6 +424,11 @@ export default defineType({
             {
               name: 'titleSettings',
               title: 'Section header controls',
+              options: {collapsible: true, collapsed: true},
+            },
+            {
+              name: 'textSettings',
+              title: 'Section text controls',
               options: {collapsible: true, collapsed: true},
             },
             {
@@ -588,6 +621,15 @@ export default defineType({
               },
             },
             {name: 'titleColor', title: 'Section title color', type: 'color', fieldset: 'titleSettings'},
+            {
+              name: 'bodyTextSize',
+              title: 'Body text size (px)',
+              type: 'number',
+              fieldset: 'textSettings',
+              initialValue: 16,
+              options: {range: {min: 12, max: 28, step: 1}},
+              validation: (rule) => rule.min(12).max(28),
+            },
             {
               name: 'body',
               type: 'array',
