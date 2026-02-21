@@ -271,6 +271,21 @@ function formatTimeOnly(dateStr: string, timeZone = "America/Chicago") {
   }).format(d);
 }
 
+function rangesOverlap(
+  firstStart?: string,
+  firstEnd?: string,
+  secondStart?: string,
+  secondEnd?: string,
+) {
+  if (!firstStart || !secondStart) return false;
+  const aStart = new Date(firstStart).getTime();
+  const aEnd = new Date(firstEnd || firstStart).getTime();
+  const bStart = new Date(secondStart).getTime();
+  const bEnd = new Date(secondEnd || secondStart).getTime();
+  if (![aStart, aEnd, bStart, bEnd].every(Number.isFinite)) return false;
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
 export default async function EventDetailPage(props: Props) {
   const { id } = await props.params;
   if (!id) return notFound();
@@ -294,6 +309,12 @@ export default async function EventDetailPage(props: Props) {
     !!event.secondStartDate && !Number.isNaN(new Date(event.secondStartDate).getTime());
   const hasSecondEnd =
     !!event.secondEndDate && !Number.isNaN(new Date(event.secondEndDate).getTime());
+  const secondOverlapsPrimary = rangesOverlap(
+    event.startDate,
+    event.endDate,
+    event.secondStartDate,
+    event.secondEndDate,
+  );
 
   const sameDay =
     !!event.startDate && !!event.endDate ? isSameDayInTz(event.startDate, event.endDate) : false;
@@ -358,7 +379,7 @@ export default async function EventDetailPage(props: Props) {
                     )}
                   </span>
                 </div>
-                {event.isMultiDayEvent && hasSecondStart && (
+                {event.isMultiDayEvent && hasSecondStart && !secondOverlapsPrimary && (
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900">
                     <CalendarDays className="h-3.5 w-3.5 text-emerald-700" />
                     <span className="font-medium">
