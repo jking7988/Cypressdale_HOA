@@ -91,7 +91,8 @@ type BaseSection = {
 };
 
 function sectionWidthClasses(width: SectionWidth) {
-  switch (width) {
+  const value = width ? stegaClean(width).trim().toLowerCase() : "default";
+  switch (value) {
     case "narrow":
       return "max-w-2xl mx-auto";
     case "wide":
@@ -104,7 +105,8 @@ function sectionWidthClasses(width: SectionWidth) {
 }
 
 function sectionSpacingClasses(spacing: SectionSpacing) {
-  switch (spacing) {
+  const value = spacing ? stegaClean(spacing).trim().toLowerCase() : "normal";
+  switch (value) {
     case "tight":
       return "py-2 md:py-3";
     case "spacious":
@@ -115,7 +117,8 @@ function sectionSpacingClasses(spacing: SectionSpacing) {
 }
 
 function sectionBorderClasses(border: SectionBorder) {
-  switch (border) {
+  const value = border ? stegaClean(border).trim().toLowerCase() : "subtle";
+  switch (value) {
     case "none":
       return "border-none shadow-none";
     case "strong":
