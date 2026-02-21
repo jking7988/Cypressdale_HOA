@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import SanityVisualEditing from "@/components/SanityVisualEditing";
+import { SanityLive } from "@/lib/live";
 
 export const metadata: Metadata = {
   title: "Cypressdale HOA",
@@ -22,8 +23,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
         </div>
 
-        {/* ✅ Mount always. It will only "connect" when preview is enabled. */}
         <SanityVisualEditing />
+        <SanityLive />
       </body>
     </html>
   );

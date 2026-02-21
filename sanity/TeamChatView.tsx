@@ -18,7 +18,7 @@ const NOTE_COLORS = ['#FEF3C7', '#FDE7C7', '#F1F5F9', '#E0E7FF', '#FCE7F3'];
 const PIN_COLORS = ['#EF4444', '#F97316', '#22C55E', '#2563EB'];
 const NOTE_DESCRIPTION_LIMIT = 220;
 
-const CORKBOARD_IMAGE = new URL('./corkboard.jpg', import.meta.url).href;
+const CORKBOARD_IMAGE = '/corkboard.jpg';
 
 const corkBoardBackground =
   process.env.NEXT_PUBLIC_TEAM_NOTES_CORK ||

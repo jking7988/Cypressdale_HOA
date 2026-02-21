@@ -52,15 +52,15 @@ export default defineConfig({
 
         if (type === "post") {
           return [
-            { title: "News list", href: "/news" },
             { title: `News: ${doc?.title || id}`, href: `/news/${id}` },
+            { title: "News list", href: "/news" },
           ];
         }
 
         if (type === "event") {
           return [
-            { title: "Events list", href: "/events" },
             { title: `Event: ${doc?.title || id}`, href: `/events/${id}` },
+            { title: "Events list", href: "/events" },
           ];
         }
 
