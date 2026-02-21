@@ -1,4 +1,5 @@
 import {defineField, defineType} from 'sanity';
+import InlineTextSizeInput from '../InlineTextSizeInput';
 
 const portableTextWithTextColor = [
   {
@@ -10,6 +11,21 @@ const portableTextWithTextColor = [
           title: 'Text color',
           type: 'object',
           fields: [{name: 'color', title: 'Color', type: 'color'}],
+        },
+        {
+          name: 'textSize',
+          title: 'Text size',
+          type: 'object',
+          fields: [
+            {
+              name: 'size',
+              title: 'Size (px)',
+              type: 'number',
+              initialValue: 16,
+              components: {input: InlineTextSizeInput},
+              validation: (rule: any) => rule.min(10).max(64),
+            },
+          ],
         },
       ],
     },

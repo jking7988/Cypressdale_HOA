@@ -78,6 +78,30 @@ const TextColorMark = ({
   return <span style={{ color }}>{children}</span>;
 };
 
+type TextSizeValue = {
+  size?: number | string;
+};
+
+const TextSizeMark = ({
+  children,
+  value,
+}: {
+  children?: ReactNode;
+  value?: TextSizeValue;
+}) => {
+  const raw = value?.size;
+  const parsed =
+    typeof raw === 'number'
+      ? raw
+      : typeof raw === 'string' && raw
+      ? Number(stegaClean(raw))
+      : NaN;
+
+  if (!Number.isFinite(parsed)) return <>{children}</>;
+  const clamped = Math.min(64, Math.max(10, parsed));
+  return <span style={{ fontSize: `${clamped}px` }}>{children}</span>;
+};
+
 // If the type causes an error, remove `: PortableTextComponents`
 export const portableTextComponents /* : PortableTextComponents */ = {
   block: {
@@ -97,5 +121,6 @@ export const portableTextComponents /* : PortableTextComponents */ = {
   marks: {
     strong: StrongMark,
     textColor: TextColorMark,
+    textSize: TextSizeMark,
   },
 };
