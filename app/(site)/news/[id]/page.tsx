@@ -128,6 +128,7 @@ type BaseSection = {
   borderColor?: ColorField;
   titleColor?: ColorField;
   titleSize?: string;
+  titleWeight?: string;
   backgroundImageUrl?: string;
   backgroundImageOpacity?: number;
 };
@@ -211,6 +212,21 @@ function sectionTitleSizeClass(section: BaseSection) {
     case "md":
     default:
       return "text-lg md:text-xl";
+  }
+}
+
+function sectionTitleWeightClass(section: BaseSection) {
+  const value = section.titleWeight ? stegaClean(section.titleWeight).trim().toLowerCase() : "semibold";
+  switch (value) {
+    case "medium":
+      return "font-medium";
+    case "bold":
+      return "font-bold";
+    case "extrabold":
+      return "font-extrabold";
+    case "semibold":
+    default:
+      return "font-semibold";
   }
 }
 
@@ -328,7 +344,7 @@ export default async function NewsDetailPage(props: Props) {
                     return (
                       <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {section.title && (
-                          <h2 className={`${sectionTitleSizeClass(section)} font-semibold text-brand-900 mb-2`} style={sectionTitleStyle(section)}>
+                          <h2 className={`${sectionTitleSizeClass(section)} ${sectionTitleWeightClass(section)} text-brand-900 mb-2`} style={sectionTitleStyle(section)}>
                             {section.title}
                           </h2>
                         )}
@@ -416,7 +432,7 @@ export default async function NewsDetailPage(props: Props) {
                         )}
 
                         {section.title && (
-                          <h2 className={`${sectionTitleSizeClass(section)} font-semibold text-brand-900 mb-2`} style={sectionTitleStyle(section)}>
+                          <h2 className={`${sectionTitleSizeClass(section)} ${sectionTitleWeightClass(section)} text-brand-900 mb-2`} style={sectionTitleStyle(section)}>
                             {section.title}
                           </h2>
                         )}

@@ -94,12 +94,20 @@ export default defineType({
           type: 'object',
           name: 'textSection',
           title: 'Text section',
+          fieldsets: [
+            {
+              name: 'titleSettings',
+              title: 'Section header controls',
+              options: {collapsible: true, collapsed: true},
+            },
+          ],
           fields: [
             { name: 'title', type: 'string', title: 'Section title' },
             {
               name: 'titleSize',
               title: 'Section title size',
               type: 'string',
+              fieldset: 'titleSettings',
               initialValue: 'md',
               options: {
                 list: [
@@ -111,7 +119,23 @@ export default defineType({
                 layout: 'radio',
               },
             },
-            {name: 'titleColor', title: 'Section title color', type: 'color'},
+            {
+              name: 'titleWeight',
+              title: 'Section title thickness',
+              type: 'string',
+              fieldset: 'titleSettings',
+              initialValue: 'semibold',
+              options: {
+                list: [
+                  {title: 'Medium', value: 'medium'},
+                  {title: 'Semibold', value: 'semibold'},
+                  {title: 'Bold', value: 'bold'},
+                  {title: 'Extra Bold', value: 'extrabold'},
+                ],
+                layout: 'radio',
+              },
+            },
+            {name: 'titleColor', title: 'Section title color', type: 'color', fieldset: 'titleSettings'},
 
             {
               name: 'alignment',
@@ -322,6 +346,13 @@ export default defineType({
           type: 'object',
           name: 'topicSection',
           title: 'Topic section',
+          fieldsets: [
+            {
+              name: 'titleSettings',
+              title: 'Section header controls',
+              options: {collapsible: true, collapsed: true},
+            },
+          ],
           fields: [
             {
               name: 'topicLabel',
@@ -460,6 +491,7 @@ export default defineType({
               name: 'titleSize',
               title: 'Section title size',
               type: 'string',
+              fieldset: 'titleSettings',
               initialValue: 'md',
               options: {
                 list: [
@@ -471,7 +503,23 @@ export default defineType({
                 layout: 'radio',
               },
             },
-            {name: 'titleColor', title: 'Section title color', type: 'color'},
+            {
+              name: 'titleWeight',
+              title: 'Section title thickness',
+              type: 'string',
+              fieldset: 'titleSettings',
+              initialValue: 'semibold',
+              options: {
+                list: [
+                  {title: 'Medium', value: 'medium'},
+                  {title: 'Semibold', value: 'semibold'},
+                  {title: 'Bold', value: 'bold'},
+                  {title: 'Extra Bold', value: 'extrabold'},
+                ],
+                layout: 'radio',
+              },
+            },
+            {name: 'titleColor', title: 'Section title color', type: 'color', fieldset: 'titleSettings'},
             {
               name: 'body',
               type: 'array',
