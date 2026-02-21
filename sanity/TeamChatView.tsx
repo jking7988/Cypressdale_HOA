@@ -2,7 +2,7 @@
 
 import React, {useEffect, useMemo, useState} from 'react';
 import {useCurrentUser} from 'sanity';
-import {supabase} from './studioSupabaseClient';
+import {supabase} from './studioSupaBaseClient';
 
 type Message = {
   id: string;
@@ -92,7 +92,7 @@ const TeamChatView = () => {
 
     channel = supabase
       .channel(CHANNEL_NAME)
-      .on('broadcast', {event: 'message'}, (payload) => {
+      .on('broadcast', {event: 'message'}, (payload: {payload: unknown}) => {
         const payloadNote = payload.payload as Message;
         setNotes((prev) => {
           if (prev.some((note) => note.id === payloadNote.id)) {
