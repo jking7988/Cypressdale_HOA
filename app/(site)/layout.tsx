@@ -4,6 +4,7 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import SanityVisualEditing from "@/components/SanityVisualEditing";
 import { SanityLive } from "@/lib/live";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Cypressdale HOA",
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           refreshOnFocus
           revalidateSyncTags={refreshOnLiveEvent}
         />
+        <Analytics />
       </body>
     </html>
   );
