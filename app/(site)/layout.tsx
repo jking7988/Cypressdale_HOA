@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   description: "Community info, events, and documents",
 };
 
+async function refreshOnLiveEvent(_tags: string[]) {
+  "use server";
+  return "refresh" as const;
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full">
@@ -24,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         <SanityVisualEditing />
-        <SanityLive />
+        <SanityLive revalidateSyncTags={refreshOnLiveEvent} />
       </body>
     </html>
   );
