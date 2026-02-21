@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { writeClient } from '@/lib/sanity.server';
 
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const secretHeader =
     req.headers.get('x-event-comment-delete-secret') ??
     req.headers.get('x-news-delete-secret');
@@ -20,7 +21,7 @@ export async function DELETE(
   }
 
   const body = await req.json().catch(() => null);
-  const commentId = params?.id || (body?.commentId as string | undefined);
+  const commentId = id || (body?.commentId as string | undefined);
   if (!commentId) {
     return NextResponse.json(
       { error: 'Comment ID is required' },
