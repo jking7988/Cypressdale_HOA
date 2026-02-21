@@ -100,6 +100,11 @@ export default defineType({
               title: 'Section header controls',
               options: {collapsible: true, collapsed: true},
             },
+            {
+              name: 'borderSettings',
+              title: 'Section border controls',
+              options: {collapsible: true, collapsed: true},
+            },
           ],
           fields: [
             { name: 'title', type: 'string', title: 'Section title' },
@@ -184,12 +189,14 @@ export default defineType({
               name: 'borderColor',
               title: 'Border color',
               type: 'color',
+              fieldset: 'borderSettings',
               description: 'Outline color for this section.',
             },
             {
               name: 'borderStyle',
               title: 'Border strength',
               type: 'string',
+              fieldset: 'borderSettings',
               options: {
                 list: [
                   { title: 'None', value: 'none' },
@@ -199,6 +206,21 @@ export default defineType({
                 layout: 'radio',
               },
               initialValue: 'subtle',
+            },
+            {
+              name: 'borderThickness',
+              title: 'Border thickness',
+              type: 'string',
+              fieldset: 'borderSettings',
+              initialValue: 'thin',
+              options: {
+                list: [
+                  {title: 'Thin', value: 'thin'},
+                  {title: 'Medium', value: 'medium'},
+                  {title: 'Thick', value: 'thick'},
+                ],
+                layout: 'radio',
+              },
             },
 
             // layout
@@ -241,6 +263,13 @@ export default defineType({
           type: 'object',
           name: 'imageWithText',
           title: 'Image + text',
+          fieldsets: [
+            {
+              name: 'borderSettings',
+              title: 'Section border controls',
+              options: {collapsible: true, collapsed: true},
+            },
+          ],
           fields: [
             {
               name: 'image',
@@ -290,11 +319,13 @@ export default defineType({
               name: 'borderColor',
               title: 'Border color',
               type: 'color',
+              fieldset: 'borderSettings',
             },
             {
               name: 'borderStyle',
               title: 'Border strength',
               type: 'string',
+              fieldset: 'borderSettings',
               options: {
                 list: [
                   { title: 'None', value: 'none' },
@@ -304,6 +335,21 @@ export default defineType({
                 layout: 'radio',
               },
               initialValue: 'subtle',
+            },
+            {
+              name: 'borderThickness',
+              title: 'Border thickness',
+              type: 'string',
+              fieldset: 'borderSettings',
+              initialValue: 'thin',
+              options: {
+                list: [
+                  {title: 'Thin', value: 'thin'},
+                  {title: 'Medium', value: 'medium'},
+                  {title: 'Thick', value: 'thick'},
+                ],
+                layout: 'radio',
+              },
             },
 
             // layout
@@ -350,6 +396,11 @@ export default defineType({
             {
               name: 'titleSettings',
               title: 'Section header controls',
+              options: {collapsible: true, collapsed: true},
+            },
+            {
+              name: 'borderSettings',
+              title: 'Section border controls',
               options: {collapsible: true, collapsed: true},
             },
           ],
@@ -437,11 +488,13 @@ export default defineType({
               name: 'borderColor',
               title: 'Border color',
               type: 'color',
+              fieldset: 'borderSettings',
             },
             {
               name: 'borderStyle',
               title: 'Border strength',
               type: 'string',
+              fieldset: 'borderSettings',
               options: {
                 list: [
                   { title: 'None', value: 'none' },
@@ -451,6 +504,21 @@ export default defineType({
                 layout: 'radio',
               },
               initialValue: 'subtle',
+            },
+            {
+              name: 'borderThickness',
+              title: 'Border thickness',
+              type: 'string',
+              fieldset: 'borderSettings',
+              initialValue: 'thin',
+              options: {
+                list: [
+                  {title: 'Thin', value: 'thin'},
+                  {title: 'Medium', value: 'medium'},
+                  {title: 'Thick', value: 'thick'},
+                ],
+                layout: 'radio',
+              },
             },
 
             // layout

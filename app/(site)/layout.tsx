@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import SanityVisualEditing from "@/components/SanityVisualEditing";
 import { SanityLive } from "@/lib/live";
 import { Analytics } from "@vercel/analytics/next";
+import AutoSpanishTranslate from "@/components/AutoSpanishTranslate";
 
 export const metadata: Metadata = {
   title: "Cypressdale HOA",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         <SanityVisualEditing />
+        <AutoSpanishTranslate />
         <SanityLive
           refreshOnMount
           refreshOnReconnect

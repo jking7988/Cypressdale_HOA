@@ -79,6 +79,7 @@ type Props = {
 type SectionWidth = "default" | "narrow" | "wide" | "full" | undefined;
 type SectionSpacing = "tight" | "normal" | "spacious" | undefined;
 type SectionBorder = "none" | "subtle" | "strong" | undefined;
+type SectionBorderThickness = "thin" | "medium" | "thick" | undefined;
 type ColorField = { hex?: string };
 
 type BaseSection = {
@@ -119,17 +120,15 @@ function sectionSpacingClasses(spacing: SectionSpacing) {
   }
 }
 
-function sectionBorderClasses(border: SectionBorder) {
-  const value = border ? stegaClean(border).trim().toLowerCase() : "subtle";
-  switch (value) {
-    case "none":
-      return "border-none shadow-none";
-    case "strong":
-      return "border border-emerald-300 shadow-md";
-    case "subtle":
-    default:
-      return "border border-emerald-100 shadow-sm";
-  }
+function sectionBorderClasses(border: SectionBorder, thickness: SectionBorderThickness) {
+  const borderValue = border ? stegaClean(border).trim().toLowerCase() : "subtle";
+  if (borderValue === "none") return "border-none shadow-none";
+
+  const thicknessValue = thickness ? stegaClean(thickness).trim().toLowerCase() : "thin";
+  const widthClass =
+    thicknessValue === "thick" ? "border-4" : thicknessValue === "medium" ? "border-2" : "border";
+  const shadowClass = borderValue === "strong" ? "shadow-md" : "shadow-sm";
+  return `${widthClass} ${shadowClass}`;
 }
 
 function resolveGradientDirection(direction?: string) {
@@ -459,7 +458,7 @@ export default async function EventDetailPage(props: Props) {
                       sectionWidthClasses(section.width as SectionWidth),
                       "rounded-2xl px-4 md:px-6 mt-2",
                       sectionSpacingClasses(section.spacing as SectionSpacing),
-                      sectionBorderClasses(section.borderStyle as SectionBorder),
+                      sectionBorderClasses(section.borderStyle as SectionBorder, section.borderThickness as SectionBorderThickness),
                       sectionTextAlignClass(section.alignment),
                     ]
                       .filter(Boolean)
@@ -495,7 +494,7 @@ export default async function EventDetailPage(props: Props) {
                       sectionWidthClasses(section.width as SectionWidth),
                       "rounded-2xl px-4 md:px-5 mt-2",
                       sectionSpacingClasses(section.spacing as SectionSpacing),
-                      sectionBorderClasses(section.borderStyle as SectionBorder),
+                      sectionBorderClasses(section.borderStyle as SectionBorder, section.borderThickness as SectionBorderThickness),
                       sectionTextAlignClass(section.alignment),
                     ]
                       .filter(Boolean)
@@ -533,7 +532,7 @@ export default async function EventDetailPage(props: Props) {
                       sectionWidthClasses(section.width as SectionWidth),
                       "rounded-2xl px-4 md:px-6 mt-2",
                       sectionSpacingClasses(section.spacing as SectionSpacing),
-                      sectionBorderClasses(section.borderStyle as SectionBorder),
+                      sectionBorderClasses(section.borderStyle as SectionBorder, section.borderThickness as SectionBorderThickness),
                       sectionTextAlignClass(section.alignment),
                     ]
                       .filter(Boolean)
@@ -617,3 +616,4 @@ export default async function EventDetailPage(props: Props) {
     </div>
   );
 }
+
