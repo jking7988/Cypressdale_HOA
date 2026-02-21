@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { groq } from "next-sanity";
+import { groq, stegaClean } from "next-sanity";
 import React from "react";
 import { sanityFetch } from "@/lib/live";
 import { PortableText } from "@portabletext/react";
@@ -23,6 +23,9 @@ const eventByIdQuery = groq`
     location,
     startDate,
     endDate,
+    isMultiDayEvent,
+    secondStartDate,
+    secondEndDate,
     layoutVariant,
     showRightSidebar,
     sections[]{
@@ -54,6 +57,9 @@ type Event = {
   location?: string;
   startDate?: string;
   endDate?: string;
+  isMultiDayEvent?: boolean;
+  secondStartDate?: string;
+  secondEndDate?: string;
   layoutVariant?: "standard" | "narrow" | "wide";
   showRightSidebar?: boolean;
   sections?: any[];
@@ -121,7 +127,7 @@ function sectionBorderClasses(border: SectionBorder) {
 }
 
 function resolveGradientDirection(direction?: string) {
-  const value = direction?.trim().toLowerCase();
+  const value = direction ? stegaClean(direction).trim().toLowerCase() : "";
   if (!value) return "to bottom";
 
   const directionMap: Record<string, string> = {
@@ -143,8 +149,10 @@ function resolveGradientDirection(direction?: string) {
 function buildSectionStyle(section: BaseSection): React.CSSProperties {
   const style: React.CSSProperties = {};
 
-  const bg = section.backgroundColor?.hex;
-  const bgEnd = section.backgroundColorEnd?.hex;
+  const bg = section.backgroundColor?.hex ? stegaClean(section.backgroundColor.hex) : undefined;
+  const bgEnd = section.backgroundColorEnd?.hex
+    ? stegaClean(section.backgroundColorEnd.hex)
+    : undefined;
   const dir = resolveGradientDirection(section.gradientDirection);
 
   if (bg && bgEnd) {
@@ -154,7 +162,7 @@ function buildSectionStyle(section: BaseSection): React.CSSProperties {
   }
 
   if (section.borderColor?.hex) {
-    style.borderColor = section.borderColor.hex;
+    style.borderColor = stegaClean(section.borderColor.hex);
   }
 
   if (section.backgroundImageUrl) {
@@ -174,14 +182,16 @@ function buildSectionStyle(section: BaseSection): React.CSSProperties {
 }
 
 function sectionTextAlign(alignment?: string): React.CSSProperties {
-  if (alignment === "center") return { textAlign: "center" };
-  if (alignment === "right") return { textAlign: "right" };
+  const value = alignment ? stegaClean(alignment).trim().toLowerCase() : "left";
+  if (value === "center") return { textAlign: "center" };
+  if (value === "right") return { textAlign: "right" };
   return { textAlign: "left" };
 }
 
 function topicLabelJustifyClass(alignment?: string) {
-  if (alignment === "center") return "justify-center";
-  if (alignment === "right") return "justify-end";
+  const value = alignment ? stegaClean(alignment).trim().toLowerCase() : "left";
+  if (value === "center") return "justify-center";
+  if (value === "right") return "justify-end";
   return "justify-start";
 }
 
@@ -229,9 +239,17 @@ export default async function EventDetailPage(props: Props) {
 
   const hasStart = !!event.startDate && !Number.isNaN(new Date(event.startDate).getTime());
   const hasEnd = !!event.endDate && !Number.isNaN(new Date(event.endDate).getTime());
+  const hasSecondStart =
+    !!event.secondStartDate && !Number.isNaN(new Date(event.secondStartDate).getTime());
+  const hasSecondEnd =
+    !!event.secondEndDate && !Number.isNaN(new Date(event.secondEndDate).getTime());
 
   const sameDay =
     !!event.startDate && !!event.endDate ? isSameDayInTz(event.startDate, event.endDate) : false;
+  const secondSameDay =
+    !!event.secondStartDate && !!event.secondEndDate
+      ? isSameDayInTz(event.secondStartDate, event.secondEndDate)
+      : false;
 
   const layout = event.layoutVariant || "standard";
   const widthClass =
@@ -289,6 +307,26 @@ export default async function EventDetailPage(props: Props) {
                     )}
                   </span>
                 </div>
+                {event.isMultiDayEvent && hasSecondStart && (
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900">
+                    <CalendarDays className="h-3.5 w-3.5 text-emerald-700" />
+                    <span className="font-medium">
+                      {!hasSecondEnd ? (
+                        <FormattedDateTime value={event.secondStartDate} />
+                      ) : secondSameDay ? (
+                        <>
+                          <FormattedDateTime value={event.secondStartDate} /> -{" "}
+                          {formatTimeOnly(event.secondEndDate as string)}
+                        </>
+                      ) : (
+                        <>
+                          <FormattedDateTime value={event.secondStartDate} /> -{" "}
+                          <FormattedDateTime value={event.secondEndDate} />
+                        </>
+                      )}
+                    </span>
+                  </div>
+                )}
 
                 {event.location && (
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-100 px-3 py-1 text-sky-900">

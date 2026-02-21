@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { groq } from "next-sanity";
+import { groq, stegaClean } from "next-sanity";
 import { sanityFetch } from "@/lib/live";
 import { PortableText } from "@portabletext/react";
 import { portableTextComponents } from "@/components/portableTextComponents";
@@ -128,7 +128,7 @@ type BaseSection = {
 };
 
 function resolveGradientDirection(direction?: string) {
-  const value = direction?.trim().toLowerCase();
+  const value = direction ? stegaClean(direction).trim().toLowerCase() : "";
   if (!value) return "to bottom";
 
   const directionMap: Record<string, string> = {
@@ -150,8 +150,10 @@ function resolveGradientDirection(direction?: string) {
 function buildSectionStyle(section: BaseSection): React.CSSProperties {
   const style: React.CSSProperties = {};
 
-  const bg = section.backgroundColor?.hex;
-  const bgEnd = section.backgroundColorEnd?.hex;
+  const bg = section.backgroundColor?.hex ? stegaClean(section.backgroundColor.hex) : undefined;
+  const bgEnd = section.backgroundColorEnd?.hex
+    ? stegaClean(section.backgroundColorEnd.hex)
+    : undefined;
   const dir = resolveGradientDirection(section.gradientDirection);
 
   if (bg && bgEnd) {
@@ -161,7 +163,7 @@ function buildSectionStyle(section: BaseSection): React.CSSProperties {
   }
 
   if (section.borderColor?.hex) {
-    style.borderColor = section.borderColor.hex;
+    style.borderColor = stegaClean(section.borderColor.hex);
   }
 
   if (section.backgroundImageUrl) {
@@ -181,14 +183,16 @@ function buildSectionStyle(section: BaseSection): React.CSSProperties {
 }
 
 function sectionTextAlign(alignment?: string): React.CSSProperties {
-  if (alignment === "center") return { textAlign: "center" };
-  if (alignment === "right") return { textAlign: "right" };
+  const value = alignment ? stegaClean(alignment).trim().toLowerCase() : "left";
+  if (value === "center") return { textAlign: "center" };
+  if (value === "right") return { textAlign: "right" };
   return { textAlign: "left" };
 }
 
 function topicLabelJustifyClass(alignment?: string) {
-  if (alignment === "center") return "justify-center";
-  if (alignment === "right") return "justify-end";
+  const value = alignment ? stegaClean(alignment).trim().toLowerCase() : "left";
+  if (value === "center") return "justify-center";
+  if (value === "right") return "justify-end";
   return "justify-start";
 }
 

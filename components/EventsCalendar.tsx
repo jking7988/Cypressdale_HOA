@@ -12,6 +12,9 @@ type Event = {
   location?: string;
   startDate?: string;
   endDate?: string;
+  isMultiDayEvent?: boolean;
+  secondStartDate?: string;
+  secondEndDate?: string;
   rsvpYes?: number;
   rsvpMaybe?: number;
   flyerUrl?: string;
@@ -29,6 +32,34 @@ type Props = {
 
 type RsvpKind = 'yes' | 'maybe';
 
+type EventRange = {
+  start: Date;
+  end: Date;
+};
+
+function getEventRanges(e: Event): EventRange[] {
+  const ranges: EventRange[] = [];
+
+  const pushRange = (startDate?: string, endDate?: string) => {
+    if (!startDate) return;
+    const start = new Date(startDate);
+    if (isNaN(start.getTime())) return;
+
+    const fallbackEnd = endDate || startDate;
+    const parsedEnd = new Date(fallbackEnd);
+    const safeEnd = isNaN(parsedEnd.getTime()) || parsedEnd < start ? start : parsedEnd;
+
+    ranges.push({ start, end: safeEnd });
+  };
+
+  pushRange(e.startDate, e.endDate);
+  if (e.isMultiDayEvent) {
+    pushRange(e.secondStartDate, e.secondEndDate);
+  }
+
+  return ranges;
+}
+
 function formatDateForCalendar(dateStr?: string) {
   if (!dateStr) return null;
   const d = new Date(dateStr);
@@ -38,15 +69,19 @@ function formatDateForCalendar(dateStr?: string) {
 }
 
 function buildGoogleCalendarUrl(e: Event) {
-  const start = formatDateForCalendar(e.startDate);
-  const end = formatDateForCalendar(e.endDate || e.startDate);
+  const [primaryRange] = getEventRanges(e);
+  const start = formatDateForCalendar(primaryRange?.start.toISOString());
+  const end = formatDateForCalendar(primaryRange?.end.toISOString());
   if (!start || !end) return '#';
 
   const base = 'https://www.google.com/calendar/render?action=TEMPLATE';
   const params = new URLSearchParams({
     text: e.title || 'Event',
     dates: `${start}/${end}`,
-    details: e.description || '',
+    details:
+      e.isMultiDayEvent && e.secondStartDate
+        ? `${e.description || ''}\nSecond date range included in .ics download.`
+        : e.description || '',
     location: e.location || '',
   });
 
@@ -54,9 +89,8 @@ function buildGoogleCalendarUrl(e: Event) {
 }
 
 function downloadIcs(e: Event) {
-  const start = formatDateForCalendar(e.startDate);
-  const end = formatDateForCalendar(e.endDate || e.startDate);
-  if (!start || !end) return;
+  const ranges = getEventRanges(e);
+  if (ranges.length === 0) return;
 
   const now = new Date();
   const dtstamp = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -64,23 +98,33 @@ function downloadIcs(e: Event) {
   const escapeText = (text: string) =>
     text.replace(/,/g, '\\,').replace(/;/g, '\\;').replace(/\n/g, '\\n');
 
+  const eventLines = ranges.flatMap((range, idx) => {
+    const start = formatDateForCalendar(range.start.toISOString());
+    const end = formatDateForCalendar(range.end.toISOString());
+    if (!start || !end) return [];
+
+    return [
+      'BEGIN:VEVENT',
+      `UID:${e._id}-${idx + 1}@cypressdalehoa.com`,
+      `DTSTAMP:${dtstamp}`,
+      `DTSTART:${start}`,
+      `DTEND:${end}`,
+      `SUMMARY:${escapeText(e.title || 'Event')}`,
+      e.description ? `DESCRIPTION:${escapeText(e.description)}` : '',
+      e.location ? `LOCATION:${escapeText(e.location)}` : '',
+      'END:VEVENT',
+    ].filter(Boolean);
+  });
+
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Cypressdale HOA//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    `UID:${e._id}@cypressdalehoa.com`,
-    `DTSTAMP:${dtstamp}`,
-    `DTSTART:${start}`,
-    `DTEND:${end}`,
-    `SUMMARY:${escapeText(e.title || 'Event')}`,
-    e.description ? `DESCRIPTION:${escapeText(e.description)}` : '',
-    e.location ? `LOCATION:${escapeText(e.location)}` : '',
-    'END:VEVENT',
+    ...eventLines,
     'END:VCALENDAR',
-  ].filter(Boolean);
+  ];
 
   const icsContent = lines.join('\r\n');
   const blob = new Blob([icsContent], {
@@ -112,13 +156,21 @@ export default function EventsCalendar({ events }: Props) {
     const map = new Map<string, Event[]>();
 
     events.forEach((e) => {
-      if (!e.startDate) return;
-      const d = new Date(e.startDate);
-      if (isNaN(d.getTime())) return;
+      const ranges = getEventRanges(e);
 
-      const key = normalizeDate(d).toISOString().slice(0, 10);
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(e);
+      ranges.forEach(({ start, end }) => {
+        const cursor = normalizeDate(start);
+        const last = normalizeDate(end);
+        while (cursor <= last) {
+          const key = cursor.toISOString().slice(0, 10);
+          if (!map.has(key)) map.set(key, []);
+          const dayEvents = map.get(key)!;
+          if (!dayEvents.some((evt) => evt._id === e._id)) {
+            dayEvents.push(e);
+          }
+          cursor.setDate(cursor.getDate() + 1);
+        }
+      });
     });
 
     return map;
@@ -370,9 +422,19 @@ export default function EventsCalendar({ events }: Props) {
 
               <div className="space-y-3">
                 {selectedEvents.map((e) => {
-                  if (!e.startDate) return null;
+                  const ranges = getEventRanges(e);
+                  const targetDay = selectedDate ? normalizeDate(selectedDate) : null;
+                  const activeRange =
+                    targetDay
+                      ? ranges.find(({ start, end }) => {
+                          const dayStart = normalizeDate(start);
+                          const dayEnd = normalizeDate(end);
+                          return targetDay >= dayStart && targetDay <= dayEnd;
+                        })
+                      : ranges[0];
+                  if (!activeRange) return null;
 
-                  const start = new Date(e.startDate);
+                  const start = activeRange.start;
                   const timeLabel = start.toLocaleTimeString(undefined, {
                     hour: 'numeric',
                     minute: '2-digit',
@@ -533,16 +595,27 @@ export default function EventsCalendar({ events }: Props) {
 
           <div className="space-y-3 mt-3">
             {events.map((e) => {
-              if (!e.startDate) return null;
+              const ranges = getEventRanges(e);
+              if (ranges.length === 0) return null;
 
-              const start = new Date(e.startDate);
-              const dateLabel = start.toLocaleString(undefined, {
+              const firstStart = ranges[0].start;
+              const dateLabel = firstStart.toLocaleString(undefined, {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric',
                 hour: 'numeric',
                 minute: '2-digit',
               });
+              const hasSecondRange = ranges.length > 1;
+              const secondDateLabel = hasSecondRange
+                ? ranges[1].start.toLocaleString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })
+                : '';
 
               const counts =
                 rsvpState[e._id] || {
@@ -563,8 +636,12 @@ export default function EventsCalendar({ events }: Props) {
                   <div className="pl-3">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <div className="text-xs font-semibold text-emerald-700 flex items-center gap-1">
-                        <span>📅</span>
                         <span>{dateLabel}</span>
+                        {hasSecondRange && (
+                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-800">
+                            + {secondDateLabel}
+                          </span>
+                        )}
                       </div>
                     </div>
 

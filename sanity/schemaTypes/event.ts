@@ -45,6 +45,34 @@ export default defineType({
       type: 'datetime',
       group: 'details',
     }),
+    defineField({
+      name: 'isMultiDayEvent',
+      title: 'Multi-Day Event',
+      type: 'boolean',
+      description: 'Enable a second date range for this event.',
+      initialValue: false,
+      group: 'details',
+    }),
+    defineField({
+      name: 'secondStartDate',
+      title: 'Second Start Date & Time',
+      type: 'datetime',
+      group: 'details',
+      hidden: ({document}) => !document?.isMultiDayEvent,
+      validation: (rule) =>
+        rule.custom((value, context: any) => {
+          if (!context?.document?.isMultiDayEvent) return true
+          if (!value) return 'Second start date is required when Multi-Day Event is enabled.'
+          return true
+        }),
+    }),
+    defineField({
+      name: 'secondEndDate',
+      title: 'Second End Date & Time',
+      type: 'datetime',
+      group: 'details',
+      hidden: ({document}) => !document?.isMultiDayEvent,
+    }),
 
     defineField({
       name: 'excerpt',
