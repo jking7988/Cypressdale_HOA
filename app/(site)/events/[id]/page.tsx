@@ -188,6 +188,17 @@ function sectionTextAlign(alignment?: string): React.CSSProperties {
   return { textAlign: "left" };
 }
 
+function sectionTextAlignClass(alignment?: string) {
+  const value = alignment ? stegaClean(alignment).trim().toLowerCase() : "left";
+  if (value === "center") {
+    return "[&_p]:text-center [&_h1]:text-center [&_h2]:text-center [&_h3]:text-center [&_li]:text-center [&_ul]:ml-0 [&_ol]:ml-0 [&_ul]:list-inside [&_ol]:list-inside";
+  }
+  if (value === "right") {
+    return "[&_p]:text-right [&_h1]:text-right [&_h2]:text-right [&_h3]:text-right [&_li]:text-right [&_ul]:ml-0 [&_ol]:ml-0 [&_ul]:list-inside [&_ol]:list-inside";
+  }
+  return "[&_p]:text-left [&_h1]:text-left [&_h2]:text-left [&_h3]:text-left [&_li]:text-left";
+}
+
 function topicLabelJustifyClass(alignment?: string) {
   const value = alignment ? stegaClean(alignment).trim().toLowerCase() : "left";
   if (value === "center") return "justify-center";
@@ -408,6 +419,7 @@ export default async function EventDetailPage(props: Props) {
                       "rounded-2xl px-4 md:px-6 mt-2",
                       sectionSpacingClasses(section.spacing as SectionSpacing),
                       sectionBorderClasses(section.borderStyle as SectionBorder),
+                      sectionTextAlignClass(section.alignment),
                     ]
                       .filter(Boolean)
                       .join(" ");
@@ -418,7 +430,9 @@ export default async function EventDetailPage(props: Props) {
                       <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {section.title && <h2 className="text-lg font-semibold text-emerald-900 mb-2">{section.title}</h2>}
                         {section.body && (
-                          <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
+                          <div
+                            className={`text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3 ${sectionTextAlignClass(section.alignment)}`}
+                          >
                             <PortableText value={section.body} components={portableTextComponents} />
                           </div>
                         )}
@@ -437,6 +451,7 @@ export default async function EventDetailPage(props: Props) {
                       "rounded-2xl px-4 md:px-5 mt-2",
                       sectionSpacingClasses(section.spacing as SectionSpacing),
                       sectionBorderClasses(section.borderStyle as SectionBorder),
+                      sectionTextAlignClass(section.alignment),
                     ]
                       .filter(Boolean)
                       .join(" ");
@@ -454,7 +469,7 @@ export default async function EventDetailPage(props: Props) {
                         )}
 
                         <div
-                          className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3"
+                          className={`text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3 ${sectionTextAlignClass(section.alignment)}`}
                           style={sectionTextAlign(section.alignment)}
                         >
                           <PortableText value={section.body} components={portableTextComponents} />
@@ -474,6 +489,7 @@ export default async function EventDetailPage(props: Props) {
                       "rounded-2xl px-4 md:px-6 mt-2",
                       sectionSpacingClasses(section.spacing as SectionSpacing),
                       sectionBorderClasses(section.borderStyle as SectionBorder),
+                      sectionTextAlignClass(section.alignment),
                     ]
                       .filter(Boolean)
                       .join(" ");
@@ -492,7 +508,9 @@ export default async function EventDetailPage(props: Props) {
                         {section.title && <h2 className="text-lg font-semibold text-emerald-900 mb-2">{section.title}</h2>}
 
                         {section.body && (
-                          <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
+                          <div
+                            className={`text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3 ${sectionTextAlignClass(section.alignment)}`}
+                          >
                             <PortableText value={section.body} components={portableTextComponents} />
                           </div>
                         )}
