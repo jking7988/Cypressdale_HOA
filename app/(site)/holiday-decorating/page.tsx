@@ -101,7 +101,8 @@ function normalizePlace(place?: string) {
   if (p === "second" || p === "2nd") return "2";
   if (p === "third" || p === "3rd") return "3";
   if (p === "fourth" || p === "4th") return "4";
-  if (p === "honorable mention" || p === "honourable mention") return "hm";
+  if (p === "shoutout" || p === "shout-out" || p === "shout out" || p.includes("shout")) return "shoutout";
+  if (p === "hm" || p.includes("honorable") || p.includes("honourable")) return "hm";
   return p;
 }
 
