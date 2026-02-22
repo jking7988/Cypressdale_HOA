@@ -177,8 +177,18 @@ export default function ResidentYardSaleMap({
       const map = L.map(mapHostRef.current);
       map.setView(CENTER, 15);
 
+      L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        {
+          attribution:
+            "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+        },
+      ).addTo(map);
+
+      // Optional labels overlay so roads/places remain readable on satellite.
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        opacity: 0.25,
       }).addTo(map);
 
       pinLayerRef.current = L.layerGroup().addTo(map);
