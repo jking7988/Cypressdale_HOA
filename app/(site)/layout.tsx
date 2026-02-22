@@ -1,6 +1,6 @@
 import "../../styles/globals.css";
 import type { Metadata } from "next";
-import { draftMode } from "next/headers";
+import { draftMode, headers } from "next/headers";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import SanityVisualEditing from "@/components/SanityVisualEditing";
@@ -20,6 +20,16 @@ async function refreshOnLiveEvent(_tags: string[]) {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const isDraftMode = (await draftMode()).isEnabled;
+  const requestHeaders = await headers();
+  const referer = requestHeaders.get("referer") || "";
+  const studioUrl = process.env.NEXT_PUBLIC_SANITY_STUDIO_URL || "https://cypressdale-admin.sanity.studio";
+  let studioHost = "cypressdale-admin.sanity.studio";
+  try {
+    studioHost = new URL(studioUrl).host;
+  } catch {}
+  const isSanityPresentationRequest =
+    referer.includes(studioHost) || referer.includes(".sanity.studio");
+  const enableStudioEditing = isDraftMode || isSanityPresentationRequest;
 
   return (
     <html lang="en" className="h-full">
@@ -33,9 +43,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Footer />
         </div>
 
-        {isDraftMode && <SanityVisualEditing />}
+        {enableStudioEditing && <SanityVisualEditing />}
         <AutoSpanishTranslate />
-        {isDraftMode && (
+        {enableStudioEditing && (
           <SanityLive
             refreshOnMount
             refreshOnReconnect
