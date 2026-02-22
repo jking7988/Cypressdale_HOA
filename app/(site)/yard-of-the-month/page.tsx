@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { client } from '@/lib/sanity.client';
 import { yardWinnersQuery } from '@/lib/queries';
 import { ContactLink } from '@/components/ContactLink';
@@ -66,7 +66,7 @@ export default async function YardOfTheMonthPage() {
 
       {/* Page content */}
       <div className="relative mx-auto w-full max-w-5xl px-4 py-8 md:py-10 space-y-6 md:space-y-8">
-        {/* Corner “vine” accents instead of a full border */}
+        {/* Corner â€œvineâ€ accents instead of a full border */}
         <div className="pointer-events-none absolute inset-0 -z-10">
           {/* top-left vine */}
           <div className="absolute -top-4 -left-3 md:-top-6 md:-left-4 h-14 w-16 md:h-20 md:w-24 bg-gradient-to-br from-emerald-300/75 via-emerald-200/0 to-transparent blur-md" />
@@ -81,11 +81,11 @@ export default async function YardOfTheMonthPage() {
         {/* Page header */}
         <header className="space-y-3 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/80 px-4 py-1 text-xs font-medium text-emerald-50 shadow-sm">
-            <span className="text-sm">🌿</span>
+            <span className="text-sm">ðŸŒ¿</span>
             <span className="tracking-[0.18em] uppercase">
               Yard of the Month
             </span>
-            <span className="text-sm">🌸</span>
+            <span className="text-sm">ðŸŒ¸</span>
           </div>
 
           <h1 className="h1 text-2xl md:text-3xl text-emerald-950 flex items-center gap-2">
@@ -93,7 +93,7 @@ export default async function YardOfTheMonthPage() {
           </h1>
 
           <p className="muted max-w-2xl text-sm md:text-base text-emerald-900/95">
-            Beginning in January 2026, the Yard of the Month program recognizes
+            Beginning in April 2026, the Yard of the Month program recognizes
             Cypressdale neighbors who go above and beyond with their landscaping,
             curb appeal, and overall care for their homes. It&apos;s a fun way to
             celebrate pride of ownership and keep our community looking vibrant
@@ -106,11 +106,11 @@ export default async function YardOfTheMonthPage() {
           {/* Left: Overview */}
           <div className="card border border-emerald-100/80 bg-emerald-50/80 backdrop-blur-sm shadow-sm space-y-3">
             <div className="flex items-center gap-2 text-emerald-800">
-              <span className="text-lg">🪴</span>
+              <span className="text-lg">ðŸª´</span>
               <h2 className="h2 text-lg">Program overview</h2>
             </div>
             <p className="text-sm text-emerald-900/90">
-              Starting in January 2026, each month (season and weather
+              Starting in April 2026, each month (season and weather
               permitting), one Cypressdale home will be selected for outstanding
               front yard appearance. The winning yard will be recognized on the
               HOA website and through Cypressdale social media announcements.
@@ -130,7 +130,7 @@ export default async function YardOfTheMonthPage() {
           {/* Right: How it works / criteria */}
           <div className="card border border-lime-100/80 bg-lime-50/85 backdrop-blur-sm shadow-sm space-y-3">
             <div className="flex items-center gap-2 text-emerald-800">
-              <span className="text-lg">🌱</span>
+              <span className="text-lg">ðŸŒ±</span>
               <h2 className="h2 text-lg">How winners are chosen</h2>
             </div>
             <p className="text-sm text-emerald-900/90">
@@ -138,31 +138,31 @@ export default async function YardOfTheMonthPage() {
             </p>
             <ul className="grid gap-2 md:grid-cols-2 text-sm text-emerald-900/90">
               <li className="flex items-start gap-2">
-                <span className="mt-[3px] text-emerald-600">•</span>
+                <span className="mt-[3px] text-emerald-600">â€¢</span>
                 <span>
-                  <span className="font-semibold">Overall curb appeal</span> – a
+                  <span className="font-semibold">Overall curb appeal</span> â€“ a
                   tidy, inviting yard that enhances the street.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-[3px] text-emerald-600">•</span>
+                <span className="mt-[3px] text-emerald-600">â€¢</span>
                 <span>
-                  <span className="font-semibold">Maintenance</span> – mowed
+                  <span className="font-semibold">Maintenance</span> â€“ mowed
                   lawn, trimmed shrubs, and healthy plants.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-[3px] text-emerald-600">•</span>
+                <span className="mt-[3px] text-emerald-600">â€¢</span>
                 <span>
-                  <span className="font-semibold">Plant selection</span> – use of
+                  <span className="font-semibold">Plant selection</span> â€“ use of
                   color, seasonal interest, or thoughtful plant choices.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-[3px] text-emerald-600">•</span>
+                <span className="mt-[3px] text-emerald-600">â€¢</span>
                 <span>
                   <span className="font-semibold">Creativity &amp; harmony</span>{' '}
-                  – decor and design that fit the home and neighborhood.
+                  â€“ decor and design that fit the home and neighborhood.
                 </span>
               </li>
             </ul>
@@ -177,13 +177,13 @@ export default async function YardOfTheMonthPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <h2 className="h2 flex items-center gap-2 text-lg text-emerald-950">
-              <span className="text-base">🏆</span>
+              <span className="text-base">ðŸ†</span>
               <span>Current Yard of the Month</span>
             </h2>
             <span className="text-xs rounded-full bg-white/85 text-emerald-900 px-3 py-1 border border-emerald-200/90">
               {currentWinner
-                ? 'Recognizing this month’s standout yard'
-                : 'First selection coming January 2026'}
+                ? 'Recognizing this monthâ€™s standout yard'
+                : 'First selection coming April 2026'}
             </span>
           </div>
 
@@ -202,7 +202,7 @@ export default async function YardOfTheMonthPage() {
               )}
               <div className="p-5 md:flex-1 space-y-1.5">
                 <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide flex items-center gap-1">
-                  <span className="text-[13px]">🏆</span>
+                  <span className="text-[13px]">ðŸ†</span>
                   <span>
                     {formatMonth(currentWinner.month) || 'Current winner'}
                   </span>
@@ -224,14 +224,14 @@ export default async function YardOfTheMonthPage() {
                   href={`/yard-of-the-month/${currentWinner._id}`}
                   className="inline-flex items-center gap-1 text-xs font-medium text-emerald-800 hover:text-emerald-900 hover:underline mt-2"
                 >
-                  View photos &amp; details →
+                  View photos &amp; details â†’
                 </Link>
               </div>
             </article>
           ) : (
             <div className="rounded-3xl border border-dashed border-emerald-300/80 bg-emerald-50/90 px-4 py-6 text-sm text-emerald-900/85 text-center backdrop-blur-[1px]">
               <p className="font-medium text-emerald-950 mb-1">
-                Yard of the Month launching January 2026
+                Yard of the Month launching April 2026
               </p>
               <p>
                 The program is being finalized. Check back after the first
@@ -245,7 +245,7 @@ export default async function YardOfTheMonthPage() {
         {pastWinners.length > 0 && (
           <section className="space-y-3">
             <h2 className="h2 text-lg text-emerald-950 flex items-center gap-2">
-              <span className="text-base">🏆</span>
+              <span className="text-base">ðŸ†</span>
               <span>Past winners</span>
             </h2>
             <div className="grid gap-4 md:grid-cols-2">
@@ -285,7 +285,7 @@ export default async function YardOfTheMonthPage() {
                       href={`/yard-of-the-month/${w._id}`}
                       className="inline-flex items-center gap-1 text-xs font-medium text-emerald-800 hover:text-emerald-900 hover:underline mt-2"
                     >
-                      View details →
+                      View details â†’
                     </Link>
                   </div>
                 </article>
@@ -297,7 +297,7 @@ export default async function YardOfTheMonthPage() {
         {/* Questions / contact */}
         <section className="card border border-emerald-100/80 bg-emerald-50/85 backdrop-blur-sm space-y-2">
           <h2 className="h2 text-lg text-emerald-950 flex items-center gap-2">
-            <span className="text-base">🌻</span>
+            <span className="text-base">ðŸŒ»</span>
             <span>Questions about the program?</span>
           </h2>
           <p className="text-sm text-emerald-900/90">
@@ -312,3 +312,4 @@ export default async function YardOfTheMonthPage() {
     </div>
   );
 }
+
