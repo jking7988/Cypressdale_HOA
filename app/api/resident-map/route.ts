@@ -6,6 +6,23 @@ type GeocodeResult = {
   lng: number;
 };
 
+type NominatimCandidate = {
+  lat: string;
+  lon: string;
+  display_name?: string;
+  class?: string;
+  type?: string;
+  address?: {
+    house_number?: string;
+    road?: string;
+    city?: string;
+    town?: string;
+    village?: string;
+    state?: string;
+    postcode?: string;
+  };
+};
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -30,6 +47,11 @@ async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
     /\btx\b/.test(lower);
 
   const fallbackBase = normalized.split(",")[0]?.trim() || normalized;
+
+  const streetMatch = fallbackBase.match(/^(\d+[a-zA-Z\-]?)\s+(.+)$/);
+  const houseNumber = streetMatch?.[1]?.toLowerCase() || "";
+  const streetName = streetMatch?.[2]?.toLowerCase().replace(/[^\w\s]/g, "").trim() || "";
+
   const queries = [
     normalized,
     ...(hasCityState
@@ -42,13 +64,7 @@ async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
         ]),
   ];
 
-  for (const q of queries) {
-    const url = new URL("https://nominatim.openstreetmap.org/search");
-    url.searchParams.set("format", "json");
-    url.searchParams.set("limit", "1");
-    url.searchParams.set("countrycodes", "us");
-    url.searchParams.set("q", q);
-
+  const fetchCandidates = async (url: URL) => {
     const res = await fetch(url.toString(), {
       headers: {
         "User-Agent": "cypressdalehoa-map/1.0",
@@ -56,19 +72,75 @@ async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
       },
       cache: "no-store",
     });
+    if (!res.ok) return [] as NominatimCandidate[];
+    const data = (await res.json()) as NominatimCandidate[];
+    return Array.isArray(data) ? data : [];
+  };
 
-    if (!res.ok) continue;
-    const data = (await res.json()) as Array<{ lat: string; lon: string }>;
-    if (!Array.isArray(data) || data.length === 0) continue;
+  const allCandidates: NominatimCandidate[] = [];
 
-    const lat = Number(data[0].lat);
-    const lng = Number(data[0].lon);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-
-    return { lat, lng };
+  // Structured lookup first for better rooftop/house matching.
+  if (streetMatch) {
+    const url = new URL("https://nominatim.openstreetmap.org/search");
+    url.searchParams.set("format", "jsonv2");
+    url.searchParams.set("addressdetails", "1");
+    url.searchParams.set("limit", "6");
+    url.searchParams.set("countrycodes", "us");
+    url.searchParams.set("street", `${streetMatch[1]} ${streetMatch[2]}`);
+    url.searchParams.set("city", "Spring");
+    url.searchParams.set("state", "Texas");
+    url.searchParams.set("postalcode", "77379");
+    const candidates = await fetchCandidates(url);
+    allCandidates.push(...candidates);
   }
 
-  return null;
+  for (const q of queries) {
+    const url = new URL("https://nominatim.openstreetmap.org/search");
+    url.searchParams.set("format", "jsonv2");
+    url.searchParams.set("addressdetails", "1");
+    url.searchParams.set("limit", "6");
+    url.searchParams.set("countrycodes", "us");
+    url.searchParams.set("q", q);
+    const candidates = await fetchCandidates(url);
+    allCandidates.push(...candidates);
+  }
+
+  if (!allCandidates.length) return null;
+
+  const unique = new Map<string, NominatimCandidate>();
+  for (const c of allCandidates) {
+    const lat = Number(c.lat);
+    const lng = Number(c.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    unique.set(`${lat.toFixed(7)},${lng.toFixed(7)}`, c);
+  }
+
+  const scored = Array.from(unique.values())
+    .map((c) => {
+      const addr = c.address || {};
+      const road = (addr.road || "").toLowerCase().replace(/[^\w\s]/g, "").trim();
+      const local = `${c.display_name || ""} ${(addr.city || addr.town || addr.village || "")} ${addr.state || ""}`.toLowerCase();
+      let score = 0;
+
+      if (houseNumber && (addr.house_number || "").toLowerCase() === houseNumber) score += 7;
+      if (streetName && road && (road.includes(streetName) || streetName.includes(road))) score += 5;
+      if (local.includes("spring")) score += 2;
+      if (local.includes("texas") || local.includes(" tx")) score += 1;
+      if ((addr.postcode || "").startsWith("77379")) score += 2;
+      if (c.type === "house" || c.type === "residential") score += 1;
+
+      return { c, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const winner = scored[0]?.c;
+  if (!winner) return null;
+
+  const lat = Number(winner.lat);
+  const lng = Number(winner.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return { lat, lng };
+
 }
 
 export async function GET() {
