@@ -127,6 +127,7 @@ export default function ResidentYardSaleMap({
   const [success, setSuccess] = useState<string>("");
   const [shareMsg, setShareMsg] = useState<string>("");
   const [removalRequestMsg, setRemovalRequestMsg] = useState<string>("");
+  const [isRemovalModalOpen, setIsRemovalModalOpen] = useState(false);
 
   const [address, setAddress] = useState("");
   const [hours, setHours] = useState("");
@@ -377,6 +378,7 @@ export default function ResidentYardSaleMap({
 
       setRemovalAddress("");
       setRemovalRequestMsg("Removal request sent.");
+      setIsRemovalModalOpen(false);
     } catch (err: any) {
       setError(err?.message || "Could not send removal request.");
     } finally {
@@ -389,7 +391,8 @@ export default function ResidentYardSaleMap({
     : "";
 
   return (
-    <section className="rounded-3xl bg-white/95 border border-emerald-50 shadow-[0_18px_50px_rgba(15,118,110,0.22)] backdrop-blur px-4 py-5 md:px-6 md:py-6 space-y-4">
+    <>
+      <section className="rounded-3xl bg-white/95 border border-emerald-50 shadow-[0_18px_50px_rgba(15,118,110,0.22)] backdrop-blur px-4 py-5 md:px-6 md:py-6 space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="h2">{title}</h2>
         <p className="text-xs text-gray-600">{subtitle}</p>
@@ -510,32 +513,13 @@ export default function ResidentYardSaleMap({
 
           <div className="mt-4 border-t border-emerald-100 pt-3 space-y-2">
             <p className="text-xs font-semibold text-emerald-900">Request pin removal</p>
-            <form onSubmit={onRequestRemoval} className="space-y-2">
-              <label className="block">
-                <span className="text-xs text-gray-700">Which address should be removed?</span>
-                <input
-                  type="text"
-                  list="resident-map-addresses"
-                  value={removalAddress}
-                  onChange={(ev) => setRemovalAddress(ev.target.value)}
-                  placeholder="1234 Cypressdale Dr"
-                  className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900"
-                  required
-                />
-                <datalist id="resident-map-addresses">
-                  {knownAddresses.map((addr) => (
-                    <option key={addr} value={addr} />
-                  ))}
-                </datalist>
-              </label>
-              <button
-                type="submit"
-                disabled={!canRequestRemoval}
-                className="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isRequestingRemoval ? "Sending..." : "Send removal request"}
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={() => setIsRemovalModalOpen(true)}
+              className="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50"
+            >
+              Request to Remove a Pin
+            </button>
             {removalRequestMsg && <p className="text-xs text-emerald-700">{removalRequestMsg}</p>}
           </div>
         </div>
@@ -603,6 +587,61 @@ export default function ResidentYardSaleMap({
           </a>
         </div>
       )}
-    </section>
+      </section>
+
+      {isRemovalModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-emerald-100 bg-white p-4 shadow-xl">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-emerald-900">Request to Remove a Pin</h3>
+              <button
+                type="button"
+                onClick={() => setIsRemovalModalOpen(false)}
+                className="rounded-md border border-emerald-200 px-2 py-1 text-xs text-gray-700 hover:bg-emerald-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <form onSubmit={onRequestRemoval} className="mt-3 space-y-2">
+              <label className="block">
+                <span className="text-xs text-gray-700">Which address should be removed?</span>
+                <input
+                  type="text"
+                  list="resident-map-addresses"
+                  value={removalAddress}
+                  onChange={(ev) => setRemovalAddress(ev.target.value)}
+                  placeholder="1234 Cypressdale Dr"
+                  className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900"
+                  required
+                />
+                <datalist id="resident-map-addresses">
+                  {knownAddresses.map((addr) => (
+                    <option key={addr} value={addr} />
+                  ))}
+                </datalist>
+              </label>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={!canRequestRemoval}
+                  className="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isRequestingRemoval ? "Sending..." : "Send removal request"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsRemovalModalOpen(false)}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

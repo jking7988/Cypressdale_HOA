@@ -6,13 +6,11 @@ export default function CommunityMapPage() {
   return (
     <div className="space-y-4">
       <ResidentYardSaleMap
-        readOnly
         showQrCard
         mapPath="/map"
         title="Community Yard Sale Map"
-        subtitle="Scan the QR or share this page. Tap pins for details and export addresses to Google or Apple Maps."
+        subtitle="Add your pin with street number + street name, plus optional hours and notes."
       />
     </div>
   );
 }
-
