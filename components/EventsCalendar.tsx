@@ -660,7 +660,7 @@ export default function EventsCalendar({ events }: Props) {
                       </Link>
                       <span className="ml-2 text-[11px] font-medium text-emerald-700">
                         <Link href={`/events/${cleanEventId(e._id)}`} className="hover:underline">
-                          View details ->
+                          {"View details ->"}
                         </Link>
                       </span>
                     </div>
