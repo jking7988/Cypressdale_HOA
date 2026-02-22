@@ -341,9 +341,9 @@ export default function ResidentYardSaleMap({
         <p className="text-xs text-gray-600">{subtitle}</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="rounded-2xl overflow-hidden border border-emerald-100 shadow-sm">
-          <div ref={mapHostRef} className="h-[360px] md:h-[460px] w-full bg-emerald-50" />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] items-stretch">
+        <div className="rounded-2xl overflow-hidden border border-emerald-100 shadow-sm min-h-[360px] md:min-h-[520px] h-full">
+          <div ref={mapHostRef} className="h-full w-full min-h-[360px] md:min-h-[520px] bg-emerald-50" />
         </div>
 
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">

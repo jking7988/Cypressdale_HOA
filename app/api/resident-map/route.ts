@@ -21,29 +21,40 @@ function sanitizeString(input: unknown, maxLength: number) {
 }
 
 async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
-  const q = `${address}, Cypressdale, Spring, TX`;
-  const url = new URL("https://nominatim.openstreetmap.org/search");
-  url.searchParams.set("format", "json");
-  url.searchParams.set("limit", "1");
-  url.searchParams.set("q", q);
+  const queries = [
+    `${address}, Spring, TX 77379`,
+    `${address}, Cypressdale, Spring, TX`,
+    `${address}, Harris County, TX`,
+    `${address}, Texas`,
+  ];
 
-  const res = await fetch(url.toString(), {
-    headers: {
-      "User-Agent": "cypressdalehoa-map/1.0",
-      "Accept-Language": "en-US,en;q=0.9",
-    },
-    cache: "no-store",
-  });
+  for (const q of queries) {
+    const url = new URL("https://nominatim.openstreetmap.org/search");
+    url.searchParams.set("format", "json");
+    url.searchParams.set("limit", "1");
+    url.searchParams.set("countrycodes", "us");
+    url.searchParams.set("q", q);
 
-  if (!res.ok) return null;
-  const data = (await res.json()) as Array<{ lat: string; lon: string }>;
-  if (!Array.isArray(data) || data.length === 0) return null;
+    const res = await fetch(url.toString(), {
+      headers: {
+        "User-Agent": "cypressdalehoa-map/1.0",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      cache: "no-store",
+    });
 
-  const lat = Number(data[0].lat);
-  const lng = Number(data[0].lon);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (!res.ok) continue;
+    const data = (await res.json()) as Array<{ lat: string; lon: string }>;
+    if (!Array.isArray(data) || data.length === 0) continue;
 
-  return { lat, lng };
+    const lat = Number(data[0].lat);
+    const lng = Number(data[0].lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+    return { lat, lng };
+  }
+
+  return null;
 }
 
 export async function GET() {
@@ -93,16 +104,12 @@ export async function POST(req: Request) {
   if (!address) {
     return NextResponse.json({ error: "Address is required." }, { status: 400 });
   }
-  if (!hours) {
-    return NextResponse.json({ error: "Hours are required." }, { status: 400 });
-  }
-
   const geo = await geocodeAddress(address);
   if (!geo) {
     return NextResponse.json(
       {
         error:
-          "Could not place that address on the map. Please use a more complete address.",
+          "Could not place that address on the map. Try street + city + state (example: 1234 Cypressdale Dr, Spring, TX).",
       },
       { status: 400 },
     );
@@ -110,7 +117,8 @@ export async function POST(req: Request) {
 
   const payload = {
     address,
-    hours,
+    // Keep empty string when omitted to stay compatible with existing NOT NULL schemas.
+    hours: hours || "",
     details: details || null,
     lat: geo.lat,
     lng: geo.lng,
