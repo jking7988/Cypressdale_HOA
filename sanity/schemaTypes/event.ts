@@ -1,5 +1,6 @@
 import {defineField, defineType} from 'sanity';
 import InlineTextSizeInput from '../InlineTextSizeInput';
+import InlineTextWeightInput from '../InlineTextWeightInput';
 
 const portableTextWithTextColor = [
   {
@@ -7,16 +8,11 @@ const portableTextWithTextColor = [
     marks: {
       annotations: [
         {
-          name: 'textColor',
-          title: 'Text color',
-          type: 'object',
-          fields: [{name: 'color', title: 'Color', type: 'color'}],
-        },
-        {
-          name: 'textSize',
-          title: 'Text size',
+          name: 'textStyle',
+          title: 'Text style',
           type: 'object',
           fields: [
+            {name: 'color', title: 'Color', type: 'color'},
             {
               name: 'size',
               title: 'Size (px)',
@@ -24,6 +20,14 @@ const portableTextWithTextColor = [
               initialValue: 16,
               components: {input: InlineTextSizeInput},
               validation: (rule: any) => rule.min(10).max(64),
+            },
+            {
+              name: 'weight',
+              title: 'Weight',
+              type: 'number',
+              initialValue: 600,
+              components: {input: InlineTextWeightInput},
+              validation: (rule: any) => rule.min(100).max(900),
             },
           ],
         },

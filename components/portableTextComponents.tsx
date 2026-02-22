@@ -51,11 +51,17 @@ const NumberItem = ({ children }: BlockProps) => (
 );
 
 const StrongMark = ({ children }: BlockProps) => (
-  <span className="font-semibold text-gray-900">{children}</span>
+  <span className="font-semibold">{children}</span>
 );
 
 type TextColorValue = {
   color?: string | { hex?: string };
+};
+
+type TextStyleValue = {
+  color?: string | { hex?: string };
+  size?: number | string;
+  weight?: number | string;
 };
 
 const TextColorMark = ({
@@ -102,6 +108,74 @@ const TextSizeMark = ({
   return <span style={{ fontSize: `${clamped}px` }}>{children}</span>;
 };
 
+type TextWeightValue = {
+  weight?: number | string;
+};
+
+const TextWeightMark = ({
+  children,
+  value,
+}: {
+  children?: ReactNode;
+  value?: TextWeightValue;
+}) => {
+  const raw = value?.weight;
+  const parsed =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string" && raw
+      ? Number(stegaClean(raw))
+      : NaN;
+
+  if (!Number.isFinite(parsed)) return <>{children}</>;
+  const clamped = Math.min(900, Math.max(100, Math.round(parsed / 100) * 100));
+  return <span style={{ fontWeight: clamped }}>{children}</span>;
+};
+
+const TextStyleMark = ({
+  children,
+  value,
+}: {
+  children?: ReactNode;
+  value?: TextStyleValue;
+}) => {
+  const rawColor =
+    typeof value?.color === "string"
+      ? value.color
+      : value?.color && typeof value.color === "object"
+      ? value.color.hex
+      : undefined;
+  const color = rawColor ? stegaClean(rawColor).trim() : "";
+
+  const rawSize = value?.size;
+  const parsedSize =
+    typeof rawSize === "number"
+      ? rawSize
+      : typeof rawSize === "string" && rawSize
+      ? Number(stegaClean(rawSize))
+      : NaN;
+
+  const rawWeight = value?.weight;
+  const parsedWeight =
+    typeof rawWeight === "number"
+      ? rawWeight
+      : typeof rawWeight === "string" && rawWeight
+      ? Number(stegaClean(rawWeight))
+      : NaN;
+
+  const style: React.CSSProperties = {};
+  if (color) style.color = color;
+  if (Number.isFinite(parsedSize)) {
+    style.fontSize = `${Math.min(64, Math.max(10, parsedSize))}px`;
+  }
+  if (Number.isFinite(parsedWeight)) {
+    style.fontWeight = Math.min(900, Math.max(100, Math.round(parsedWeight / 100) * 100));
+  }
+
+  if (!Object.keys(style).length) return <>{children}</>;
+  return <span style={style}>{children}</span>;
+};
+
 // If the type causes an error, remove `: PortableTextComponents`
 export const portableTextComponents /* : PortableTextComponents */ = {
   block: {
@@ -120,7 +194,9 @@ export const portableTextComponents /* : PortableTextComponents */ = {
   },
   marks: {
     strong: StrongMark,
+    textStyle: TextStyleMark,
     textColor: TextColorMark,
     textSize: TextSizeMark,
+    textWeight: TextWeightMark,
   },
 };

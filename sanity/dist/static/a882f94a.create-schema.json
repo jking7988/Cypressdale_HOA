@@ -447,58 +447,48 @@
                 "title": "Section title"
               },
               {
-                "initialValue": "md",
-                "options": {
-                  "list": [
-                    {
-                      "title": "Small",
-                      "value": "sm"
-                    },
-                    {
-                      "title": "Medium",
-                      "value": "md"
-                    },
-                    {
-                      "title": "Large",
-                      "value": "lg"
-                    },
-                    {
-                      "title": "Extra Large",
-                      "value": "xl"
-                    }
-                  ],
-                  "layout": "radio"
-                },
+                "initialValue": 20,
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "min",
+                        "constraint": 12
+                      },
+                      {
+                        "flag": "max",
+                        "constraint": 64
+                      }
+                    ],
+                    "level": "error"
+                  }
+                ],
+                "description": "Numeric size in pixels.",
                 "name": "titleSize",
-                "type": "string",
+                "type": "number",
                 "title": "Section title size",
                 "fieldset": "titleSettings"
               },
               {
-                "initialValue": "semibold",
-                "options": {
-                  "list": [
-                    {
-                      "title": "Medium",
-                      "value": "medium"
-                    },
-                    {
-                      "title": "Semibold",
-                      "value": "semibold"
-                    },
-                    {
-                      "title": "Bold",
-                      "value": "bold"
-                    },
-                    {
-                      "title": "Extra Bold",
-                      "value": "extrabold"
-                    }
-                  ],
-                  "layout": "radio"
-                },
+                "initialValue": 600,
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "min",
+                        "constraint": 100
+                      },
+                      {
+                        "flag": "max",
+                        "constraint": 900
+                      }
+                    ],
+                    "level": "error"
+                  }
+                ],
+                "description": "Numeric font weight (100-900).",
                 "name": "titleWeight",
-                "type": "string",
+                "type": "number",
                 "title": "Section title thickness",
                 "fieldset": "titleSettings"
               },
@@ -1300,58 +1290,48 @@
                 "title": "Section title"
               },
               {
-                "initialValue": "md",
-                "options": {
-                  "list": [
-                    {
-                      "title": "Small",
-                      "value": "sm"
-                    },
-                    {
-                      "title": "Medium",
-                      "value": "md"
-                    },
-                    {
-                      "title": "Large",
-                      "value": "lg"
-                    },
-                    {
-                      "title": "Extra Large",
-                      "value": "xl"
-                    }
-                  ],
-                  "layout": "radio"
-                },
+                "initialValue": 20,
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "min",
+                        "constraint": 12
+                      },
+                      {
+                        "flag": "max",
+                        "constraint": 64
+                      }
+                    ],
+                    "level": "error"
+                  }
+                ],
+                "description": "Numeric size in pixels.",
                 "name": "titleSize",
-                "type": "string",
+                "type": "number",
                 "title": "Section title size",
                 "fieldset": "titleSettings"
               },
               {
-                "initialValue": "semibold",
-                "options": {
-                  "list": [
-                    {
-                      "title": "Medium",
-                      "value": "medium"
-                    },
-                    {
-                      "title": "Semibold",
-                      "value": "semibold"
-                    },
-                    {
-                      "title": "Bold",
-                      "value": "bold"
-                    },
-                    {
-                      "title": "Extra Bold",
-                      "value": "extrabold"
-                    }
-                  ],
-                  "layout": "radio"
-                },
+                "initialValue": 600,
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "min",
+                        "constraint": 100
+                      },
+                      {
+                        "flag": "max",
+                        "constraint": 900
+                      }
+                    ],
+                    "level": "error"
+                  }
+                ],
+                "description": "Numeric font weight (100-900).",
                 "name": "titleWeight",
-                "type": "string",
+                "type": "number",
                 "title": "Section title thickness",
                 "fieldset": "titleSettings"
               },
@@ -1905,58 +1885,48 @@
                 "title": "Section title"
               },
               {
-                "initialValue": "md",
-                "options": {
-                  "list": [
-                    {
-                      "title": "Small",
-                      "value": "sm"
-                    },
-                    {
-                      "title": "Medium",
-                      "value": "md"
-                    },
-                    {
-                      "title": "Large",
-                      "value": "lg"
-                    },
-                    {
-                      "title": "Extra Large",
-                      "value": "xl"
-                    }
-                  ],
-                  "layout": "radio"
-                },
+                "initialValue": 20,
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "min",
+                        "constraint": 12
+                      },
+                      {
+                        "flag": "max",
+                        "constraint": 64
+                      }
+                    ],
+                    "level": "error"
+                  }
+                ],
+                "description": "Numeric size in pixels.",
                 "name": "titleSize",
-                "type": "string",
+                "type": "number",
                 "title": "Section title size",
                 "fieldset": "titleSettings"
               },
               {
-                "initialValue": "semibold",
-                "options": {
-                  "list": [
-                    {
-                      "title": "Medium",
-                      "value": "medium"
-                    },
-                    {
-                      "title": "Semibold",
-                      "value": "semibold"
-                    },
-                    {
-                      "title": "Bold",
-                      "value": "bold"
-                    },
-                    {
-                      "title": "Extra Bold",
-                      "value": "extrabold"
-                    }
-                  ],
-                  "layout": "radio"
-                },
+                "initialValue": 600,
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "min",
+                        "constraint": 100
+                      },
+                      {
+                        "flag": "max",
+                        "constraint": 900
+                      }
+                    ],
+                    "level": "error"
+                  }
+                ],
+                "description": "Numeric font weight (100-900).",
                 "name": "titleWeight",
-                "type": "string",
+                "type": "number",
                 "title": "Section title thickness",
                 "fieldset": "titleSettings"
               },
@@ -2755,58 +2725,48 @@
                 "title": "Section title"
               },
               {
-                "initialValue": "md",
-                "options": {
-                  "list": [
-                    {
-                      "title": "Small",
-                      "value": "sm"
-                    },
-                    {
-                      "title": "Medium",
-                      "value": "md"
-                    },
-                    {
-                      "title": "Large",
-                      "value": "lg"
-                    },
-                    {
-                      "title": "Extra Large",
-                      "value": "xl"
-                    }
-                  ],
-                  "layout": "radio"
-                },
+                "initialValue": 20,
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "min",
+                        "constraint": 12
+                      },
+                      {
+                        "flag": "max",
+                        "constraint": 64
+                      }
+                    ],
+                    "level": "error"
+                  }
+                ],
+                "description": "Numeric size in pixels.",
                 "name": "titleSize",
-                "type": "string",
+                "type": "number",
                 "title": "Section title size",
                 "fieldset": "titleSettings"
               },
               {
-                "initialValue": "semibold",
-                "options": {
-                  "list": [
-                    {
-                      "title": "Medium",
-                      "value": "medium"
-                    },
-                    {
-                      "title": "Semibold",
-                      "value": "semibold"
-                    },
-                    {
-                      "title": "Bold",
-                      "value": "bold"
-                    },
-                    {
-                      "title": "Extra Bold",
-                      "value": "extrabold"
-                    }
-                  ],
-                  "layout": "radio"
-                },
+                "initialValue": 600,
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "min",
+                        "constraint": 100
+                      },
+                      {
+                        "flag": "max",
+                        "constraint": 900
+                      }
+                    ],
+                    "level": "error"
+                  }
+                ],
+                "description": "Numeric font weight (100-900).",
                 "name": "titleWeight",
-                "type": "string",
+                "type": "number",
                 "title": "Section title thickness",
                 "fieldset": "titleSettings"
               },
