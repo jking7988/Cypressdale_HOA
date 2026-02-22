@@ -126,8 +126,8 @@ type BaseSection = {
   gradientDirection?: string;
   borderColor?: ColorField;
   titleColor?: ColorField;
-  titleSize?: string;
-  titleWeight?: string;
+  titleSize?: number | string;
+  titleWeight?: number | string;
   backgroundImageUrl?: string;
   backgroundImageOpacity?: number;
 };
@@ -196,37 +196,30 @@ function sectionTextAlign(alignment?: string): React.CSSProperties {
 
 function sectionTitleStyle(section: BaseSection): React.CSSProperties {
   const color = section.titleColor?.hex ? stegaClean(section.titleColor.hex) : "";
-  return color ? { color } : {};
-}
+  const sizeMap: Record<string, number> = { sm: 18, md: 20, lg: 24, xl: 30 };
+  const weightMap: Record<string, number> = { medium: 500, semibold: 600, bold: 700, extrabold: 800 };
 
-function sectionTitleSizeClass(section: BaseSection) {
-  const value = section.titleSize ? stegaClean(section.titleSize).trim().toLowerCase() : "md";
-  switch (value) {
-    case "sm":
-      return "text-base md:text-lg";
-    case "lg":
-      return "text-xl md:text-2xl";
-    case "xl":
-      return "text-2xl md:text-3xl";
-    case "md":
-    default:
-      return "text-lg md:text-xl";
+  let size = 20;
+  if (typeof section.titleSize === "number" && Number.isFinite(section.titleSize)) {
+    size = section.titleSize;
+  } else if (typeof section.titleSize === "string") {
+    const clean = stegaClean(section.titleSize).trim().toLowerCase();
+    const parsed = Number(clean);
+    size = Number.isFinite(parsed) ? parsed : (sizeMap[clean] ?? 20);
   }
-}
 
-function sectionTitleWeightClass(section: BaseSection) {
-  const value = section.titleWeight ? stegaClean(section.titleWeight).trim().toLowerCase() : "semibold";
-  switch (value) {
-    case "medium":
-      return "font-medium";
-    case "bold":
-      return "font-bold";
-    case "extrabold":
-      return "font-extrabold";
-    case "semibold":
-    default:
-      return "font-semibold";
+  let weight = 600;
+  if (typeof section.titleWeight === "number" && Number.isFinite(section.titleWeight)) {
+    weight = section.titleWeight;
+  } else if (typeof section.titleWeight === "string") {
+    const clean = stegaClean(section.titleWeight).trim().toLowerCase();
+    const parsed = Number(clean);
+    weight = Number.isFinite(parsed) ? parsed : (weightMap[clean] ?? 600);
   }
+
+  const clampedSize = Math.min(64, Math.max(12, size));
+  const clampedWeight = Math.min(900, Math.max(100, weight));
+  return { ...(color ? { color } : {}), fontSize: `${clampedSize}px`, fontWeight: clampedWeight };
 }
 
 function sectionTextAlignClass(alignment?: string) {
@@ -343,7 +336,7 @@ export default async function NewsDetailPage(props: Props) {
                     return (
                       <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {section.title && (
-                          <h2 className={`${sectionTitleSizeClass(section)} ${sectionTitleWeightClass(section)} text-brand-900 mb-2`} style={sectionTitleStyle(section)}>
+                          <h2 className="text-brand-900 mb-2 leading-tight" style={sectionTitleStyle(section)}>
                             {section.title}
                           </h2>
                         )}
@@ -431,7 +424,7 @@ export default async function NewsDetailPage(props: Props) {
                         )}
 
                         {section.title && (
-                          <h2 className={`${sectionTitleSizeClass(section)} ${sectionTitleWeightClass(section)} text-brand-900 mb-2`} style={sectionTitleStyle(section)}>
+                          <h2 className="text-brand-900 mb-2 leading-tight" style={sectionTitleStyle(section)}>
                             {section.title}
                           </h2>
                         )}

@@ -10,7 +10,6 @@ import { PortableText } from "@portabletext/react";
 import { portableTextComponents } from "@/components/portableTextComponents";
 import { NewsLetterSignup } from "@/components/NewsLetterSignup";
 import { CalendarDays, MapPin, Users, FileText } from "lucide-react";
-import { FormattedDateTime } from "@/components/FormattedDateTime";
 
 const eventByIdQuery = groq`
   *[_type == "event" && (_id == $id || _id == $draftId)]
@@ -88,8 +87,8 @@ type BaseSection = {
   gradientDirection?: string;
   borderColor?: ColorField;
   titleColor?: ColorField;
-  titleSize?: string;
-  titleWeight?: string;
+  titleSize?: number | string;
+  titleWeight?: number | string;
   backgroundImageUrl?: string;
   backgroundImageOpacity?: number;
 };
@@ -195,37 +194,30 @@ function sectionTextAlign(alignment?: string): React.CSSProperties {
 
 function sectionTitleStyle(section: BaseSection): React.CSSProperties {
   const color = section.titleColor?.hex ? stegaClean(section.titleColor.hex) : "";
-  return color ? { color } : {};
-}
+  const sizeMap: Record<string, number> = { sm: 18, md: 20, lg: 24, xl: 30 };
+  const weightMap: Record<string, number> = { medium: 500, semibold: 600, bold: 700, extrabold: 800 };
 
-function sectionTitleSizeClass(section: BaseSection) {
-  const value = section.titleSize ? stegaClean(section.titleSize).trim().toLowerCase() : "md";
-  switch (value) {
-    case "sm":
-      return "text-base md:text-lg";
-    case "lg":
-      return "text-xl md:text-2xl";
-    case "xl":
-      return "text-2xl md:text-3xl";
-    case "md":
-    default:
-      return "text-lg md:text-xl";
+  let size = 20;
+  if (typeof section.titleSize === "number" && Number.isFinite(section.titleSize)) {
+    size = section.titleSize;
+  } else if (typeof section.titleSize === "string") {
+    const clean = stegaClean(section.titleSize).trim().toLowerCase();
+    const parsed = Number(clean);
+    size = Number.isFinite(parsed) ? parsed : (sizeMap[clean] ?? 20);
   }
-}
 
-function sectionTitleWeightClass(section: BaseSection) {
-  const value = section.titleWeight ? stegaClean(section.titleWeight).trim().toLowerCase() : "semibold";
-  switch (value) {
-    case "medium":
-      return "font-medium";
-    case "bold":
-      return "font-bold";
-    case "extrabold":
-      return "font-extrabold";
-    case "semibold":
-    default:
-      return "font-semibold";
+  let weight = 600;
+  if (typeof section.titleWeight === "number" && Number.isFinite(section.titleWeight)) {
+    weight = section.titleWeight;
+  } else if (typeof section.titleWeight === "string") {
+    const clean = stegaClean(section.titleWeight).trim().toLowerCase();
+    const parsed = Number(clean);
+    weight = Number.isFinite(parsed) ? parsed : (weightMap[clean] ?? 600);
   }
+
+  const clampedSize = Math.min(64, Math.max(12, size));
+  const clampedWeight = Math.min(900, Math.max(100, weight));
+  return { ...(color ? { color } : {}), fontSize: `${clampedSize}px`, fontWeight: clampedWeight };
 }
 
 function sectionTextAlignClass(alignment?: string) {
@@ -246,21 +238,6 @@ function topicLabelJustifyClass(alignment?: string) {
   return "justify-start";
 }
 
-function isSameDayInTz(a: string, b: string, timeZone = "America/Chicago") {
-  const da = new Date(a);
-  const db = new Date(b);
-  if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return false;
-
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-
-  return fmt.format(da) === fmt.format(db);
-}
-
 function formatTimeOnly(dateStr: string, timeZone = "America/Chicago") {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "";
@@ -271,19 +248,84 @@ function formatTimeOnly(dateStr: string, timeZone = "America/Chicago") {
   }).format(d);
 }
 
-function rangesOverlap(
-  firstStart?: string,
-  firstEnd?: string,
-  secondStart?: string,
-  secondEnd?: string,
-) {
-  if (!firstStart || !secondStart) return false;
-  const aStart = new Date(firstStart).getTime();
-  const aEnd = new Date(firstEnd || firstStart).getTime();
-  const bStart = new Date(secondStart).getTime();
-  const bEnd = new Date(secondEnd || secondStart).getTime();
-  if (![aStart, aEnd, bStart, bEnd].every(Number.isFinite)) return false;
-  return aStart <= bEnd && bStart <= aEnd;
+type DayScheduleEntry = {
+  dateKey: string;
+  label: string;
+  hours: string;
+  sourcePriority: number;
+};
+
+function dateKeyInTz(dateStr: string, timeZone = "America/Chicago") {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
+function formatDateKeyLabel(dateKey: string) {
+  const d = new Date(`${dateKey}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return dateKey;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(d);
+}
+
+function nextDateKey(dateKey: string) {
+  const d = new Date(`${dateKey}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return "";
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function buildRangeDayCards(
+  start?: string,
+  end?: string,
+  sourcePriority = 1,
+  timeZone = "America/Chicago",
+): DayScheduleEntry[] {
+  if (!start) return [];
+  const startKey = dateKeyInTz(start, timeZone);
+  if (!startKey) return [];
+
+  const normalizedEnd = end || start;
+  const endKey = dateKeyInTz(normalizedEnd, timeZone) || startKey;
+  const startTime = formatTimeOnly(start, timeZone);
+  const endTime = formatTimeOnly(normalizedEnd, timeZone);
+
+  const cards: DayScheduleEntry[] = [];
+  let currentKey = startKey;
+
+  while (currentKey) {
+    const isStartDay = currentKey === startKey;
+    const isEndDay = currentKey === endKey;
+    let hours = "All day";
+
+    if (isStartDay && isEndDay) {
+      hours = `${startTime} - ${endTime}`;
+    } else if (isStartDay) {
+      hours = `${startTime} - 11:59 PM`;
+    } else if (isEndDay) {
+      hours = `12:00 AM - ${endTime}`;
+    }
+
+    cards.push({
+      dateKey: currentKey,
+      label: formatDateKeyLabel(currentKey),
+      hours,
+      sourcePriority,
+    });
+
+    if (currentKey === endKey) break;
+    currentKey = nextDateKey(currentKey);
+  }
+
+  return cards;
 }
 
 export default async function EventDetailPage(props: Props) {
@@ -304,24 +346,23 @@ export default async function EventDetailPage(props: Props) {
   const maybeCount = event.rsvpMaybe ?? 0;
 
   const hasStart = !!event.startDate && !Number.isNaN(new Date(event.startDate).getTime());
-  const hasEnd = !!event.endDate && !Number.isNaN(new Date(event.endDate).getTime());
   const hasSecondStart =
     !!event.secondStartDate && !Number.isNaN(new Date(event.secondStartDate).getTime());
-  const hasSecondEnd =
-    !!event.secondEndDate && !Number.isNaN(new Date(event.secondEndDate).getTime());
-  const secondOverlapsPrimary = rangesOverlap(
-    event.startDate,
-    event.endDate,
-    event.secondStartDate,
-    event.secondEndDate,
+  const scheduleMap = new Map<string, DayScheduleEntry>();
+  const primaryCards = buildRangeDayCards(event.startDate, event.endDate, 1);
+  const secondaryCards =
+    event.isMultiDayEvent && hasSecondStart
+      ? buildRangeDayCards(event.secondStartDate, event.secondEndDate, 2)
+      : [];
+  for (const card of [...primaryCards, ...secondaryCards]) {
+    const existing = scheduleMap.get(card.dateKey);
+    if (!existing || card.sourcePriority >= existing.sourcePriority) {
+      scheduleMap.set(card.dateKey, card);
+    }
+  }
+  const scheduleCards = Array.from(scheduleMap.values()).sort((a, b) =>
+    a.dateKey.localeCompare(b.dateKey),
   );
-
-  const sameDay =
-    !!event.startDate && !!event.endDate ? isSameDayInTz(event.startDate, event.endDate) : false;
-  const secondSameDay =
-    !!event.secondStartDate && !!event.secondEndDate
-      ? isSameDayInTz(event.secondStartDate, event.secondEndDate)
-      : false;
 
   const layout = event.layoutVariant || "standard";
   const widthClass =
@@ -361,42 +402,24 @@ export default async function EventDetailPage(props: Props) {
               </div>
 
               <div className="flex flex-col items-start md:items-end gap-1 text-[11px] md:text-xs">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900">
-                  <CalendarDays className="h-3.5 w-3.5 text-emerald-700" />
-                  <span className="font-medium">
-                    {!hasStart ? (
-                      "Date TBA"
-                    ) : !hasEnd ? (
-                      <FormattedDateTime value={event.startDate} />
-                    ) : sameDay ? (
-                      <>
-                        <FormattedDateTime value={event.startDate} /> - {formatTimeOnly(event.endDate as string)}
-                      </>
-                    ) : (
-                      <>
-                        <FormattedDateTime value={event.startDate} /> - <FormattedDateTime value={event.endDate} />
-                      </>
-                    )}
-                  </span>
-                </div>
-                {event.isMultiDayEvent && hasSecondStart && !secondOverlapsPrimary && (
+                {!hasStart || scheduleCards.length === 0 ? (
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900">
                     <CalendarDays className="h-3.5 w-3.5 text-emerald-700" />
-                    <span className="font-medium">
-                      {!hasSecondEnd ? (
-                        <FormattedDateTime value={event.secondStartDate} />
-                      ) : secondSameDay ? (
-                        <>
-                          <FormattedDateTime value={event.secondStartDate} /> -{" "}
-                          {formatTimeOnly(event.secondEndDate as string)}
-                        </>
-                      ) : (
-                        <>
-                          <FormattedDateTime value={event.secondStartDate} /> -{" "}
-                          <FormattedDateTime value={event.secondEndDate} />
-                        </>
-                      )}
-                    </span>
+                    <span className="font-medium">Date TBA</span>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {scheduleCards.map((card) => (
+                      <div
+                        key={card.dateKey}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900"
+                      >
+                        <CalendarDays className="h-3.5 w-3.5 text-emerald-700" />
+                        <span className="font-medium">
+                          {card.label}, {card.hours}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -490,7 +513,7 @@ export default async function EventDetailPage(props: Props) {
                     return (
                       <section key={idx} className={wrapperClasses} style={alignedStyle}>
                         {section.title && (
-                          <h2 className={`${sectionTitleSizeClass(section)} ${sectionTitleWeightClass(section)} text-emerald-900 mb-2`} style={sectionTitleStyle(section)}>
+                          <h2 className="text-emerald-900 mb-2 leading-tight" style={sectionTitleStyle(section)}>
                             {section.title}
                           </h2>
                         )}
@@ -571,7 +594,7 @@ export default async function EventDetailPage(props: Props) {
                         )}
 
                         {section.title && (
-                          <h2 className={`${sectionTitleSizeClass(section)} ${sectionTitleWeightClass(section)} text-emerald-900 mb-2`} style={sectionTitleStyle(section)}>
+                          <h2 className="text-emerald-900 mb-2 leading-tight" style={sectionTitleStyle(section)}>
                             {section.title}
                           </h2>
                         )}
