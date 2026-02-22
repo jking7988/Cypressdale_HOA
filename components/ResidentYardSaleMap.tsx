@@ -48,13 +48,14 @@ function escapeHtml(value: string) {
 
 function popupHtml(entry: ResidentMapEntry) {
   const details = entry.details ? `<div style="margin-top:6px">${escapeHtml(entry.details)}</div>` : "";
+  const hoursLine = entry.hours ? `<div><strong>Hours:</strong> ${escapeHtml(entry.hours)}</div>` : "";
   const encodedAddress = encodeURIComponent(entry.address);
   const googleUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
   const appleUrl = `https://maps.apple.com/?q=${encodedAddress}`;
   return `
     <div style="min-width:220px;font:13px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0b1f18">
       <div style="font-weight:700;margin-bottom:4px">${escapeHtml(entry.address)}</div>
-      <div><strong>Hours:</strong> ${escapeHtml(entry.hours)}</div>
+      ${hoursLine}
       ${details}
       <div style="display:flex;gap:8px;margin-top:8px">
         <a href="${googleUrl}" target="_blank" rel="noreferrer" style="color:#0369a1;text-decoration:underline">Google Maps</a>
@@ -209,7 +210,8 @@ export default function ResidentYardSaleMap({
 
     valid.forEach((entry) => {
       const marker = L.marker([Number(entry.lat), Number(entry.lng)]);
-      marker.bindTooltip(`${entry.address} | ${entry.hours}`, { direction: "top" });
+      const tooltip = entry.hours ? `${entry.address} | ${entry.hours}` : entry.address;
+      marker.bindTooltip(tooltip, { direction: "top" });
       marker.bindPopup(popupHtml(entry));
       marker.addTo(layer);
     });
@@ -222,7 +224,7 @@ export default function ResidentYardSaleMap({
     }
   }, [entries]);
 
-  const canSubmit = useMemo(() => !!address.trim() && !!hours.trim() && !isSubmitting, [address, hours, isSubmitting]);
+  const canSubmit = useMemo(() => !!address.trim() && !isSubmitting, [address, isSubmitting]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -365,14 +367,13 @@ export default function ResidentYardSaleMap({
                 </label>
 
                 <label className="block">
-                  <span className="text-xs font-medium text-emerald-900">Hours</span>
+                  <span className="text-xs font-medium text-emerald-900">Hours (optional)</span>
                   <input
                     type="text"
                     value={hours}
                     onChange={(e) => setHours(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900"
                     placeholder="Sat 8:00 AM - 2:00 PM"
-                    required
                   />
                 </label>
 
@@ -463,7 +464,11 @@ export default function ResidentYardSaleMap({
             {entries.map((entry) => (
               <div key={entry.id} className="rounded-lg border border-emerald-100 bg-emerald-50/40 p-3">
                 <p className="text-sm font-semibold text-emerald-950">{entry.address}</p>
-                <p className="text-xs text-gray-700 mt-0.5"><span className="font-semibold">Hours:</span> {entry.hours}</p>
+                {entry.hours && (
+                  <p className="text-xs text-gray-700 mt-0.5">
+                    <span className="font-semibold">Hours:</span> {entry.hours}
+                  </p>
+                )}
                 {entry.details && <p className="text-xs text-gray-700 mt-1">{entry.details}</p>}
                 <div className="mt-2 flex flex-wrap gap-3 text-xs">
                   <a
