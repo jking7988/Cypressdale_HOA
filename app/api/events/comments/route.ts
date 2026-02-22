@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { writeClient } from '@/lib/sanity.server';
-import { client } from '@/lib/sanity.client';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -24,7 +23,8 @@ export async function GET(req: Request) {
     }`;
 
   try {
-    const comments = await client.fetch(query, { eventId });
+    // Use the non-CDN client so freshly posted replies appear immediately.
+    const comments = await writeClient.fetch(query, { eventId });
     return NextResponse.json({ comments });
   } catch (err) {
     console.error('Unable to load event comments', err);

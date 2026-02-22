@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { runNewsletterSend } from '@/lib/newsletter/send';
+import { getCanonicalSiteUrl } from '@/lib/siteUrl';
 
 export const runtime = 'nodejs';
 
@@ -20,8 +21,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized webhook' }, { status: 401 });
   }
 
-  const baseUrl =
-    process.env.NEWSLETTER_SITE_URL?.trim() || url.origin;
+  const baseUrl = getCanonicalSiteUrl(url.origin);
   const result = await runNewsletterSend({ baseUrl });
   return NextResponse.json(result.body, { status: result.statusCode });
 }

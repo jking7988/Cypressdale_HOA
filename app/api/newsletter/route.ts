@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { getCanonicalSiteUrl } from '@/lib/siteUrl';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
   }
 
   const url = new URL(req.url);
-  const baseUrl = url.origin;
+  const baseUrl = getCanonicalSiteUrl(url.origin);
 
   // Look up existing subscriber
   const { data: existing, error: fetchError } = await supabase

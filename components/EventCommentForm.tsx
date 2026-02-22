@@ -53,7 +53,9 @@ function CommentsThreadForm({ targetId, targetType }: BaseCommentFormProps) {
 
   const fetchComments = useCallback(async () => {
     try {
-      const res = await fetch(`${apiBase}?${idParam}=${encodeURIComponent(targetId)}`);
+      const res = await fetch(`${apiBase}?${idParam}=${encodeURIComponent(targetId)}`, {
+        cache: 'no-store',
+      });
       if (!res.ok) throw new Error('Unable to load comments');
       const data = await res.json();
       setComments(data.comments ?? []);
