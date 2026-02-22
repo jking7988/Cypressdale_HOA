@@ -32,6 +32,29 @@ const portableTextWithTextColor = [
             },
           ],
         },
+        {
+          name: 'link',
+          title: 'Link',
+          type: 'object',
+          fields: [
+            {
+              name: 'href',
+              title: 'URL',
+              type: 'url',
+              validation: (rule: any) =>
+                rule.uri({
+                  allowRelative: true,
+                  scheme: ['http', 'https', 'mailto', 'tel'],
+                }),
+            },
+            {
+              name: 'openInNewTab',
+              title: 'Open in new tab',
+              type: 'boolean',
+              initialValue: true,
+            },
+          ],
+        },
       ],
     },
   },

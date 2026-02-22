@@ -157,6 +157,11 @@ type TextStyleValue = {
   weight?: number | string;
 };
 
+type LinkValue = {
+  href?: string;
+  openInNewTab?: boolean;
+};
+
 const TextColorMark = ({
   children,
   value,
@@ -269,6 +274,37 @@ const TextStyleMark = ({
   return <span style={style}>{children}</span>;
 };
 
+function sanitizeHref(raw?: string) {
+  if (!raw) return '';
+  const href = stegaClean(raw).trim();
+  if (!href) return '';
+  if (href.startsWith('/') || href.startsWith('#')) return href;
+  if (/^(https?:|mailto:|tel:)/i.test(href)) return href;
+  return '';
+}
+
+const LinkMark = ({
+  children,
+  value,
+}: {
+  children?: ReactNode;
+  value?: LinkValue;
+}) => {
+  const href = sanitizeHref(value?.href);
+  if (!href) return <>{children}</>;
+  const openInNewTab = value?.openInNewTab ?? true;
+  return (
+    <a
+      href={href}
+      target={openInNewTab ? '_blank' : undefined}
+      rel={openInNewTab ? 'noopener noreferrer nofollow' : undefined}
+      className="underline text-emerald-700 hover:text-emerald-800"
+    >
+      {children}
+    </a>
+  );
+};
+
 // If the type causes an error, remove `: PortableTextComponents`
 export const portableTextComponents /* : PortableTextComponents */ = {
   block: {
@@ -287,6 +323,7 @@ export const portableTextComponents /* : PortableTextComponents */ = {
   },
   marks: {
     strong: StrongMark,
+    link: LinkMark,
     textStyle: TextStyleMark,
     textColor: TextColorMark,
     textSize: TextSizeMark,
