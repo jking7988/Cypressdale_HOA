@@ -120,14 +120,17 @@ export default function ResidentYardSaleMap({
   const [entries, setEntries] = useState<ResidentMapEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRequestingRemoval, setIsRequestingRemoval] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [shareMsg, setShareMsg] = useState<string>("");
+  const [removalRequestMsg, setRemovalRequestMsg] = useState<string>("");
 
   const [address, setAddress] = useState("");
   const [hours, setHours] = useState("");
   const [details, setDetails] = useState("");
   const [shareUrl, setShareUrl] = useState("");
+  const [removalAddress, setRemovalAddress] = useState("");
 
   const mapHostRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
@@ -235,6 +238,14 @@ export default function ResidentYardSaleMap({
   }, [entries]);
 
   const canSubmit = useMemo(() => !!address.trim() && !isSubmitting, [address, isSubmitting]);
+  const canRequestRemoval = useMemo(
+    () => !!removalAddress.trim() && !isRequestingRemoval,
+    [removalAddress, isRequestingRemoval],
+  );
+  const knownAddresses = useMemo(
+    () => Array.from(new Set(entries.map((e) => e.address).filter(Boolean))),
+    [entries],
+  );
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -339,6 +350,35 @@ export default function ResidentYardSaleMap({
       setShareMsg("Map link copied.");
     } catch {
       setError("Could not copy link.");
+    }
+  }
+
+  async function onRequestRemoval(e: FormEvent) {
+    e.preventDefault();
+    if (!canRequestRemoval) return;
+
+    setError("");
+    setSuccess("");
+    setRemovalRequestMsg("");
+    setIsRequestingRemoval(true);
+
+    try {
+      const res = await fetch("/api/resident-map/remove-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: removalAddress.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.error || "Could not send removal request.");
+      }
+
+      setRemovalAddress("");
+      setRemovalRequestMsg("Removal request sent.");
+    } catch (err: any) {
+      setError(err?.message || "Could not send removal request.");
+    } finally {
+      setIsRequestingRemoval(false);
     }
   }
 
@@ -465,6 +505,37 @@ export default function ResidentYardSaleMap({
               </a>
             </div>
           )}
+
+          <div className="mt-4 border-t border-emerald-100 pt-3 space-y-2">
+            <p className="text-xs font-semibold text-emerald-900">Request pin removal</p>
+            <form onSubmit={onRequestRemoval} className="space-y-2">
+              <label className="block">
+                <span className="text-xs text-gray-700">Which address should be removed?</span>
+                <input
+                  type="text"
+                  list="resident-map-addresses"
+                  value={removalAddress}
+                  onChange={(ev) => setRemovalAddress(ev.target.value)}
+                  placeholder="1234 Cypressdale Dr"
+                  className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900"
+                  required
+                />
+                <datalist id="resident-map-addresses">
+                  {knownAddresses.map((addr) => (
+                    <option key={addr} value={addr} />
+                  ))}
+                </datalist>
+              </label>
+              <button
+                type="submit"
+                disabled={!canRequestRemoval}
+                className="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isRequestingRemoval ? "Sending..." : "Send removal request"}
+              </button>
+            </form>
+            {removalRequestMsg && <p className="text-xs text-emerald-700">{removalRequestMsg}</p>}
+          </div>
         </div>
       </div>
 
