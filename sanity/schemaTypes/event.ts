@@ -599,6 +599,38 @@ export default defineType({
       },
     }),
     defineField({
+      name: 'rsvps',
+      title: 'RSVP entries (legacy)',
+      type: 'array',
+      group: 'flyerRsvp',
+      hidden: true,
+      readOnly: true,
+      of: [
+        {
+          type: 'object',
+          name: 'rsvp',
+          title: 'RSVP entry',
+          fields: [
+            {name: 'name', title: 'Name', type: 'string'},
+            {name: 'email', title: 'Email', type: 'string'},
+            {
+              name: 'status',
+              title: 'Status',
+              type: 'string',
+              options: {
+                list: [
+                  {title: 'Going', value: 'yes'},
+                  {title: 'Maybe', value: 'maybe'},
+                ],
+                layout: 'radio',
+              },
+            },
+            {name: 'createdAt', title: 'Submitted at', type: 'datetime'},
+          ],
+        },
+      ],
+    }),
+    defineField({
       name: 'rsvpYes',
       title: 'RSVP - Going',
       type: 'number',
