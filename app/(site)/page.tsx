@@ -26,6 +26,8 @@ type Post = {
   excerpt?: any;
   body?: any;
   _createdAt?: string;
+  publishedAt?: string;
+  newsDate?: string;
 };
 
 type Event = {
@@ -35,6 +37,9 @@ type Event = {
   location?: string;
   startDate?: string;
   endDate?: string;
+  isMultiDayEvent?: boolean;
+  secondStartDate?: string;
+  secondEndDate?: string;
   flyerUrl?: string;
   flyerMime?: string;
   flyerName?: string;
@@ -185,22 +190,30 @@ export default async function HomePage() {
 
   const [today, ...otherDays] = dailyForecast ?? [];
 
-  const sortedEvents = events
-    .filter((e) => {
-      if (!e.startDate) return false;
-      const d = new Date(e.startDate);
-      return !Number.isNaN(d.getTime());
-    })
+  const nowMs = Date.now();
+  const currentOrUpcomingEvents = events
+    .filter((e) => getNextRelevantTime(e, nowMs) !== null)
     .sort((a, b) => {
-      return (
-        new Date(a.startDate as string).getTime() -
-        new Date(b.startDate as string).getTime()
-      );
+      const at = getNextRelevantTime(a, nowMs) ?? Number.MAX_SAFE_INTEGER;
+      const bt = getNextRelevantTime(b, nowMs) ?? Number.MAX_SAFE_INTEGER;
+      return at - bt;
     });
 
-  const upcomingEvents = sortedEvents;
-  const nextEvent = upcomingEvents[0] ?? null;
-  const latestPosts = posts.slice(0, 3);
+  const upcomingEvents = events
+    .filter((e) => getLatestNonPastStartTime(e, nowMs) !== null)
+    .sort((a, b) => {
+      const at = getLatestNonPastStartTime(a, nowMs) ?? 0;
+      const bt = getLatestNonPastStartTime(b, nowMs) ?? 0;
+      return bt - at;
+    });
+  const nextEvent = currentOrUpcomingEvents[0] ?? null;
+  const latestPosts = posts
+    .filter((p) => {
+      const ts = getPostTime(p);
+      return ts !== null && ts <= nowMs;
+    })
+    .sort((a, b) => (getPostTime(b) ?? 0) - (getPostTime(a) ?? 0))
+    .slice(0, 3);
   const latestPost = latestPosts[0] ?? null;
 
   if (process.env.NODE_ENV === 'development') {
@@ -880,4 +893,71 @@ function getWeatherMeta(phrase: string) {
       'bg-white/90 bg-[radial-gradient(circle_at_top,_rgba(52,211,153,0.18),_transparent)]',
     ringClass: 'ring-emerald-200/70',
   };
+}
+
+function getNextRelevantTime(event: Event, nowMs: number): number | null {
+  const ranges: Array<{ start?: string; end?: string }> = [
+    { start: event.startDate, end: event.endDate },
+  ];
+
+  if (event.isMultiDayEvent && event.secondStartDate) {
+    ranges.push({ start: event.secondStartDate, end: event.secondEndDate });
+  }
+
+  const candidates: number[] = [];
+
+  for (const r of ranges) {
+    if (!r.start) continue;
+    const startMs = new Date(r.start).getTime();
+    const endMs = new Date(r.end || r.start).getTime();
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
+
+    // Current event window should be prioritized as "now".
+    if (startMs <= nowMs && endMs >= nowMs) {
+      candidates.push(nowMs);
+      continue;
+    }
+
+    // Upcoming event window should be sorted by next start.
+    if (startMs > nowMs) {
+      candidates.push(startMs);
+    }
+  }
+
+  if (!candidates.length) return null;
+  return Math.min(...candidates);
+}
+
+function getLatestNonPastStartTime(event: Event, nowMs: number): number | null {
+  const ranges: Array<{ start?: string; end?: string }> = [
+    { start: event.startDate, end: event.endDate },
+  ];
+
+  if (event.isMultiDayEvent && event.secondStartDate) {
+    ranges.push({ start: event.secondStartDate, end: event.secondEndDate });
+  }
+
+  const candidates: number[] = [];
+
+  for (const r of ranges) {
+    if (!r.start) continue;
+    const startMs = new Date(r.start).getTime();
+    const endMs = new Date(r.end || r.start).getTime();
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
+
+    // Keep only windows that are active now or still in the future.
+    if (endMs >= nowMs) {
+      candidates.push(startMs);
+    }
+  }
+
+  if (!candidates.length) return null;
+  return Math.max(...candidates);
+}
+
+function getPostTime(post: Post): number | null {
+  const source = post.newsDate || post.publishedAt || post._createdAt;
+  if (!source) return null;
+  const ms = new Date(source).getTime();
+  return Number.isFinite(ms) ? ms : null;
 }
