@@ -189,14 +189,7 @@
                     {
                       "name": "color",
                       "type": "color"
-                    }
-                  ],
-                  "name": "textColor",
-                  "type": "object",
-                  "title": "Text color"
-                },
-                {
-                  "fields": [
+                    },
                     {
                       "initialValue": 16,
                       "validation": [
@@ -217,11 +210,31 @@
                       "name": "size",
                       "type": "number",
                       "title": "Size (px)"
+                    },
+                    {
+                      "initialValue": 600,
+                      "validation": [
+                        {
+                          "rules": [
+                            {
+                              "flag": "min",
+                              "constraint": 100
+                            },
+                            {
+                              "flag": "max",
+                              "constraint": 900
+                            }
+                          ],
+                          "level": "error"
+                        }
+                      ],
+                      "name": "weight",
+                      "type": "number"
                     }
                   ],
-                  "name": "textSize",
+                  "name": "textStyle",
                   "type": "object",
-                  "title": "Text size"
+                  "title": "Text style"
                 }
               ],
               "decorators": [
@@ -310,14 +323,7 @@
                     {
                       "name": "color",
                       "type": "color"
-                    }
-                  ],
-                  "name": "textColor",
-                  "type": "object",
-                  "title": "Text color"
-                },
-                {
-                  "fields": [
+                    },
                     {
                       "initialValue": 16,
                       "validation": [
@@ -338,11 +344,31 @@
                       "name": "size",
                       "type": "number",
                       "title": "Size (px)"
+                    },
+                    {
+                      "initialValue": 600,
+                      "validation": [
+                        {
+                          "rules": [
+                            {
+                              "flag": "min",
+                              "constraint": 100
+                            },
+                            {
+                              "flag": "max",
+                              "constraint": 900
+                            }
+                          ],
+                          "level": "error"
+                        }
+                      ],
+                      "name": "weight",
+                      "type": "number"
                     }
                   ],
-                  "name": "textSize",
+                  "name": "textStyle",
                   "type": "object",
-                  "title": "Text size"
+                  "title": "Text style"
                 }
               ],
               "decorators": [
@@ -663,14 +689,7 @@
                             {
                               "name": "color",
                               "type": "color"
-                            }
-                          ],
-                          "name": "textColor",
-                          "type": "object",
-                          "title": "Text color"
-                        },
-                        {
-                          "fields": [
+                            },
                             {
                               "initialValue": 16,
                               "validation": [
@@ -691,11 +710,31 @@
                               "name": "size",
                               "type": "number",
                               "title": "Size (px)"
+                            },
+                            {
+                              "initialValue": 600,
+                              "validation": [
+                                {
+                                  "rules": [
+                                    {
+                                      "flag": "min",
+                                      "constraint": 100
+                                    },
+                                    {
+                                      "flag": "max",
+                                      "constraint": 900
+                                    }
+                                  ],
+                                  "level": "error"
+                                }
+                              ],
+                              "name": "weight",
+                              "type": "number"
                             }
                           ],
-                          "name": "textSize",
+                          "name": "textStyle",
                           "type": "object",
-                          "title": "Text size"
+                          "title": "Text style"
                         }
                       ],
                       "decorators": [
@@ -966,14 +1005,7 @@
                             {
                               "name": "color",
                               "type": "color"
-                            }
-                          ],
-                          "name": "textColor",
-                          "type": "object",
-                          "title": "Text color"
-                        },
-                        {
-                          "fields": [
+                            },
                             {
                               "initialValue": 16,
                               "validation": [
@@ -994,11 +1026,31 @@
                               "name": "size",
                               "type": "number",
                               "title": "Size (px)"
+                            },
+                            {
+                              "initialValue": 600,
+                              "validation": [
+                                {
+                                  "rules": [
+                                    {
+                                      "flag": "min",
+                                      "constraint": 100
+                                    },
+                                    {
+                                      "flag": "max",
+                                      "constraint": 900
+                                    }
+                                  ],
+                                  "level": "error"
+                                }
+                              ],
+                              "name": "weight",
+                              "type": "number"
                             }
                           ],
-                          "name": "textSize",
+                          "name": "textStyle",
                           "type": "object",
-                          "title": "Text size"
+                          "title": "Text style"
                         }
                       ],
                       "decorators": [
@@ -1351,14 +1403,7 @@
                             {
                               "name": "color",
                               "type": "color"
-                            }
-                          ],
-                          "name": "textColor",
-                          "type": "object",
-                          "title": "Text color"
-                        },
-                        {
-                          "fields": [
+                            },
                             {
                               "initialValue": 16,
                               "validation": [
@@ -1379,11 +1424,31 @@
                               "name": "size",
                               "type": "number",
                               "title": "Size (px)"
+                            },
+                            {
+                              "initialValue": 600,
+                              "validation": [
+                                {
+                                  "rules": [
+                                    {
+                                      "flag": "min",
+                                      "constraint": 100
+                                    },
+                                    {
+                                      "flag": "max",
+                                      "constraint": 900
+                                    }
+                                  ],
+                                  "level": "error"
+                                }
+                              ],
+                              "name": "weight",
+                              "type": "number"
                             }
                           ],
-                          "name": "textSize",
+                          "name": "textStyle",
                           "type": "object",
-                          "title": "Text size"
+                          "title": "Text style"
                         }
                       ],
                       "decorators": [
@@ -1627,14 +1692,7 @@
                     {
                       "name": "color",
                       "type": "color"
-                    }
-                  ],
-                  "name": "textColor",
-                  "type": "object",
-                  "title": "Text color"
-                },
-                {
-                  "fields": [
+                    },
                     {
                       "initialValue": 16,
                       "validation": [
@@ -1655,11 +1713,31 @@
                       "name": "size",
                       "type": "number",
                       "title": "Size (px)"
+                    },
+                    {
+                      "initialValue": 600,
+                      "validation": [
+                        {
+                          "rules": [
+                            {
+                              "flag": "min",
+                              "constraint": 100
+                            },
+                            {
+                              "flag": "max",
+                              "constraint": 900
+                            }
+                          ],
+                          "level": "error"
+                        }
+                      ],
+                      "name": "weight",
+                      "type": "number"
                     }
                   ],
-                  "name": "textSize",
+                  "name": "textStyle",
                   "type": "object",
-                  "title": "Text size"
+                  "title": "Text style"
                 }
               ],
               "decorators": [
@@ -1748,14 +1826,7 @@
                     {
                       "name": "color",
                       "type": "color"
-                    }
-                  ],
-                  "name": "textColor",
-                  "type": "object",
-                  "title": "Text color"
-                },
-                {
-                  "fields": [
+                    },
                     {
                       "initialValue": 16,
                       "validation": [
@@ -1776,11 +1847,31 @@
                       "name": "size",
                       "type": "number",
                       "title": "Size (px)"
+                    },
+                    {
+                      "initialValue": 600,
+                      "validation": [
+                        {
+                          "rules": [
+                            {
+                              "flag": "min",
+                              "constraint": 100
+                            },
+                            {
+                              "flag": "max",
+                              "constraint": 900
+                            }
+                          ],
+                          "level": "error"
+                        }
+                      ],
+                      "name": "weight",
+                      "type": "number"
                     }
                   ],
-                  "name": "textSize",
+                  "name": "textStyle",
                   "type": "object",
-                  "title": "Text size"
+                  "title": "Text style"
                 }
               ],
               "decorators": [
@@ -2098,14 +2189,7 @@
                             {
                               "name": "color",
                               "type": "color"
-                            }
-                          ],
-                          "name": "textColor",
-                          "type": "object",
-                          "title": "Text color"
-                        },
-                        {
-                          "fields": [
+                            },
                             {
                               "initialValue": 16,
                               "validation": [
@@ -2126,11 +2210,31 @@
                               "name": "size",
                               "type": "number",
                               "title": "Size (px)"
+                            },
+                            {
+                              "initialValue": 600,
+                              "validation": [
+                                {
+                                  "rules": [
+                                    {
+                                      "flag": "min",
+                                      "constraint": 100
+                                    },
+                                    {
+                                      "flag": "max",
+                                      "constraint": 900
+                                    }
+                                  ],
+                                  "level": "error"
+                                }
+                              ],
+                              "name": "weight",
+                              "type": "number"
                             }
                           ],
-                          "name": "textSize",
+                          "name": "textStyle",
                           "type": "object",
-                          "title": "Text size"
+                          "title": "Text style"
                         }
                       ],
                       "decorators": [
@@ -2401,14 +2505,7 @@
                             {
                               "name": "color",
                               "type": "color"
-                            }
-                          ],
-                          "name": "textColor",
-                          "type": "object",
-                          "title": "Text color"
-                        },
-                        {
-                          "fields": [
+                            },
                             {
                               "initialValue": 16,
                               "validation": [
@@ -2429,11 +2526,31 @@
                               "name": "size",
                               "type": "number",
                               "title": "Size (px)"
+                            },
+                            {
+                              "initialValue": 600,
+                              "validation": [
+                                {
+                                  "rules": [
+                                    {
+                                      "flag": "min",
+                                      "constraint": 100
+                                    },
+                                    {
+                                      "flag": "max",
+                                      "constraint": 900
+                                    }
+                                  ],
+                                  "level": "error"
+                                }
+                              ],
+                              "name": "weight",
+                              "type": "number"
                             }
                           ],
-                          "name": "textSize",
+                          "name": "textStyle",
                           "type": "object",
-                          "title": "Text size"
+                          "title": "Text style"
                         }
                       ],
                       "decorators": [
@@ -2786,14 +2903,7 @@
                             {
                               "name": "color",
                               "type": "color"
-                            }
-                          ],
-                          "name": "textColor",
-                          "type": "object",
-                          "title": "Text color"
-                        },
-                        {
-                          "fields": [
+                            },
                             {
                               "initialValue": 16,
                               "validation": [
@@ -2814,11 +2924,31 @@
                               "name": "size",
                               "type": "number",
                               "title": "Size (px)"
+                            },
+                            {
+                              "initialValue": 600,
+                              "validation": [
+                                {
+                                  "rules": [
+                                    {
+                                      "flag": "min",
+                                      "constraint": 100
+                                    },
+                                    {
+                                      "flag": "max",
+                                      "constraint": 900
+                                    }
+                                  ],
+                                  "level": "error"
+                                }
+                              ],
+                              "name": "weight",
+                              "type": "number"
                             }
                           ],
-                          "name": "textSize",
+                          "name": "textStyle",
                           "type": "object",
-                          "title": "Text size"
+                          "title": "Text style"
                         }
                       ],
                       "decorators": [

@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { groq, stegaClean } from "next-sanity";
 import { sanityFetch } from "@/lib/live";
 import { PortableText } from "@portabletext/react";
-import { portableTextComponents } from "@/components/portableTextComponents";
+import { normalizePortableTextValue, portableTextComponents } from "@/components/portableTextComponents";
 import React from "react";
 import { FormattedDateTime } from "@/components/FormattedDateTime";
 
@@ -344,7 +344,7 @@ export default async function NewsDetailPage(props: Props) {
                           <div
                             className={`text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3 ${sectionTextAlignClass(section.alignment)}`}
                           >
-                            <PortableText value={section.body} components={portableTextComponents} />
+                            <PortableText value={normalizePortableTextValue(section.body)} components={portableTextComponents} />
                           </div>
                         )}
                       </section>
@@ -385,7 +385,7 @@ export default async function NewsDetailPage(props: Props) {
                           className={`text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3 ${sectionTextAlignClass(section.alignment)}`}
                           style={sectionTextAlign(section.alignment)}
                         >
-                          <PortableText value={section.body} components={portableTextComponents} />
+                          <PortableText value={normalizePortableTextValue(section.body)} components={portableTextComponents} />
                         </div>
 
                         {!imageOnLeft && imageUrl && (
@@ -433,7 +433,7 @@ export default async function NewsDetailPage(props: Props) {
                           <div
                             className={`text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3 ${sectionTextAlignClass(section.alignment)}`}
                           >
-                            <PortableText value={section.body} components={portableTextComponents} />
+                            <PortableText value={normalizePortableTextValue(section.body)} components={portableTextComponents} />
                           </div>
                         )}
                       </section>

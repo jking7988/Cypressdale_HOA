@@ -50,6 +50,98 @@ const NumberItem = ({ children }: BlockProps) => (
   <li className="leading-relaxed">{children}</li>
 );
 
+type PortableTextSpan = {
+  _type?: string;
+  marks?: string[];
+  text?: string;
+};
+
+type PortableTextMarkDef = {
+  _key?: string;
+  _type?: string;
+  color?: string | { hex?: string };
+  size?: number | string;
+  weight?: number | string;
+};
+
+type PortableTextBlock = {
+  _type?: string;
+  children?: PortableTextSpan[];
+  markDefs?: PortableTextMarkDef[];
+};
+
+type PortableTextValue = PortableTextBlock[] | undefined;
+
+export function normalizePortableTextValue(value: PortableTextValue): PortableTextValue {
+  if (!Array.isArray(value)) return value;
+
+  return value.map((block) => {
+    if (!block || block._type !== "block" || !Array.isArray(block.children)) return block;
+    const markDefs = Array.isArray(block.markDefs) ? [...block.markDefs] : [];
+    if (!markDefs.length) return block;
+
+    const legacyByKey = new Map(
+      markDefs
+        .filter((d) => d?._key && (d._type === "textColor" || d._type === "textSize" || d._type === "textWeight"))
+        .map((d) => [d._key as string, d]),
+    );
+
+    if (!legacyByKey.size) return block;
+
+    const textStyleByKey = new Map(
+      markDefs.filter((d) => d?._key && d._type === "textStyle").map((d) => [d._key as string, d]),
+    );
+
+    const children = block.children.map((child) => {
+      if (!child?.marks?.length) return child;
+      const marks = [...child.marks];
+      const styleKey = marks.find((m) => textStyleByKey.has(m));
+      const legacyKeys = marks.filter((m) => legacyByKey.has(m));
+      if (!legacyKeys.length) return child;
+
+      if (styleKey) {
+        return { ...child, marks: marks.filter((m) => !legacyByKey.has(m)) };
+      }
+
+      let color: PortableTextMarkDef["color"] | undefined;
+      let size: PortableTextMarkDef["size"] | undefined;
+      let weight: PortableTextMarkDef["weight"] | undefined;
+
+      for (const k of legacyKeys) {
+        const def = legacyByKey.get(k);
+        if (!def) continue;
+        if (def._type === "textColor") color = def.color;
+        if (def._type === "textSize") size = def.size;
+        if (def._type === "textWeight") weight = def.weight;
+      }
+
+      const newKey = `textStyle-${legacyKeys.join("-")}`;
+      if (!textStyleByKey.has(newKey)) {
+        const merged: PortableTextMarkDef = {_key: newKey, _type: "textStyle"};
+        if (typeof color !== "undefined") merged.color = color;
+        if (typeof size !== "undefined") merged.size = size;
+        if (typeof weight !== "undefined") merged.weight = weight;
+        markDefs.push(merged);
+        textStyleByKey.set(newKey, merged);
+      }
+
+      return {
+        ...child,
+        marks: [...marks.filter((m) => !legacyByKey.has(m)), newKey],
+      };
+    });
+
+    const usedMarkKeys = new Set(children.flatMap((c) => c.marks || []));
+    const filteredMarkDefs = markDefs.filter((d) => d?._key && usedMarkKeys.has(d._key));
+
+    return {
+      ...block,
+      children,
+      markDefs: filteredMarkDefs,
+    };
+  });
+}
+
 const StrongMark = ({ children }: BlockProps) => (
   <span className="font-semibold">{children}</span>
 );
