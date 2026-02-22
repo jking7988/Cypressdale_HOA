@@ -220,9 +220,9 @@ export default function ResidentYardSaleMap({
 
     valid.forEach((entry) => {
       const marker = L.marker([Number(entry.lat), Number(entry.lng)]);
-      const tooltip = entry.hours ? `${entry.address} | ${entry.hours}` : entry.address;
-      marker.bindTooltip(tooltip, { direction: "top" });
       marker.bindPopup(popupHtml(entry));
+      marker.on("mouseover", () => marker.openPopup());
+      marker.on("mouseout", () => marker.closePopup());
       marker.addTo(layer);
     });
 
