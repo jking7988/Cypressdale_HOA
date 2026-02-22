@@ -37,7 +37,7 @@ async function getDraftEnabled(): Promise<boolean> {
 }
 
 function placeLabel(place?: string) {
-  switch (place) {
+  switch (normalizePlace(place)) {
     case "1":
       return "1st Place";
     case "2":
@@ -52,7 +52,7 @@ function placeLabel(place?: string) {
 }
 
 function placeIcon(place?: string) {
-  switch (place) {
+  switch (normalizePlace(place)) {
     case "1":
       return "🥇";
     case "2":
@@ -67,12 +67,12 @@ function placeIcon(place?: string) {
 }
 
 function placeRank(place?: string) {
-  const n = Number(place);
+  const n = Number(normalizePlace(place));
   return Number.isNaN(n) ? 99 : n;
 }
 
 function placePrize(place?: string) {
-  switch (place) {
+  switch (normalizePlace(place)) {
     case "1":
       return "$75 prize";
     case "2":
@@ -83,6 +83,26 @@ function placePrize(place?: string) {
     default:
       return null;
   }
+}
+
+function normalizeHoliday(holiday?: string) {
+  const h = String(holiday || "").trim().toLowerCase();
+  if (!h) return "";
+  if (h === "xmas") return "christmas";
+  if (h.includes("christmas")) return "christmas";
+  if (h.includes("halloween")) return "halloween";
+  return h;
+}
+
+function normalizePlace(place?: string) {
+  const p = String(place || "").trim().toLowerCase();
+  if (!p) return "";
+  if (p === "first" || p === "1st") return "1";
+  if (p === "second" || p === "2nd") return "2";
+  if (p === "third" || p === "3rd") return "3";
+  if (p === "fourth" || p === "4th") return "4";
+  if (p === "honorable mention" || p === "honourable mention") return "hm";
+  return p;
 }
 
 const layoutSections = [
@@ -120,7 +140,7 @@ export default async function HolidayDecoratingPage(props: Props) {
 
   const winners = await sanity.fetch<HolidayWinner[]>(holidayWinnersQuery);
 
-  const christmasWinners = winners.filter((w) => w.holiday === "christmas");
+  const christmasWinners = winners.filter((w) => normalizeHoliday(w.holiday) === "christmas");
 
   let currentChristmas: HolidayWinner[] = [];
   let currentYearLabel: string | null = null;
@@ -138,10 +158,13 @@ export default async function HolidayDecoratingPage(props: Props) {
   }
 
   const rankedChristmas = currentChristmas
-    .filter((w) => ["1", "2", "3", "4"].includes(String(w.place ?? "")))
+    .filter((w) => ["1", "2", "3", "4"].includes(normalizePlace(w.place)))
     .sort((a, b) => placeRank(a.place) - placeRank(b.place));
 
-  const shoutouts = currentChristmas.filter((w) => w.place === "shoutout" || w.place === "hm");
+  const shoutouts = currentChristmas.filter((w) => {
+    const p = normalizePlace(w.place);
+    return p === "shoutout" || p === "hm";
+  });
 
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-900 via-emerald-800 to-rose-900 text-emerald-50">
