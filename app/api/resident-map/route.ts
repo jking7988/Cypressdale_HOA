@@ -21,11 +21,25 @@ function sanitizeString(input: unknown, maxLength: number) {
 }
 
 async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
+  const normalized = address.replace(/\s+/g, " ").replace(/,\s*,/g, ",").trim();
+  const lower = normalized.toLowerCase();
+  const hasCityState =
+    lower.includes("spring, tx") ||
+    lower.includes("spring tx") ||
+    lower.includes("texas") ||
+    /\btx\b/.test(lower);
+
+  const fallbackBase = normalized.split(",")[0]?.trim() || normalized;
   const queries = [
-    `${address}, Spring, TX 77379`,
-    `${address}, Cypressdale, Spring, TX`,
-    `${address}, Harris County, TX`,
-    `${address}, Texas`,
+    normalized,
+    ...(hasCityState
+      ? []
+      : [
+          `${fallbackBase}, Spring, TX 77379`,
+          `${fallbackBase}, Cypressdale, Spring, TX`,
+          `${fallbackBase}, Harris County, TX`,
+          `${fallbackBase}, Texas`,
+        ]),
   ];
 
   for (const q of queries) {
@@ -109,7 +123,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error:
-          "Could not place that address on the map. Try street + city + state (example: 1234 Cypressdale Dr, Spring, TX).",
+          "Could not place that address on the map. Enter street number and street name only (example: 1234 Cypressdale Dr).",
       },
       { status: 400 },
     );

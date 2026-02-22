@@ -115,7 +115,7 @@ export default function ResidentYardSaleMap({
   showQrCard = false,
   mapPath = "/map",
   title = "Community Yard Sale Map",
-  subtitle = "Add your pin with address, hours, and optional notes.",
+  subtitle = "Add your pin with street number + street name, plus optional hours and notes.",
 }: ResidentYardSaleMapProps) {
   const [entries, setEntries] = useState<ResidentMapEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
@@ -355,15 +355,18 @@ export default function ResidentYardSaleMap({
 
               <form onSubmit={onSubmit} className="space-y-3">
                 <label className="block">
-                  <span className="text-xs font-medium text-emerald-900">Address</span>
+                  <span className="text-xs font-medium text-emerald-900">Street address</span>
                   <input
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900"
-                    placeholder="1234 Cypressdale Dr, Spring, TX"
+                    placeholder="1234 Cypressdale Dr"
                     required
                   />
+                  <p className="mt-1 text-[11px] text-gray-600">
+                    Enter street number and street name only.
+                  </p>
                 </label>
 
                 <label className="block">
