@@ -1,8 +1,9 @@
-// TeamChatView.tsx
+ï»¿// TeamChatView.tsx
 // @ts-nocheck
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useCurrentUser} from 'sanity';
 import {supabase} from './studioSupaBaseClient';
+import './TeamChatView.css';
 
 type Message = {
   id: string;
@@ -17,41 +18,30 @@ type Message = {
 
 const ROOM_ID = 'global:board-chat';
 const CHANNEL_NAME = 'team-chat';
+const REACTION_OPTIONS = ['\u{1F44D}', '\u2764\uFE0F', '\u{1F602}'];
 
-// small helper
 function nowIso() {
   return new Date().toISOString();
 }
-
-const REACTION_OPTIONS = ['??', '??', '??'];
 
 const TeamChatView = () => {
   const user = useCurrentUser();
 
   if (!supabase) {
     return (
-      <div className="p-3 text-xs text-gray-600">
-        <p className="font-semibold mb-1">Team chat not configured</p>
-        <p className="mb-1">
-          Supabase credentials are missing in the Studio environment.
-        </p>
+      <div className="tc-empty">
+        <p className="tc-empty-title">Team chat not configured</p>
+        <p>Supabase credentials are missing in the Studio environment.</p>
         <p>
-          Set{' '}
-          <code className="font-mono text-[11px] bg-gray-100 px-1 rounded">
-            SANITY_STUDIO_SUPABASE_URL
-          </code>{' '}
-          and{' '}
-          <code className="font-mono text-[11px] bg-gray-100 px-1 rounded">
-            SANITY_STUDIO_SUPABASE_ANON_KEY
-          </code>{' '}
-          to enable live chat.
+          Set <code>SANITY_STUDIO_SUPABASE_URL</code> and{' '}
+          <code>SANITY_STUDIO_SUPABASE_ANON_KEY</code> to enable live chat.
         </p>
       </div>
     );
   }
 
   const displayName = user?.name || user?.email || 'Unknown user';
-  const userId = user?._id || displayName; // simple stable id
+  const userId = user?._id || displayName;
   const initials =
     (user?.name &&
       user.name
@@ -67,15 +57,9 @@ const TeamChatView = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [typingUsers, setTypingUsers] = useState<
-    Record<string, {name: string; last: number}>
-  >({});
-  const [onlineUsers, setOnlineUsers] = useState<
-    Record<string, {name: string; last: number}>
-  >({});
-  const [reactions, setReactions] = useState<
-    Record<string, Record<string, number>>
-  >({});
+  const [typingUsers, setTypingUsers] = useState<Record<string, {name: string; last: number}>>({});
+  const [onlineUsers, setOnlineUsers] = useState<Record<string, {name: string; last: number}>>({});
+  const [reactions, setReactions] = useState<Record<string, Record<string, number>>>({});
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const channelRef = useRef<any>(null);
@@ -84,17 +68,14 @@ const TeamChatView = () => {
   const [isWindowFocused, setIsWindowFocused] = useState(
     typeof document !== 'undefined' ? !document.hidden : true,
   );
-
   const [lastReadAt, setLastReadAt] = useState<number>(() => Date.now());
 
-  // Scroll to bottom on message changes
   useEffect(() => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({behavior: 'smooth', block: 'end'});
     }
   }, [messages]);
 
-  // Track focus / visibility for "unread" logic
   useEffect(() => {
     function handleVisibility() {
       const visible = !document.hidden;
@@ -104,15 +85,16 @@ const TeamChatView = () => {
         setUnreadCount(0);
       }
     }
+
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('focus', handleVisibility);
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('focus', handleVisibility);
     };
   }, []);
 
-  // Load history + setup broadcast channel (messages, typing, presence, reactions)
   useEffect(() => {
     let active = true;
 
@@ -139,51 +121,34 @@ const TeamChatView = () => {
         const msg = payload.payload as Message;
         setMessages((prev) => [...prev, msg]);
         const createdTime = new Date(msg.created_at).getTime();
-        // increment unread if we're not focused
         setUnreadCount((prev) =>
           isWindowFocused || createdTime <= lastReadAt ? prev : prev + 1,
         );
       })
       .on('broadcast', {event: 'typing'}, (payload) => {
-        const {userId: typingId, name} = payload.payload as {
-          userId: string;
-          name: string;
-        };
+        const {userId: typingId, name} = payload.payload as {userId: string; name: string};
         const now = Date.now();
-        setTypingUsers((prev) => ({
-          ...prev,
-          [typingId]: {name, last: now},
-        }));
+        setTypingUsers((prev) => ({...prev, [typingId]: {name, last: now}}));
       })
       .on('broadcast', {event: 'presence'}, (payload) => {
-        const {userId: presenceId, name} = payload.payload as {
-          userId: string;
-          name: string;
-        };
+        const {userId: presenceId, name} = payload.payload as {userId: string; name: string};
         const now = Date.now();
-        setOnlineUsers((prev) => ({
-          ...prev,
-          [presenceId]: {name, last: now},
-        }));
+        setOnlineUsers((prev) => ({...prev, [presenceId]: {name, last: now}}));
       })
       .on('broadcast', {event: 'reaction'}, (payload) => {
-        const {messageId, emoji} = payload.payload as {
-          messageId: string;
-          emoji: string;
-        };
+        const {messageId, emoji} = payload.payload as {messageId: string; emoji: string};
         setReactions((prev) => {
-          const current = {...prev};
-          const forMsg = {...(current[messageId] || {})};
+          const next = {...prev};
+          const forMsg = {...(next[messageId] || {})};
           forMsg[emoji] = (forMsg[emoji] || 0) + 1;
-          current[messageId] = forMsg;
-          return current;
+          next[messageId] = forMsg;
+          return next;
         });
       })
       .subscribe();
 
     channelRef.current = channel;
 
-    // announce presence immediately and then ping every 20s
     function sendPresence() {
       if (!channelRef.current) return;
       channelRef.current.send({
@@ -192,13 +157,13 @@ const TeamChatView = () => {
         payload: {userId, name: displayName},
       });
     }
-    sendPresence();
-    const presenceInterval = setInterval(sendPresence, 20_000);
 
-    // periodically prune stale typing / presence
+    sendPresence();
+    const presenceInterval = setInterval(sendPresence, 20000);
+
     const pruneInterval = setInterval(() => {
-      const cutoffTyping = Date.now() - 3_000; // 3s
-      const cutoffPresence = Date.now() - 30_000; // 30s
+      const cutoffTyping = Date.now() - 3000;
+      const cutoffPresence = Date.now() - 30000;
 
       setTypingUsers((prev) => {
         const next: typeof prev = {};
@@ -215,7 +180,7 @@ const TeamChatView = () => {
         }
         return next;
       });
-    }, 3_000);
+    }, 3000);
 
     return () => {
       active = false;
@@ -228,14 +193,13 @@ const TeamChatView = () => {
     };
   }, [isWindowFocused, lastReadAt, userId, displayName]);
 
-  // Typing broadcast on input change (debounced)
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
     setInput(value);
 
     const now = Date.now();
     if (!channelRef.current) return;
-    if (now - lastTypingSentRef.current < 800) return; // throttle
+    if (now - lastTypingSentRef.current < 800) return;
     lastTypingSentRef.current = now;
 
     channelRef.current.send({
@@ -252,9 +216,9 @@ const TeamChatView = () => {
 
     const createdAt = nowIso();
     const localId =
-      (typeof crypto !== 'undefined' && crypto.randomUUID
+      typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
-        : `local-${Date.now()}`);
+        : `local-${Date.now()}`;
 
     const msg: Message = {
       id: localId,
@@ -264,20 +228,14 @@ const TeamChatView = () => {
       created_at: createdAt,
     };
 
-    // optimistic + broadcast
     setMessages((prev) => [...prev, msg]);
     setInput('');
     setSending(true);
 
     if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'message',
-        payload: msg,
-      });
+      channelRef.current.send({type: 'broadcast', event: 'message', payload: msg});
     }
 
-    // persist
     const {error} = await supabase.from('messages').insert({
       room_id: ROOM_ID,
       author_name: displayName,
@@ -288,7 +246,6 @@ const TeamChatView = () => {
     setSending(false);
 
     if (error) {
-      // rollback optimistic if insert fails
       setMessages((prev) => prev.filter((m) => m.id !== localId));
       console.error('Supabase insert error:', error.message);
     }
@@ -301,9 +258,7 @@ const TeamChatView = () => {
     try {
       setSending(true);
       const path = `${userId}/${Date.now()}-${file.name}`;
-      const {error: uploadError} = await supabase.storage
-        .from('chat-uploads')
-        .upload(path, file);
+      const {error: uploadError} = await supabase.storage.from('chat-uploads').upload(path, file);
 
       if (uploadError) {
         console.error(uploadError);
@@ -317,9 +272,9 @@ const TeamChatView = () => {
 
       const createdAt = nowIso();
       const localId =
-        (typeof crypto !== 'undefined' && crypto.randomUUID
+        typeof crypto !== 'undefined' && crypto.randomUUID
           ? crypto.randomUUID()
-          : `file-${Date.now()}`);
+          : `file-${Date.now()}`;
 
       const msg: Message = {
         id: localId,
@@ -332,14 +287,9 @@ const TeamChatView = () => {
         file_type: file.type,
       };
 
-      // optimistic + broadcast
       setMessages((prev) => [...prev, msg]);
       if (channelRef.current) {
-        channelRef.current.send({
-          type: 'broadcast',
-          event: 'message',
-          payload: msg,
-        });
+        channelRef.current.send({type: 'broadcast', event: 'message', payload: msg});
       }
 
       const {error: insertError} = await supabase.from('messages').insert({
@@ -353,7 +303,6 @@ const TeamChatView = () => {
       });
 
       if (insertError) {
-        // rollback if necessary
         setMessages((prev) => prev.filter((m) => m.id !== localId));
         console.error(insertError);
       }
@@ -364,16 +313,14 @@ const TeamChatView = () => {
   }
 
   function handleReaction(messageId: string, emoji: string) {
-    // local
     setReactions((prev) => {
-      const current = {...prev};
-      const forMsg = {...(current[messageId] || {})};
+      const next = {...prev};
+      const forMsg = {...(next[messageId] || {})};
       forMsg[emoji] = (forMsg[emoji] || 0) + 1;
-      current[messageId] = forMsg;
-      return current;
+      next[messageId] = forMsg;
+      return next;
     });
 
-    // broadcast
     if (channelRef.current) {
       channelRef.current.send({
         type: 'broadcast',
@@ -386,62 +333,49 @@ const TeamChatView = () => {
   const typingList = Object.values(typingUsers)
     .map((t) => t.name)
     .filter((n) => n && n !== displayName);
+
   const onlineList = Object.entries(onlineUsers);
 
   return (
-    <div className="flex flex-col h-full rounded-2xl border border-gray-200 bg-white">
-      {/* Header */}
-      <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
+    <div className="tc-root">
+      <div className="tc-header">
+        <div className="tc-header-main">
           <div>
-            <p className="text-xs font-semibold text-gray-800">
-              Board / Team chat
-            </p>
-            <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-[9px]">
-                {initials}
-              </span>
+            <p className="tc-title">Board / Team chat</p>
+            <p className="tc-subtitle">
+              <span className="tc-initials">{initials}</span>
               <span>Online as {displayName}</span>
             </p>
           </div>
           {onlineList.length > 0 && (
-            <div className="hidden md:flex items-center gap-1 text-[10px] text-gray-500">
-              <span className="mr-1">Also online:</span>
+            <div className="tc-online-wrap">
+              <span className="tc-online-label">Also online:</span>
               {onlineList.map(([id, info]) => (
-                <span
-                  key={id}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-50 border border-gray-200"
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span className="truncate max-w-[90px]">{info.name}</span>
+                <span key={id} className="tc-online-chip">
+                  <span className="tc-online-dot" />
+                  <span className="tc-online-name">{info.name}</span>
                 </span>
               ))}
             </div>
           )}
         </div>
-        <div className="text-[10px] text-gray-400 text-right">
+        <div className="tc-meta">
           <div>
-            Room:{' '}
-            <span className="font-mono">
-              {ROOM_ID}
-            </span>
+            Room: <span className="tc-room-id">{ROOM_ID}</span>
           </div>
           {unreadCount > 0 && (
-            <div className="text-[10px] text-emerald-700 font-semibold mt-0.5">
-              • {unreadCount} new message{unreadCount > 1 ? 's' : ''}
+            <div className="tc-unread">
+              {unreadCount} new message{unreadCount > 1 ? 's' : ''}
             </div>
           )}
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 text-xs">
+      <div className="tc-messages">
         {loading ? (
-          <p className="text-gray-500 text-[11px]">Loading messages…</p>
+          <p className="tc-muted">Loading messages...</p>
         ) : messages.length === 0 ? (
-          <p className="text-gray-500 text-[11px]">
-            No messages yet. Start the conversation!
-          </p>
+          <p className="tc-muted">No messages yet. Start the conversation!</p>
         ) : (
           messages.map((m) => {
             const isMe = m.author_name === displayName;
@@ -450,23 +384,12 @@ const TeamChatView = () => {
             const msgReactions = reactions[m.id] || {};
 
             return (
-              <div
-                key={m.id}
-                className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className="flex flex-col items-stretch max-w-[80%]">
-                  <div
-                    className={`space-y-0.5 rounded-2xl px-3 py-1.5 border ${
-                      isMe
-                        ? 'bg-emerald-50 border-emerald-100 text-gray-900'
-                        : 'bg-gray-50 border-gray-200 text-gray-900'
-                    }`}
-                  >
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="font-semibold text-[11px] text-gray-800 truncate">
-                        {m.author_name}
-                      </span>
-                      <span className="text-[10px] text-gray-400">
+              <div key={m.id} className={isMe ? 'tc-row tc-row-me' : 'tc-row tc-row-other'}>
+                <div className="tc-bubble-wrap">
+                  <div className={isMe ? 'tc-bubble tc-bubble-me' : 'tc-bubble tc-bubble-other'}>
+                    <div className="tc-line">
+                      <span className="tc-author">{m.author_name}</span>
+                      <span className="tc-time">
                         {new Date(m.created_at).toLocaleTimeString(undefined, {
                           hour: 'numeric',
                           minute: '2-digit',
@@ -474,72 +397,50 @@ const TeamChatView = () => {
                       </span>
                     </div>
 
-                    {/* Message text */}
-                    {m.text && (
-                      <p className="text-[11px] text-gray-800">{m.text}</p>
-                    )}
+                    {m.text && <p className="tc-text">{m.text}</p>}
 
-                    {/* Attachment preview/link */}
                     {m.file_url && (
-                      <div className="mt-1">
+                      <div className="tc-file-wrap">
                         {m.file_type?.startsWith('image/') ? (
-                          <a
-                            href={m.file_url}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
+                          <a href={m.file_url} target="_blank" rel="noreferrer">
                             <img
                               src={m.file_url}
                               alt={m.file_name || 'Attachment'}
-                              className="max-h-40 rounded-lg border border-gray-200"
+                              className="tc-file-image"
                             />
                           </a>
                         ) : (
-                          <a
-                            href={m.file_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[11px] text-emerald-700 underline"
-                          >
+                          <a href={m.file_url} target="_blank" rel="noreferrer" className="tc-file-link">
                             {m.file_name || 'Download file'}
                           </a>
                         )}
                       </div>
                     )}
 
-                    {/* Reactions row */}
                     {Object.keys(msgReactions).length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
+                      <div className="tc-reactions">
                         {Object.entries(msgReactions).map(([emoji, count]) => (
-                          <span
-                            key={emoji}
-                            className="inline-flex items-center gap-1 rounded-full bg-white/70 border border-gray-200 px-2 py-0.5 text-[10px]"
-                          >
+                          <span key={emoji} className="tc-reaction-chip">
                             <span>{emoji}</span>
-                            <span className="text-gray-600">{count}</span>
+                            <span className="tc-reaction-count">{count}</span>
                           </span>
                         ))}
                       </div>
                     )}
                   </div>
 
-                  {/* Reaction buttons */}
-                  <div className="mt-1 flex gap-1">
+                  <div className="tc-actions">
                     {REACTION_OPTIONS.map((emoji) => (
                       <button
                         key={emoji}
                         type="button"
                         onClick={() => handleReaction(m.id, emoji)}
-                        className="text-[10px] px-1.5 py-0.5 rounded-full border border-gray-200 bg-white hover:bg-gray-50"
+                        className="tc-reaction-btn"
                       >
                         {emoji}
                       </button>
                     ))}
-                    {isNew && (
-                      <span className="ml-1 text-[10px] text-emerald-600">
-                        • New
-                      </span>
-                    )}
+                    {isNew && <span className="tc-new">New</span>}
                   </div>
                 </div>
               </div>
@@ -549,46 +450,32 @@ const TeamChatView = () => {
         <div ref={bottomRef} />
       </div>
 
-      {/* Typing indicator */}
       {typingList.length > 0 && (
-        <div className="px-3 pb-1 text-[10px] text-gray-500">
+        <div className="tc-typing">
           {typingList.length === 1
-            ? `${typingList[0]} is typing…`
-            : 'Several people are typing…'}
+            ? `${typingList[0]} is typing...`
+            : 'Several people are typing...'}
         </div>
       )}
 
-      {/* Input + Attach */}
-      <form
-        onSubmit={handleSend}
-        className="border-t border-gray-200 flex items-center gap-2 px-3 py-2"
-      >
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileSelected}
-        />
+      <form onSubmit={handleSend} className="tc-input-row">
+        <input type="file" ref={fileInputRef} className="tc-hidden" onChange={handleFileSelected} />
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="text-[10px] px-2 py-1 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
+          className="tc-btn-secondary"
           disabled={sending}
         >
           Attach
         </button>
         <input
           type="text"
-          className="flex-1 rounded-full border border-gray-300 px-3 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          placeholder="Type a message for the team…"
+          className="tc-input"
+          placeholder="Type a message for the team..."
           value={input}
           onChange={handleInputChange}
         />
-        <button
-          type="submit"
-          disabled={sending || !input.trim()}
-          className="text-xs font-semibold text-emerald-700 disabled:opacity-50"
-        >
+        <button type="submit" disabled={sending || !input.trim()} className="tc-btn-primary">
           Send
         </button>
       </form>
@@ -597,4 +484,3 @@ const TeamChatView = () => {
 };
 
 export default TeamChatView;
-

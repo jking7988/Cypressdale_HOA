@@ -22,6 +22,7 @@ type LeafletLike = {
 type ResidentYardSaleMapProps = {
   readOnly?: boolean;
   showQrCard?: boolean;
+  showAddressList?: boolean;
   mapPath?: string;
   title?: string;
   subtitle?: string;
@@ -113,6 +114,7 @@ async function ensureLeafletLoaded() {
 export default function ResidentYardSaleMap({
   readOnly = false,
   showQrCard = false,
+  showAddressList = true,
   mapPath = "/map",
   title = "Community Yard Sale Map",
   subtitle = "Add your pin with street number + street name, plus optional hours and notes.",
@@ -539,53 +541,68 @@ export default function ResidentYardSaleMap({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-emerald-100 bg-white/90 p-4">
-        <h3 className="text-sm font-semibold text-emerald-900 mb-2">Address list</h3>
-        {entries.length === 0 ? (
-          <p className="text-xs text-gray-600">No addresses have been pinned yet.</p>
-        ) : (
-          <div className="grid gap-2 md:grid-cols-2">
-            {entries.map((entry) => (
-              <div key={entry.id} className="rounded-lg border border-emerald-100 bg-emerald-50/40 p-3">
-                <p className="text-sm font-semibold text-emerald-950">{entry.address}</p>
-                {entry.hours && (
-                  <p className="text-xs text-gray-700 mt-0.5">
-                    <span className="font-semibold">Hours:</span> {entry.hours}
-                  </p>
-                )}
-                {entry.details && <p className="text-xs text-gray-700 mt-1">{entry.details}</p>}
-                <div className="mt-2 flex flex-wrap gap-3 text-xs">
-                  <a
-                    href={googleMapsUrl(entry.address)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sky-700 hover:underline"
-                  >
-                    Open in Google Maps
-                  </a>
-                  <a
-                    href={appleMapsUrl(entry.address)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-emerald-700 hover:underline"
-                  >
-                    Open in Apple Maps
-                  </a>
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      onClick={() => onDeletePin(entry.id)}
-                      className="text-red-700 hover:underline"
-                    >
-                      Remove pin
-                    </button>
+      {showAddressList ? (
+        <div className="rounded-2xl border border-emerald-100 bg-white/90 p-4">
+          <h3 className="text-sm font-semibold text-emerald-900 mb-2">Address list</h3>
+          {entries.length === 0 ? (
+            <p className="text-xs text-gray-600">No addresses have been pinned yet.</p>
+          ) : (
+            <div className="grid gap-2 md:grid-cols-2">
+              {entries.map((entry) => (
+                <div key={entry.id} className="rounded-lg border border-emerald-100 bg-emerald-50/40 p-3">
+                  <p className="text-sm font-semibold text-emerald-950">{entry.address}</p>
+                  {entry.hours && (
+                    <p className="text-xs text-gray-700 mt-0.5">
+                      <span className="font-semibold">Hours:</span> {entry.hours}
+                    </p>
                   )}
+                  {entry.details && <p className="text-xs text-gray-700 mt-1">{entry.details}</p>}
+                  <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                    <a
+                      href={googleMapsUrl(entry.address)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sky-700 hover:underline"
+                    >
+                      Open in Google Maps
+                    </a>
+                    <a
+                      href={appleMapsUrl(entry.address)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-emerald-700 hover:underline"
+                    >
+                      Open in Apple Maps
+                    </a>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => onDeletePin(entry.id)}
+                        className="text-red-700 hover:underline"
+                      >
+                        Remove pin
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-emerald-100 bg-white/90 p-4">
+          <h3 className="text-sm font-semibold text-emerald-900 mb-1">Address list</h3>
+          <p className="text-xs text-gray-700">
+            Addresses are only shown on the dedicated map page.
+          </p>
+          <a
+            href={mapPath}
+            className="mt-2 inline-flex items-center rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
+          >
+            Open full map with addresses
+          </a>
+        </div>
+      )}
     </section>
   );
 }

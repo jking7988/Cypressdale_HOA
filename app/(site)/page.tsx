@@ -246,7 +246,7 @@ export default async function HomePage() {
 
           <LatestNewsSection posts={latestPosts} />
 
-          <ResidentYardSaleMap showQrCard mapPath="/map" />
+          <ResidentYardSaleMap showQrCard showAddressList={false} mapPath="/map" />
 
           <NewsLetterSignup />
 
