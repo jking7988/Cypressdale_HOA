@@ -299,13 +299,23 @@ export default function ResidentYardSaleMap({
         setShareMsg("Shared successfully.");
         return;
       }
-
-      await navigator.clipboard.writeText(shareUrl);
-      setShareMsg("Map link copied.");
     } catch (err: any) {
       if (err?.name === "AbortError") return;
-      setError("Could not share right now.");
     }
+
+    // Fallback path for browsers where share exists but fails, or share is unavailable.
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareMsg("Share not available on this device. Map link copied.");
+        return;
+      }
+    } catch {
+      // continue to manual fallback
+    }
+
+    window.prompt("Copy this map link:", shareUrl);
+    setShareMsg("Share not available on this device. Copy link shown.");
   }
 
   async function onCopyMapLink() {

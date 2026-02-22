@@ -1,5 +1,6 @@
 import "../../styles/globals.css";
 import type { Metadata } from "next";
+import { draftMode } from "next/headers";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import SanityVisualEditing from "@/components/SanityVisualEditing";
@@ -17,7 +18,9 @@ async function refreshOnLiveEvent(_tags: string[]) {
   return "refresh" as const;
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const isDraftMode = (await draftMode()).isEnabled;
+
   return (
     <html lang="en" className="h-full">
       <body
@@ -30,14 +33,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Footer />
         </div>
 
-        <SanityVisualEditing />
+        {isDraftMode && <SanityVisualEditing />}
         <AutoSpanishTranslate />
-        <SanityLive
-          refreshOnMount
-          refreshOnReconnect
-          refreshOnFocus
-          revalidateSyncTags={refreshOnLiveEvent}
-        />
+        {isDraftMode && (
+          <SanityLive
+            refreshOnMount
+            refreshOnReconnect
+            refreshOnFocus
+            revalidateSyncTags={refreshOnLiveEvent}
+          />
+        )}
         <Analytics />
       </body>
     </html>

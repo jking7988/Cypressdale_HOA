@@ -11,6 +11,7 @@ export default function Nav() {
   const links = [
     { href: '/', label: 'Home', icon: '\u{1F3E0}' },
     { href: '/news', label: 'News', icon: '\u{1F4F0}' },
+    { href: '/events', label: 'Events', icon: '\u{1F4C5}' },
     { href: '/map', label: 'Yard Sale Map', icon: '\u{1F5FA}\uFE0F' },
     { href: '/pool', label: 'Pool', icon: '\u{1F30A}', highlight: true },
     { href: '/new-residents', label: 'New Residents', icon: '\u{1F9ED}' },
