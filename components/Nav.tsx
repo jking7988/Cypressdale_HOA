@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -9,17 +9,17 @@ export default function Nav() {
   const pathname = usePathname();
 
   const links = [
-    { href: '/', label: 'Home', icon: '🏠' },
-    { href: '/news', label: 'News', icon: '🗞️' },
-    { href: '/events', label: 'Events', icon: '📅' },
-    { href: '/pool', label: 'Pool', icon: '🌊', highlight: true },
-    { href: '/new-residents', label: 'New Residents', icon: '🧭' },
-    { href: '/local-area', label: 'Local Area Map', icon: '📍' },
-    { href: '/trash', label: 'Trash & Recycling', icon: '🗑️' },
-    { href: '/documents', label: 'Documents', icon: '📄' },
-    { href: '/yard-of-the-month', label: 'Yard of the Month', icon: '🌿' },
-    { href: '/holiday-decorating', label: 'Holiday Decorating', icon: '🎄' },
-    { href: '/about', label: 'About', icon: 'ℹ️' },
+    { href: '/', label: 'Home', icon: 'ðŸ ' },
+    { href: '/news', label: 'News', icon: 'ðŸ—žï¸' },
+        { href: '/map', label: 'Yard Sale Map', icon: '🗺️' },
+    { href: '/pool', label: 'Pool', icon: 'ðŸŒŠ', highlight: true },
+    { href: '/new-residents', label: 'New Residents', icon: 'ðŸ§­' },
+    { href: '/local-area', label: 'Local Area Map', icon: 'ðŸ“' },
+    { href: '/trash', label: 'Trash & Recycling', icon: 'ðŸ—‘ï¸' },
+    { href: '/documents', label: 'Documents', icon: 'ðŸ“„' },
+    { href: '/yard-of-the-month', label: 'Yard of the Month', icon: 'ðŸŒ¿' },
+    { href: '/holiday-decorating', label: 'Holiday Decorating', icon: 'ðŸŽ„' },
+    { href: '/about', label: 'About', icon: 'â„¹ï¸' },
   ];
 
   return (
@@ -108,3 +108,4 @@ export default function Nav() {
     </header>
   );
 }
+

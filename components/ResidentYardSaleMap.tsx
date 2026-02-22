@@ -19,6 +19,14 @@ type LeafletLike = {
   marker: (latLng: [number, number]) => any;
 };
 
+type ResidentYardSaleMapProps = {
+  readOnly?: boolean;
+  showQrCard?: boolean;
+  mapPath?: string;
+  title?: string;
+  subtitle?: string;
+};
+
 const CENTER: [number, number] = [30.0376, -95.4798];
 const LEAFLET_CSS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
 const LEAFLET_JS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
@@ -40,13 +48,28 @@ function escapeHtml(value: string) {
 
 function popupHtml(entry: ResidentMapEntry) {
   const details = entry.details ? `<div style="margin-top:6px">${escapeHtml(entry.details)}</div>` : "";
+  const encodedAddress = encodeURIComponent(entry.address);
+  const googleUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+  const appleUrl = `https://maps.apple.com/?q=${encodedAddress}`;
   return `
     <div style="min-width:220px;font:13px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0b1f18">
       <div style="font-weight:700;margin-bottom:4px">${escapeHtml(entry.address)}</div>
       <div><strong>Hours:</strong> ${escapeHtml(entry.hours)}</div>
       ${details}
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <a href="${googleUrl}" target="_blank" rel="noreferrer" style="color:#0369a1;text-decoration:underline">Google Maps</a>
+        <a href="${appleUrl}" target="_blank" rel="noreferrer" style="color:#0f766e;text-decoration:underline">Apple Maps</a>
+      </div>
     </div>
   `;
+}
+
+function googleMapsUrl(address: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+}
+
+function appleMapsUrl(address: string) {
+  return `https://maps.apple.com/?q=${encodeURIComponent(address)}`;
 }
 
 async function ensureLeafletLoaded() {
@@ -86,7 +109,13 @@ async function ensureLeafletLoaded() {
   return window.L ?? null;
 }
 
-export default function ResidentYardSaleMap() {
+export default function ResidentYardSaleMap({
+  readOnly = false,
+  showQrCard = false,
+  mapPath = "/map",
+  title = "Community Yard Sale Map",
+  subtitle = "Add your pin with address, hours, and optional notes.",
+}: ResidentYardSaleMapProps) {
   const [entries, setEntries] = useState<ResidentMapEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,6 +125,7 @@ export default function ResidentYardSaleMap() {
   const [address, setAddress] = useState("");
   const [hours, setHours] = useState("");
   const [details, setDetails] = useState("");
+  const [shareUrl, setShareUrl] = useState("");
 
   const mapHostRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
@@ -128,6 +158,11 @@ export default function ResidentYardSaleMap() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setShareUrl(`${window.location.origin}${mapPath}`);
+  }, [mapPath]);
 
   useEffect(() => {
     let cancelled = false;
@@ -225,11 +260,15 @@ export default function ResidentYardSaleMap() {
     }
   }
 
+  const qrImageUrl = shareUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(shareUrl)}`
+    : "";
+
   return (
     <section className="rounded-3xl bg-white/95 border border-emerald-50 shadow-[0_18px_50px_rgba(15,118,110,0.22)] backdrop-blur px-4 py-5 md:px-6 md:py-6 space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="h2">Community Yard Sale Map</h2>
-        <p className="text-xs text-gray-600">Add your pin with address, hours, and optional notes.</p>
+        <h2 className="h2">{title}</h2>
+        <p className="text-xs text-gray-600">{subtitle}</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -238,58 +277,121 @@ export default function ResidentYardSaleMap() {
         </div>
 
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
-          <h3 className="text-sm font-semibold text-emerald-900 mb-2">Add your sale pin</h3>
+          {!readOnly ? (
+            <>
+              <h3 className="text-sm font-semibold text-emerald-900 mb-2">Add your sale pin</h3>
 
-          <form onSubmit={onSubmit} className="space-y-3">
-            <label className="block">
-              <span className="text-xs font-medium text-emerald-900">Address</span>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900"
-                placeholder="1234 Cypressdale Dr, Spring, TX"
-                required
-              />
-            </label>
+              <form onSubmit={onSubmit} className="space-y-3">
+                <label className="block">
+                  <span className="text-xs font-medium text-emerald-900">Address</span>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900"
+                    placeholder="1234 Cypressdale Dr, Spring, TX"
+                    required
+                  />
+                </label>
 
-            <label className="block">
-              <span className="text-xs font-medium text-emerald-900">Hours</span>
-              <input
-                type="text"
-                value={hours}
-                onChange={(e) => setHours(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900"
-                placeholder="Sat 8:00 AM - 2:00 PM"
-                required
-              />
-            </label>
+                <label className="block">
+                  <span className="text-xs font-medium text-emerald-900">Hours</span>
+                  <input
+                    type="text"
+                    value={hours}
+                    onChange={(e) => setHours(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900"
+                    placeholder="Sat 8:00 AM - 2:00 PM"
+                    required
+                  />
+                </label>
 
-            <label className="block">
-              <span className="text-xs font-medium text-emerald-900">Details (optional)</span>
-              <textarea
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900 min-h-[90px]"
-                placeholder="Furniture, kids clothes, tools, etc."
-              />
-            </label>
+                <label className="block">
+                  <span className="text-xs font-medium text-emerald-900">Details (optional)</span>
+                  <textarea
+                    value={details}
+                    onChange={(e) => setDetails(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-gray-900 min-h-[90px]"
+                    placeholder="Furniture, kids clothes, tools, etc."
+                  />
+                </label>
 
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className="w-full rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold px-3 py-2"
-            >
-              {isSubmitting ? "Submitting..." : "Submit pin"}
-            </button>
-          </form>
+                <button
+                  type="submit"
+                  disabled={!canSubmit}
+                  className="w-full rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold px-3 py-2"
+                >
+                  {isSubmitting ? "Submitting..." : "Submit pin"}
+                </button>
+              </form>
+            </>
+          ) : (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-emerald-900">Use a pin for details</h3>
+              <p className="text-xs text-gray-700">
+                Tap any pin to view hours and optional notes, then export that address to Google or Apple Maps.
+              </p>
+            </div>
+          )}
 
           {loadingEntries && <p className="mt-3 text-xs text-gray-600">Loading map pins...</p>}
           {error && <p className="mt-3 text-xs text-red-700">{error}</p>}
           {!error && success && <p className="mt-3 text-xs text-emerald-700">{success}</p>}
+
+          {showQrCard && qrImageUrl && (
+            <div className="mt-4 border-t border-emerald-100 pt-3 space-y-2">
+              <p className="text-xs font-semibold text-emerald-900">Share this map</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrImageUrl}
+                alt="QR code linking to community yard sale map page"
+                className="h-36 w-36 rounded-lg border border-emerald-200 bg-white"
+              />
+              <a
+                href={shareUrl}
+                className="inline-flex text-xs text-emerald-700 hover:underline break-all"
+              >
+                {shareUrl}
+              </a>
+            </div>
+          )}
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-emerald-100 bg-white/90 p-4">
+        <h3 className="text-sm font-semibold text-emerald-900 mb-2">Address list</h3>
+        {entries.length === 0 ? (
+          <p className="text-xs text-gray-600">No addresses have been pinned yet.</p>
+        ) : (
+          <div className="grid gap-2 md:grid-cols-2">
+            {entries.map((entry) => (
+              <div key={entry.id} className="rounded-lg border border-emerald-100 bg-emerald-50/40 p-3">
+                <p className="text-sm font-semibold text-emerald-950">{entry.address}</p>
+                <p className="text-xs text-gray-700 mt-0.5"><span className="font-semibold">Hours:</span> {entry.hours}</p>
+                {entry.details && <p className="text-xs text-gray-700 mt-1">{entry.details}</p>}
+                <div className="mt-2 flex gap-3 text-xs">
+                  <a
+                    href={googleMapsUrl(entry.address)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sky-700 hover:underline"
+                  >
+                    Open in Google Maps
+                  </a>
+                  <a
+                    href={appleMapsUrl(entry.address)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-emerald-700 hover:underline"
+                  >
+                    Open in Apple Maps
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 }
-

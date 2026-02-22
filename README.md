@@ -69,3 +69,5 @@ create table if not exists public.resident_map_entries (
 create index if not exists resident_map_entries_created_at_idx
   on public.resident_map_entries (created_at desc);
 ```
+- Public map page: `/map` (shareable and QR-friendly). Scanning the QR opens this page.
+- Each pinned address now includes direct links to open in Google Maps or Apple Maps.

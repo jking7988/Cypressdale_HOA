@@ -233,7 +233,7 @@ export default async function HomePage() {
 
           <LatestNewsSection posts={latestPosts} />
 
-          <ResidentYardSaleMap />
+          <ResidentYardSaleMap showQrCard mapPath="/map" />
 
           <NewsLetterSignup />
 
