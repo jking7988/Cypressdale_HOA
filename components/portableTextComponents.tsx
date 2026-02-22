@@ -1,6 +1,7 @@
 // src/components/portableTextComponents.tsx
 import React, { ReactNode } from 'react';
 import { stegaClean } from 'next-sanity';
+import type {TypedObject} from '@portabletext/types';
 // If this type import causes issues, you can delete the line and the type annotation below.
 // import type { PortableTextComponents } from '@portabletext/react';
 
@@ -70,10 +71,10 @@ type PortableTextBlock = {
   markDefs?: PortableTextMarkDef[];
 };
 
-type PortableTextValue = PortableTextBlock[] | undefined;
+type PortableTextValue = TypedObject[];
 
-export function normalizePortableTextValue(value: PortableTextValue): PortableTextValue {
-  if (!Array.isArray(value)) return value;
+export function normalizePortableTextValue(value: unknown): PortableTextValue {
+  if (!Array.isArray(value)) return [];
 
   return value.map((block) => {
     if (!block || block._type !== "block" || !Array.isArray(block.children)) return block;
@@ -139,7 +140,7 @@ export function normalizePortableTextValue(value: PortableTextValue): PortableTe
       children,
       markDefs: filteredMarkDefs,
     };
-  });
+  }) as PortableTextValue;
 }
 
 const StrongMark = ({ children }: BlockProps) => (
