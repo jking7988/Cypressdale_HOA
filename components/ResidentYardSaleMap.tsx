@@ -121,6 +121,7 @@ export default function ResidentYardSaleMap({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
+  const [shareMsg, setShareMsg] = useState<string>("");
 
   const [address, setAddress] = useState("");
   const [hours, setHours] = useState("");
@@ -260,6 +261,65 @@ export default function ResidentYardSaleMap({
     }
   }
 
+  async function onDeletePin(id: string) {
+    setError("");
+    setSuccess("");
+
+    const passphrase = window.prompt("Enter admin passphrase to remove this pin:");
+    if (!passphrase) return;
+
+    try {
+      const res = await fetch(`/api/resident-map?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: { "x-delete-secret": passphrase },
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.error || "Could not delete pin.");
+      }
+
+      setEntries((prev) => prev.filter((p) => p.id !== id));
+      setSuccess("Pin removed.");
+    } catch (err: any) {
+      setError(err?.message || "Could not delete pin.");
+    }
+  }
+
+  async function onShareMap() {
+    if (!shareUrl) return;
+    setError("");
+    setShareMsg("");
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Community Yard Sale Map",
+          text: "Open the community map with all sale addresses.",
+          url: shareUrl,
+        });
+        setShareMsg("Shared successfully.");
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
+      setShareMsg("Map link copied.");
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
+      setError("Could not share right now.");
+    }
+  }
+
+  async function onCopyMapLink() {
+    if (!shareUrl) return;
+    setError("");
+    setShareMsg("");
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareMsg("Map link copied.");
+    } catch {
+      setError("Could not copy link.");
+    }
+  }
+
   const qrImageUrl = shareUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(shareUrl)}`
     : "";
@@ -347,6 +407,32 @@ export default function ResidentYardSaleMap({
                 alt="QR code linking to community yard sale map page"
                 className="h-36 w-36 rounded-lg border border-emerald-200 bg-white"
               />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={onShareMap}
+                  className="rounded-md bg-emerald-700 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-800"
+                >
+                  Share QR/Link
+                </button>
+                <button
+                  type="button"
+                  onClick={onCopyMapLink}
+                  className="rounded-md border border-emerald-300 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50"
+                >
+                  Copy link
+                </button>
+                <a
+                  href={qrImageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  download="cypressdale-yard-sale-map-qr.png"
+                  className="rounded-md border border-emerald-300 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50"
+                >
+                  Save QR
+                </a>
+              </div>
+              {shareMsg && <p className="text-xs text-emerald-700">{shareMsg}</p>}
               <a
                 href={shareUrl}
                 className="inline-flex text-xs text-emerald-700 hover:underline break-all"
@@ -369,7 +455,7 @@ export default function ResidentYardSaleMap({
                 <p className="text-sm font-semibold text-emerald-950">{entry.address}</p>
                 <p className="text-xs text-gray-700 mt-0.5"><span className="font-semibold">Hours:</span> {entry.hours}</p>
                 {entry.details && <p className="text-xs text-gray-700 mt-1">{entry.details}</p>}
-                <div className="mt-2 flex gap-3 text-xs">
+                <div className="mt-2 flex flex-wrap gap-3 text-xs">
                   <a
                     href={googleMapsUrl(entry.address)}
                     target="_blank"
@@ -386,6 +472,15 @@ export default function ResidentYardSaleMap({
                   >
                     Open in Apple Maps
                   </a>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => onDeletePin(entry.id)}
+                      className="text-red-700 hover:underline"
+                    >
+                      Remove pin
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

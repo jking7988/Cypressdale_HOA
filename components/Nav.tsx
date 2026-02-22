@@ -9,17 +9,17 @@ export default function Nav() {
   const pathname = usePathname();
 
   const links = [
-    { href: '/', label: 'Home', icon: 'ðŸ ' },
-    { href: '/news', label: 'News', icon: 'ðŸ—žï¸' },
-        { href: '/map', label: 'Yard Sale Map', icon: '🗺️' },
-    { href: '/pool', label: 'Pool', icon: 'ðŸŒŠ', highlight: true },
-    { href: '/new-residents', label: 'New Residents', icon: 'ðŸ§­' },
-    { href: '/local-area', label: 'Local Area Map', icon: 'ðŸ“' },
-    { href: '/trash', label: 'Trash & Recycling', icon: 'ðŸ—‘ï¸' },
-    { href: '/documents', label: 'Documents', icon: 'ðŸ“„' },
-    { href: '/yard-of-the-month', label: 'Yard of the Month', icon: 'ðŸŒ¿' },
-    { href: '/holiday-decorating', label: 'Holiday Decorating', icon: 'ðŸŽ„' },
-    { href: '/about', label: 'About', icon: 'â„¹ï¸' },
+    { href: '/', label: 'Home', icon: '\u{1F3E0}' },
+    { href: '/news', label: 'News', icon: '\u{1F4F0}' },
+    { href: '/map', label: 'Yard Sale Map', icon: '\u{1F5FA}\uFE0F' },
+    { href: '/pool', label: 'Pool', icon: '\u{1F30A}', highlight: true },
+    { href: '/new-residents', label: 'New Residents', icon: '\u{1F9ED}' },
+    { href: '/local-area', label: 'Local Area Map', icon: '\u{1F4CD}' },
+    { href: '/trash', label: 'Trash & Recycling', icon: '\u{1F5D1}\uFE0F' },
+    { href: '/documents', label: 'Documents', icon: '\u{1F4C4}' },
+    { href: '/yard-of-the-month', label: 'Yard of the Month', icon: '\u{1F33F}' },
+    { href: '/holiday-decorating', label: 'Holiday Decorating', icon: '\u{1F384}' },
+    { href: '/about', label: 'About', icon: '\u2139\uFE0F' },
   ];
 
   return (

@@ -133,3 +133,33 @@ export async function POST(req: Request) {
   return NextResponse.json({ entry: data }, { status: 201 });
 }
 
+export async function DELETE(req: Request) {
+  if (!supabase) {
+    return NextResponse.json(
+      { error: "Supabase is not configured for resident map." },
+      { status: 500 },
+    );
+  }
+
+  const expectedSecret =
+    process.env.RESIDENT_MAP_DELETE_SECRET || process.env.NEWS_DELETE_SECRET || "";
+  const providedSecret = req.headers.get("x-delete-secret") || "";
+
+  if (!expectedSecret || providedSecret !== expectedSecret) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const id = sanitizeString(searchParams.get("id"), 80);
+  if (!id) {
+    return NextResponse.json({ error: "Pin id is required." }, { status: 400 });
+  }
+
+  const { error } = await supabase.from("resident_map_entries").delete().eq("id", id);
+  if (error) {
+    console.error("resident-map DELETE error:", error);
+    return NextResponse.json({ error: "Could not delete pin." }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
