@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useMemo, useState } from 'react';
 import { CalendarPlus, Download } from 'lucide-react';
 import Link from 'next/link';
+import { stegaClean } from 'next-sanity';
 import { EventCommentForm } from '@/components/EventCommentForm';
 
 type Event = {
@@ -142,6 +143,10 @@ function downloadIcs(e: Event) {
 
 function normalizeDate(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function cleanEventId(id: string) {
+  return stegaClean(id || '');
 }
 
 export default function EventsCalendar({ events }: Props) {
@@ -335,7 +340,7 @@ export default function EventsCalendar({ events }: Props) {
                 onClick={goPrevMonth}
                 className="px-2 py-1 rounded-lg border border-emerald-100 text-emerald-800 text-sm hover:bg-emerald-50 hover:-translate-y-[1px] transition"
               >
-                ‹
+                â€¹
               </button>
               <div className="text-sm font-semibold text-emerald-900 flex items-center gap-2">
                 <span>{monthLabel}</span>
@@ -348,7 +353,7 @@ export default function EventsCalendar({ events }: Props) {
                 onClick={goNextMonth}
                 className="px-2 py-1 rounded-lg border border-emerald-100 text-emerald-800 text-sm hover:bg-emerald-50 hover:-translate-y-[1px] transition"
               >
-                ›
+                â€º
               </button>
             </div>
 
@@ -456,7 +461,7 @@ export default function EventsCalendar({ events }: Props) {
                         <div>
                           <div className="font-semibold text-brand-800">
                             <Link
-                              href={`/events/${e._id}`}
+                              href={`/events/${cleanEventId(e._id)}`}
                               className="hover:underline hover:text-emerald-800"
                             >
                               {e.title}
@@ -464,7 +469,7 @@ export default function EventsCalendar({ events }: Props) {
                           </div>
                           <div className="text-xs text-gray-600">
                             {timeLabel}
-                            {e.location ? ` • ${e.location}` : ''}
+                            {e.location ? ` â€¢ ${e.location}` : ''}
                           </div>
                           <div className="flex items-center gap-2 mt-1 text-[11px]">
                             <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-emerald-700">
@@ -627,7 +632,7 @@ export default function EventsCalendar({ events }: Props) {
               return (
                 <div
                   key={e._id}
-                  id={e._id} // 👈 anchor for /events#<id> preview
+                  id={e._id} // ðŸ‘ˆ anchor for /events#<id> preview
                   className="card relative overflow-hidden border border-emerald-50 transition hover:-translate-y-[1px] hover:shadow-md"
                 >
                   {/* accent bar */}
@@ -645,17 +650,17 @@ export default function EventsCalendar({ events }: Props) {
                       </div>
                     </div>
 
-                    {/* ✅ FIX: title now links to the event detail page */}
+                    {/* âœ… FIX: title now links to the event detail page */}
                     <div className="font-semibold text-brand-800">
                       <Link
-                        href={`/events/${e._id}`}
+                        href={`/events/${cleanEventId(e._id)}`}
                         className="hover:underline hover:text-emerald-800"
                       >
                         {e.title}
                       </Link>
                       <span className="ml-2 text-[11px] font-medium text-emerald-700">
-                        <Link href={`/events/${e._id}`} className="hover:underline">
-                          View details →
+                        <Link href={`/events/${cleanEventId(e._id)}`} className="hover:underline">
+                          View details â†’
                         </Link>
                       </span>
                     </div>
@@ -738,7 +743,7 @@ export default function EventsCalendar({ events }: Props) {
                       </button>
                     </div>
 
-                    <EventCommentForm eventId={e._id} />
+                    <EventCommentForm eventId={cleanEventId(e._id)} />
                   </div>
                 </div>
               );
@@ -752,7 +757,7 @@ export default function EventsCalendar({ events }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-brand-800 mb-2">
-              RSVP – {modalEvent.title}
+              RSVP â€“ {modalEvent.title}
             </h3>
             <p className="text-xs text-gray-500 mb-4">
               You're responding: {modalKind === 'yes' ? "I'm going" : 'Maybe'}
@@ -801,7 +806,7 @@ export default function EventsCalendar({ events }: Props) {
                 disabled={submitting}
                 className="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-60"
               >
-                {submitting ? 'Sending…' : 'Submit RSVP'}
+                {submitting ? 'Sendingâ€¦' : 'Submit RSVP'}
               </button>
             </div>
           </div>
@@ -810,3 +815,4 @@ export default function EventsCalendar({ events }: Props) {
     </>
   );
 }
+
