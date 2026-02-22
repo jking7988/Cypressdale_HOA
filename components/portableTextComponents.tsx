@@ -93,15 +93,15 @@ export function normalizePortableTextValue(value: unknown): PortableTextValue {
       markDefs.filter((d) => d?._key && d._type === "textStyle").map((d) => [d._key as string, d]),
     );
 
-    const children = block.children.map((child) => {
+    const children = block.children.map((child: PortableTextSpan) => {
       if (!child?.marks?.length) return child;
       const marks = [...child.marks];
-      const styleKey = marks.find((m) => textStyleByKey.has(m));
-      const legacyKeys = marks.filter((m) => legacyByKey.has(m));
+      const styleKey = marks.find((m: string) => textStyleByKey.has(m));
+      const legacyKeys = marks.filter((m: string) => legacyByKey.has(m));
       if (!legacyKeys.length) return child;
 
       if (styleKey) {
-        return { ...child, marks: marks.filter((m) => !legacyByKey.has(m)) };
+        return { ...child, marks: marks.filter((m: string) => !legacyByKey.has(m)) };
       }
 
       let color: PortableTextMarkDef["color"] | undefined;
@@ -132,7 +132,7 @@ export function normalizePortableTextValue(value: unknown): PortableTextValue {
       };
     });
 
-    const usedMarkKeys = new Set(children.flatMap((c) => c.marks || []));
+    const usedMarkKeys = new Set(children.flatMap((c: PortableTextSpan) => c.marks || []));
     const filteredMarkDefs = markDefs.filter((d) => d?._key && usedMarkKeys.has(d._key));
 
     return {

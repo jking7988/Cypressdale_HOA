@@ -17,6 +17,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { FormattedDateTime } from '@/components/FormattedDateTime';
+import ResidentYardSaleMap from '@/components/ResidentYardSaleMap';
 /* ---------- Types ---------- */
 
 type Post = {
@@ -231,6 +232,8 @@ export default async function HomePage() {
           <UpcomingEventsSection events={upcomingEvents} />
 
           <LatestNewsSection posts={latestPosts} />
+
+          <ResidentYardSaleMap />
 
           <NewsLetterSignup />
 
@@ -772,28 +775,6 @@ function AboutSection() {
         </p>
       </div>
 
-      {/* Satellite map card */}
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 text-center">
-          Neighborhood Map
-        </p>
-
-        <div className="relative w-full h-64 md:h-80 rounded-2xl overflow-hidden border border-emerald-100 shadow-md shadow-emerald-900/15">
-          <iframe
-            title="Cypressdale neighborhood map"
-            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d7253.287432251687!2d-95.48146289845731!3d30.04081149481949!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2sus!4v1763605266842!5m2!1sen!2sus"
-            loading="lazy"
-            allowFullScreen
-            referrerPolicy="no-referrer-when-downgrade"
-            className="absolute inset-0 h-full w-full border-0"
-          />
-        </div>
-
-        <p className="text-[11px] text-gray-500">
-          Zoom or drag the map to explore the Cypressdale area. For directions,
-          open the map in Google Maps on your device.
-        </p>
-      </div>
     </section>
   );
 }

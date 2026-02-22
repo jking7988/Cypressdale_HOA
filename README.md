@@ -46,3 +46,26 @@ npm run dev
 
 - When you need the delete button on each news card, set `NEXT_PUBLIC_ENABLE_ADMIN_DELETE=1` so the control appears. Remove that flag when you want to hide the delete UI for regular visitors.
 - `NEWS_DELETE_SECRET` secures the deletion API. When the button is clicked you’ll be prompted for that passphrase; the route rejects requests that don’t present the matching secret, so keep it secret and store it server-side (it is read-only and is already used to guard the client/delete flow).
+
+## Resident map pins
+
+- The homepage now includes a live "Community Yard Sale Map" section where residents can submit address, hours, and optional details.
+- Data is stored in Supabase table `resident_map_entries` through `GET/POST /api/resident-map`.
+- Geocoding is handled server-side via OpenStreetMap Nominatim.
+
+Create the table in Supabase SQL editor:
+
+```sql
+create table if not exists public.resident_map_entries (
+  id uuid primary key default gen_random_uuid(),
+  address text not null,
+  hours text not null,
+  details text,
+  lat double precision not null,
+  lng double precision not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists resident_map_entries_created_at_idx
+  on public.resident_map_entries (created_at desc);
+```
