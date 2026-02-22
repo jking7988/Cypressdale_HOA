@@ -23,6 +23,17 @@ type NominatimCandidate = {
   };
 };
 
+type GoogleGeocodeResponse = {
+  status: string;
+  results?: Array<{
+    partial_match?: boolean;
+    geometry?: {
+      location?: { lat: number; lng: number };
+      location_type?: string;
+    };
+  }>;
+};
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -63,6 +74,43 @@ async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
           `${fallbackBase}, Texas`,
         ]),
   ];
+
+  const googleKey = process.env.GOOGLE_MAPS_GEOCODING_API_KEY;
+  if (googleKey) {
+    for (const q of queries) {
+      const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
+      url.searchParams.set("address", q);
+      url.searchParams.set("components", "country:US|administrative_area:TX|locality:Spring");
+      url.searchParams.set("key", googleKey);
+
+      const res = await fetch(url.toString(), { cache: "no-store" });
+      if (!res.ok) continue;
+      const json = (await res.json()) as GoogleGeocodeResponse;
+      if (json.status !== "OK" || !Array.isArray(json.results) || json.results.length === 0) {
+        continue;
+      }
+
+      const ranked = [...json.results].sort((a, b) => {
+        const score = (r: NonNullable<GoogleGeocodeResponse["results"]>[number]) => {
+          let s = 0;
+          if (!r.partial_match) s += 2;
+          const lt = r.geometry?.location_type || "";
+          if (lt === "ROOFTOP") s += 4;
+          else if (lt === "RANGE_INTERPOLATED") s += 2;
+          else if (lt === "GEOMETRIC_CENTER") s += 1;
+          return s;
+        };
+        return score(b) - score(a);
+      });
+
+      const best = ranked[0];
+      const lat = Number(best?.geometry?.location?.lat);
+      const lng = Number(best?.geometry?.location?.lng);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        return { lat, lng };
+      }
+    }
+  }
 
   const fetchCandidates = async (url: URL) => {
     const res = await fetch(url.toString(), {
@@ -186,11 +234,16 @@ export async function POST(req: Request) {
   const address = sanitizeString((body as any)?.address, 180);
   const hours = sanitizeString((body as any)?.hours, 120);
   const details = sanitizeString((body as any)?.details, 1000);
+  const latRaw = Number((body as any)?.lat);
+  const lngRaw = Number((body as any)?.lng);
 
   if (!address) {
     return NextResponse.json({ error: "Address is required." }, { status: 400 });
   }
-  const geo = await geocodeAddress(address);
+  const hasManualPin = Number.isFinite(latRaw) && Number.isFinite(lngRaw);
+  const geo = hasManualPin
+    ? { lat: latRaw, lng: lngRaw }
+    : await geocodeAddress(address);
   if (!geo) {
     return NextResponse.json(
       {

@@ -51,7 +51,7 @@ npm run dev
 
 - The homepage now includes a live "Community Yard Sale Map" section where residents can submit address, hours, and optional details.
 - Data is stored in Supabase table `resident_map_entries` through `GET/POST /api/resident-map`.
-- Geocoding is handled server-side via OpenStreetMap Nominatim.
+- Geocoding is handled server-side. If `GOOGLE_MAPS_GEOCODING_API_KEY` is set, Google Geocoding is used first (recommended for address accuracy); otherwise it falls back to OpenStreetMap Nominatim.
 
 Create the table in Supabase SQL editor:
 
