@@ -4,16 +4,16 @@ import { client } from '@/lib/sanity.client';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const eventId = url.searchParams.get('eventId');
+  const postId = url.searchParams.get('postId');
 
-  if (!eventId) {
+  if (!postId) {
     return NextResponse.json(
-      { error: 'eventId query parameter is required' },
+      { error: 'postId query parameter is required' },
       { status: 400 }
     );
   }
 
-  const query = `*[_type == "eventComment" && event._ref == $eventId]
+  const query = `*[_type == "eventComment" && post._ref == $postId]
     | order(createdAt asc) {
       _id,
       name,
@@ -24,10 +24,10 @@ export async function GET(req: Request) {
     }`;
 
   try {
-    const comments = await client.fetch(query, { eventId });
+    const comments = await client.fetch(query, { postId });
     return NextResponse.json({ comments });
   } catch (err) {
-    console.error('Unable to load event comments', err);
+    console.error('Unable to load news comments', err);
     return NextResponse.json(
       { error: 'Unable to load comments' },
       { status: 500 }
@@ -37,15 +37,15 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
-  const eventId = body?.eventId as string | undefined;
+  const postId = body?.postId as string | undefined;
   const message = (body?.message as string | undefined)?.trim();
   const name = (body?.name as string | undefined)?.trim() ?? '';
   const email = (body?.email as string | undefined)?.trim() ?? '';
   const parentCommentId = (body?.parentCommentId as string | undefined)?.trim() ?? '';
 
-  if (!eventId || !message) {
+  if (!postId || !message) {
     return NextResponse.json(
-      { error: 'eventId and message are required' },
+      { error: 'postId and message are required' },
       { status: 400 }
     );
   }
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   try {
     await writeClient.create({
       _type: 'eventComment',
-      event: { _type: 'reference', _ref: eventId },
+      post: { _type: 'reference', _ref: postId },
       ...(parentCommentId
         ? { parentComment: { _type: 'reference', _ref: parentCommentId } }
         : {}),
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('Event comment error', err);
+    console.error('News comment error', err);
     return NextResponse.json(
       { error: 'Unable to save comment' },
       { status: 500 }

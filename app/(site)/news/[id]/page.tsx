@@ -9,6 +9,7 @@ import { PortableText } from "@portabletext/react";
 import { normalizePortableTextValue, portableTextComponents } from "@/components/portableTextComponents";
 import React from "react";
 import { FormattedDateTime } from "@/components/FormattedDateTime";
+import { NewsCommentForm } from "@/components/EventCommentForm";
 
 type Post = {
   _id: string;
@@ -463,6 +464,8 @@ export default async function NewsDetailPage(props: Props) {
               </span>
             )}
           </footer>
+
+          <NewsCommentForm postId={post._id.replace(/^drafts\./, "")} />
         </article>
       </div>
     </div>

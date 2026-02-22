@@ -1,8 +1,8 @@
-import { defineField, defineType } from 'sanity';
+﻿import { defineField, defineType } from 'sanity';
 
 export default defineType({
   name: 'eventComment',
-  title: 'Event Comment',
+  title: 'Site Comment',
   type: 'document',
   fields: [
     defineField({
@@ -10,7 +10,18 @@ export default defineType({
       title: 'Event',
       type: 'reference',
       to: [{ type: 'event' }],
-      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: 'post',
+      title: 'News Post',
+      type: 'reference',
+      to: [{ type: 'post' }],
+    }),
+    defineField({
+      name: 'parentComment',
+      title: 'Parent Comment',
+      type: 'reference',
+      to: [{ type: 'eventComment' }],
     }),
     defineField({
       name: 'name',
@@ -35,11 +46,24 @@ export default defineType({
       options: { dateFormat: 'YYYY-MM-DD', timeFormat: 'HH:mm', timeStep: 5 },
     }),
   ],
+  validation: (rule) =>
+    rule.custom((doc: any) => {
+      if (doc?.event?._ref || doc?.post?._ref) return true;
+      return 'Comment must belong to an event or a news post.';
+    }),
   preview: {
     select: {
       title: 'message',
-      subtitle: 'event.title',
+      eventTitle: 'event.title',
+      postTitle: 'post.title',
       media: 'event.flyerUrl',
+    },
+    prepare({ title, eventTitle, postTitle, media }) {
+      return {
+        title,
+        subtitle: eventTitle || postTitle || 'Unassigned',
+        media,
+      };
     },
   },
 });
