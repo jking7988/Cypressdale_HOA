@@ -141,30 +141,40 @@ export default async function HolidayDecoratingPage(props: Props) {
   const winners = await sanity.fetch<HolidayWinner[]>(holidayWinnersQuery);
 
   const christmasWinners = winners.filter((w) => normalizeHoliday(w.holiday) === "christmas");
+  const sourceWinners = christmasWinners.length > 0 ? christmasWinners : winners;
 
   let currentChristmas: HolidayWinner[] = [];
   let currentYearLabel: string | null = null;
 
-  if (christmasWinners.length > 0) {
-    const years = christmasWinners
+  if (sourceWinners.length > 0) {
+    const years = sourceWinners
       .map((w) => w.year)
       .filter((y): y is number => typeof y === "number");
 
     if (years.length > 0) {
       const latestYear = Math.max(...years);
       currentYearLabel = String(latestYear);
-      currentChristmas = christmasWinners.filter((w) => w.year === latestYear);
+      currentChristmas = sourceWinners.filter((w) => w.year === latestYear);
+    } else {
+      currentChristmas = sourceWinners;
     }
   }
 
+  const rankedPlaceSet = new Set(["1", "2", "3", "4"]);
   const rankedChristmas = currentChristmas
-    .filter((w) => ["1", "2", "3", "4"].includes(normalizePlace(w.place)))
+    .filter((w) => rankedPlaceSet.has(normalizePlace(w.place)))
     .sort((a, b) => placeRank(a.place) - placeRank(b.place));
 
   const shoutouts = currentChristmas.filter((w) => {
     const p = normalizePlace(w.place);
     return p === "shoutout" || p === "hm";
   });
+  const otherCurrentWinners = currentChristmas.filter((w) => {
+    const p = normalizePlace(w.place);
+    return !rankedPlaceSet.has(p) && p !== "shoutout" && p !== "hm";
+  });
+  const featuredWinners =
+    rankedChristmas.length > 0 ? rankedChristmas : otherCurrentWinners;
 
   return (
     <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen min-h-[calc(100vh-5rem)] bg-gradient-to-b from-emerald-900 via-emerald-800 to-rose-900 text-emerald-50">
@@ -209,13 +219,13 @@ export default async function HolidayDecoratingPage(props: Props) {
               <span>{currentYearLabel ? `Christmas ${currentYearLabel} Winners` : "Christmas Winners"}</span>
             </h2>
             <span className="rounded-full bg-emerald-100/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-50">
-              {rankedChristmas.length > 0 ? "Latest results" : "First winners coming soon"}
+              {featuredWinners.length > 0 ? "Latest results" : "First winners coming soon"}
             </span>
           </div>
 
-          {rankedChristmas.length > 0 ? (
+          {featuredWinners.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-3">
-              {rankedChristmas.map((winner) => {
+              {featuredWinners.map((winner) => {
                 const photos = mergedPhotos(winner);
 
                 return (
