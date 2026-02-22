@@ -33,6 +33,29 @@ export type NewsletterSendResult = {
   body: Record<string, unknown>;
 };
 
+const NEWSLETTER_TIME_ZONE = 'America/Chicago';
+
+function centralWeekday(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    timeZone: NEWSLETTER_TIME_ZONE,
+  }).format(date);
+}
+
+function centralDateKey(date: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: NEWSLETTER_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+
+  const year = parts.find((p) => p.type === 'year')?.value ?? '0000';
+  const month = parts.find((p) => p.type === 'month')?.value ?? '00';
+  const day = parts.find((p) => p.type === 'day')?.value ?? '00';
+  return `${year}-${month}-${day}`;
+}
+
 export async function runNewsletterSend({
   baseUrl,
   force = false,
@@ -46,6 +69,52 @@ export async function runNewsletterSend({
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY);
+
+  const { data: lastRun, error: runError } = await supabase
+    .from('newsletter_runs')
+    .select('sent_at')
+    .order('sent_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (runError) {
+    console.error('Supabase error fetching newsletter_runs:', runError);
+    return {
+      statusCode: 500,
+      body: { error: 'supabase error (newsletter_runs)' },
+    };
+  }
+
+  const now = new Date();
+  const isFridayCentral = centralWeekday(now) === 'Fri';
+  const lastSentAt = lastRun?.sent_at ? new Date(lastRun.sent_at) : null;
+
+  if (!force && !isFridayCentral) {
+    return {
+      statusCode: 200,
+      body: {
+        sent: 0,
+        reason: 'not-friday',
+        detail: `Newsletter sends run only on Fridays (${NEWSLETTER_TIME_ZONE}).`,
+      },
+    };
+  }
+
+  if (
+    !force &&
+    lastSentAt &&
+    centralWeekday(lastSentAt) === 'Fri' &&
+    centralDateKey(lastSentAt) === centralDateKey(now)
+  ) {
+    return {
+      statusCode: 200,
+      body: {
+        sent: 0,
+        reason: 'already-sent-this-friday',
+        lastSentAt: lastSentAt.toISOString(),
+      },
+    };
+  }
 
   const [posts, events] = await Promise.all([
     client.fetch<SanityPost[]>(`*[_type == "post"] | order(publishedAt desc, _updatedAt desc)[0...10]{
@@ -90,23 +159,6 @@ export async function runNewsletterSend({
 
   const latestContentTime = Math.max(...allDates);
   const latestContentDate = new Date(latestContentTime);
-
-  const { data: lastRun, error: runError } = await supabase
-    .from('newsletter_runs')
-    .select('sent_at')
-    .order('sent_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (runError) {
-    console.error('Supabase error fetching newsletter_runs:', runError);
-    return {
-      statusCode: 500,
-      body: { error: 'supabase error (newsletter_runs)' },
-    };
-  }
-
-  const lastSentAt = lastRun?.sent_at ? new Date(lastRun.sent_at) : null;
 
   if (!force && lastSentAt && latestContentDate <= lastSentAt) {
     return {
