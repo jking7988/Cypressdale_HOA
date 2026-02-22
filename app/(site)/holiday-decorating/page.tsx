@@ -152,9 +152,23 @@ export default async function HolidayDecoratingPage(props: Props) {
       .filter((y): y is number => typeof y === "number");
 
     if (years.length > 0) {
-      const latestYear = Math.max(...years);
-      currentYearLabel = String(latestYear);
-      currentChristmas = sourceWinners.filter((w) => w.year === latestYear);
+      const uniqueYears = Array.from(new Set(years)).sort((a, b) => b - a);
+      const hasWinnerCategory = (w: HolidayWinner) => {
+        const p = normalizePlace(w.place);
+        return p === "1" || p === "2" || p === "3" || p === "4" || p === "shoutout" || p === "hm";
+      };
+
+      let chosenYear = uniqueYears[0];
+      for (const year of uniqueYears) {
+        const group = sourceWinners.filter((w) => w.year === year);
+        if (group.some(hasWinnerCategory)) {
+          chosenYear = year;
+          break;
+        }
+      }
+
+      currentYearLabel = String(chosenYear);
+      currentChristmas = sourceWinners.filter((w) => w.year === chosenYear);
     } else {
       currentChristmas = sourceWinners;
     }
