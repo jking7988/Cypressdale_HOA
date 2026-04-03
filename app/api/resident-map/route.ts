@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { isYardSaleMapActive } from "@/lib/yardSale";
 
 type GeocodeResult = {
   lat: number;
@@ -192,6 +193,10 @@ async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
 }
 
 export async function GET() {
+  if (!isYardSaleMapActive) {
+    return NextResponse.json({ entries: [] });
+  }
+
   if (!supabase) {
     return NextResponse.json(
       { error: "Supabase is not configured for resident map." },
@@ -217,6 +222,13 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!isYardSaleMapActive) {
+    return NextResponse.json(
+      { error: "Yard sale map is currently closed." },
+      { status: 403 },
+    );
+  }
+
   if (!supabase) {
     return NextResponse.json(
       { error: "Supabase is not configured for resident map." },
@@ -281,6 +293,13 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!isYardSaleMapActive) {
+    return NextResponse.json(
+      { error: "Yard sale map is currently closed." },
+      { status: 403 },
+    );
+  }
+
   if (!supabase) {
     return NextResponse.json(
       { error: "Supabase is not configured for resident map." },

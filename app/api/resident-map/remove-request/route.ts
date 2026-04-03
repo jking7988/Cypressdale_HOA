@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { isYardSaleMapActive } from "@/lib/yardSale";
 
 const resendApiKey = process.env.RESEND_API_KEY || "";
 const notifyTo = process.env.RESIDENT_MAP_NOTIFY_TO || "joshking7988@gmail.com";
@@ -10,6 +11,13 @@ function sanitizeString(input: unknown, maxLength: number) {
 }
 
 export async function POST(req: Request) {
+  if (!isYardSaleMapActive) {
+    return NextResponse.json(
+      { error: "Yard sale map is currently closed." },
+      { status: 403 },
+    );
+  }
+
   if (!resendApiKey) {
     return NextResponse.json(
       { error: "Email notification service is not configured." },
@@ -58,4 +66,3 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ ok: true });
 }
-

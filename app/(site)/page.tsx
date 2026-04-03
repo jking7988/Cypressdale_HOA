@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { FormattedDateTime } from '@/components/FormattedDateTime';
 import ResidentYardSaleMap from '@/components/ResidentYardSaleMap';
+import { isYardSaleMapActive } from '@/lib/yardSale';
 /* ---------- Types ---------- */
 
 type Post = {
@@ -246,7 +247,9 @@ export default async function HomePage() {
 
           <LatestNewsSection posts={latestPosts} />
 
-          <ResidentYardSaleMap showQrCard showAddressList={false} mapPath="/map" />
+          {isYardSaleMapActive && (
+            <ResidentYardSaleMap showQrCard showAddressList={false} mapPath="/map" />
+          )}
 
           <NewsLetterSignup />
 
