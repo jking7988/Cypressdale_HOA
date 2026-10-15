@@ -1,61 +1,23 @@
-// app/api/newsletter/unsubscribe/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const email = url.searchParams.get('email');
-
-  if (!email) {
-    return new NextResponse(
-      'Missing email. Please use the link from your email.',
-      { status: 400 }
-    );
-  }
-
-  const lowerEmail = email.trim().toLowerCase();
-
-  const { error } = await supabase
-    .from('newsletter_subscribers')
-    .update({ active: false })
-    .eq('email', lowerEmail);
-
-  if (error) {
-    console.error('Supabase error (newsletter unsubscribe):', error);
-    return new NextResponse('Unable to unsubscribe at this time.', {
-      status: 500,
-    });
-  }
-
-  // Simple HTML confirmation page
-  return new NextResponse(
-    `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Unsubscribed</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-  </head>
-  <body style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9fafb;color:#111827;padding:32px;">
-    <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e5e7eb;padding:24px;box-shadow:0 10px 25px rgba(15,23,42,0.08);">
-      <h1 style="font-size:20px;margin:0 0 8px;color:#b91c1c;">You&apos;re unsubscribed</h1>
-      <p style="font-size:14px;line-height:1.6;margin:0 0 12px;color:#374151;">
-        Your email has been removed from the Cypressdale newsletter list.
-      </p>
-      <p style="font-size:13px;line-height:1.5;margin:0;color:#6b7280;">
-        If this was a mistake, you can re-subscribe anytime from the News or Events page.
-      </p>
-    </div>
-  </body>
-</html>`,
-    {
-      status: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    }
-  );
+import { z } from 'zod';
+import { newsletterConfirmation, newsletterError, newsletterHeaders, newsletterManagementRequest } from '@/lib/newsletter/routes';
+import { createHubStorageClient, HubAccessError } from '@/lib/member-hub/server';
+export async function GET(request: Request) {
+  const params = new URL(request.url).searchParams;
+  const email = z.string().trim().email().max(254).safeParse(params.get('email'));
+  if (!params.has('token') && email.success) return newsletterManagementRequest(email.data);
+  const token = z.string().uuid().safeParse(params.get('token'));
+  if (!token.success) return new NextResponse('Use the unsubscribe link from your newsletter email.',{status:400,headers:newsletterHeaders});
+  return newsletterConfirmation('Unsubscribe from the newsletter','/api/newsletter/unsubscribe',token.data,'Unsubscribe');
+}
+export async function POST(request: Request) {
+  try {
+    const raw = new URL(request.url).searchParams.get('token') || (await request.formData()).get('token');
+    const token = z.string().uuid().safeParse(raw);
+    if (!token.success) throw new HubAccessError(400,'Use the unsubscribe link from your newsletter email.');
+    const {error} = await createHubStorageClient().from('newsletter_subscribers').update({active:false,verification_hash:null,
+      verification_expires_at:null,pending_name:null,pending_street:null,updated_at:new Date().toISOString()}).eq('unsubscribe_token',token.data);
+    if (error) throw error;
+    return new NextResponse('You are unsubscribed from the Cypressdale newsletter.',{headers:newsletterHeaders});
+  } catch(error) { return newsletterError(error); }
 }

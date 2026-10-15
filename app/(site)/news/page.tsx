@@ -2,13 +2,11 @@
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { postsQuery } from '@/lib/queries';
+import { getPublicContent } from '@/lib/member-hub/public-content';
 import { PortableText } from '@portabletext/react';
 import { NewsCalendar } from '@/components/NewsCalendar';
 import { NewsLetterSignup } from '@/components/NewsLetterSignup';
 import { FormattedDateTime } from '@/components/FormattedDateTime';
-import { DeletePostButton } from '@/components/DeletePostButton';
-import { sanityFetch } from '@/lib/live';
 
 type Post = {
   _id: string;
@@ -28,18 +26,14 @@ function getEffectiveDate(p: Post): string | null {
 // turn a datetime into a date key YYYY-MM-DD (string only, no Date math)
 function toDateKey(dateStr: string | null): string | null {
   if (!dateStr) return null;
-  // Sanity sends ISO like "2025-11-24T17:00:00.000Z"
+  // Stored dates use ISO strings, such as "2025-11-24T17:00:00.000Z".
   return dateStr.slice(0, 10); // "2025-11-24"
 }
 
 export default async function NewsPage() {
-  const { data } = await sanityFetch({
-    query: postsQuery,
-    stega: true,
-  });
-  const posts = (data ?? []) as Post[];
+  const posts = await getPublicContent<Post>('post');
 
-  // Lead story = first post (postsQuery should already return newest first)
+  // Public content is already ordered newest first.
   const leadStory = posts[0] ?? null;
   const remainingPosts = leadStory ? posts.slice(1) : posts;
 
@@ -64,8 +58,6 @@ export default async function NewsPage() {
   const todayKey = new Date().toISOString().slice(0, 10);
 
   const dateKeys = Array.from(postsByDate.keys()).sort(); // ascending
-  const adminDeleteEnabled =
-    process.env.NEXT_PUBLIC_ENABLE_ADMIN_DELETE === '1';
   const baseDateKey = dateKeys.length ? dateKeys[dateKeys.length - 1] : todayKey;
 
   // feed the calendar a datetime in the middle of that day so TZ can't shift it
@@ -168,11 +160,6 @@ export default async function NewsPage() {
                     </article>
                   </Link>
 
-                  {adminDeleteEnabled && (
-                    <div className="absolute top-4 right-4 z-10">
-                      <DeletePostButton postId={leadStory._id} />
-                    </div>
-                  )}
                 </section>
               )}
 
@@ -236,11 +223,6 @@ export default async function NewsPage() {
                                       </article>
                                     </Link>
 
-                                    {adminDeleteEnabled && (
-                                      <div className="absolute top-3 right-3 z-10">
-                                        <DeletePostButton postId={p._id} />
-                                      </div>
-                                    )}
                                   </div>
                                 );
                               })}

@@ -1,74 +1,83 @@
-# Cypressdale HOA — Next.js + Sanity + Tailwind
+# Cypressdale HOA
 
-## Prereqs
-- Node.js 18 or 20 (LTS)
-- VS Code recommended
+Next.js, React, Tailwind and Supabase. Public content, protected files, accounts,
+admin editing, discussions, RSVPs and newsletters use the member-hub backend.
+There is no CMS Studio or external CMS connection in this application.
 
-## Setup
-```bash
-npm install
+Work is isolated in `Cypressdale_HOA-member-hub` on `feature/member-hub`.
+The existing production site on `main` has not been changed or redeployed.
+The existing-project production cutover still needs to be configured and verified.
 
-# Initialize or link a Sanity project (choose output path: ./sanity when prompted)
-npm create sanity@latest -- --project "Create new" --dataset production --template clean --output-path sanity
+## Local Development
+
+Use Node.js 22.18+ and Docker Desktop. From the migration worktree:
+
+```powershell
+npm ci
+npm run member-hub:start
+npm run member-hub:seed
+npm run member-hub:dev
 ```
 
-Create `.env.local`:
+- Website: http://localhost:3001
+- Admin login: http://localhost:3001/admin-sign-in
+- Captured test emails: http://127.0.0.1:55424
+- Local-only admin: `admin@cypressdale.test` / `CypressdaleLocal2026!`
+
+The launcher reads credentials from the isolated local Supabase stack. Never copy
+production credentials into local testing. Seeding preserves existing accounts.
+To stop database containers without deleting data, run `npx supabase stop`.
+
+See [local setup and administration](docs/member-hub-local-testing.md),
+[migration status and rollout](docs/member-hub-migration.md), and
+[newsletter testing and delivery](docs/newsletter-migration.md).
+See [production configuration](docs/production-configuration.md) and the
+[existing-project cutover plan](docs/production-cutover.md) before any hosted changes.
+
+## Project Structure
+
+- `app/(site)`: public website and original content URLs.
+- `app/(hub)`: admin tools, account pages, and protected content.
+- `app/api`, `app/auth`: authorized APIs and email callbacks.
+- `components/content`: public page renderers shared with live previews.
+- `components/member-hub`: admin editing and account controls.
+- `lib/member-hub`, `lib/newsletter`: backend access and application logic.
+- `public/images`: existing static website images and judging maps.
+- `supabase`: database migrations and Auth email templates.
+- `scripts/member-hub`, `tests/member-hub`: local tools and regression tests.
+- `scripts/migration`: offline archive import/verification, not a live CMS connection.
+- `backups`: ignored private archives. Do not commit, publish, or delete them.
+
+The standalone Portable Text editor/renderer retains existing rich-text formatting.
+Its internal schema utilities are not a CMS service or Studio installation.
+Legacy IDs and attachment references are preserved to keep existing links intact.
+The retired Board/Team Chat tool is not part of this hub; a new notes/collaboration
+area is future work. Homeowners is also a placeholder, separate from admin access.
+
+## Verification
+
+```powershell
+npm run typecheck
+npm run member-hub:test
+npm run migration:test
+npm run member-hub:e2e
+npm run build
 ```
-NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id
-NEXT_PUBLIC_SANITY_DATASET=production
-NEXT_PUBLIC_SANITY_API_VERSION=2025-01-01
-```
 
-## Run
-```bash
-npm run dev
-# App: http://localhost:3000
-# Studio: http://localhost:3000/studio
-```
+Browser tests require the local Docker stack and development server. They create
+their own fixtures and preserve accounts/content entered by testers.
 
-## Newsletter webhook
+## Optional Website Integrations
 
-- Add `NEWSLETTER_WEBHOOK_SECRET` (a secret string you control) to the environment so the webhook can be verified.
-- Create a Sanity webhook that forwards relevant document updates (news posts, events, or other pages you care about) to `https://<your-domain>/api/newsletter/webhook?secret=<secret>`.
-- The webhook only needs to POST an empty body; updates are deduplicated on the Next.js side, so the newsletter will only send when new or updated content exists.
-- To prevent duplicate emails when multiple documents change in a single day, the newsletter now runs on a once-daily cron (`/api/newsletter/send` is executed by Vercel every day at 12:00 UTC). Keep the webhook if you still want to trigger a manual check, but rely on the scheduled job for the daily send.
-- Make sure `NEWSLETTER_SITE_URL` points to the public Cypressdale HOA domain (e.g., `https://cypressdalehoa.com`). That value is now the canonical base URL used inside outgoing emails, so the newsletter links resolve to the HOA site instead of the Vercel project hostname.
-- All contact links now share a single Spectrum-managed inbox. Set `SPECTRUM_CONTACT_EMAIL` (default: `cypressdalehoa@spectrumam.com`) in each environment so the general/board/management/pool sections all point at the same address.
+`SPECTRUM_CONTACT_EMAIL` controls the shared contact inbox. The optional yard-sale
+map uses `NEXT_PUBLIC_YARD_SALE_MAP_ACTIVE=1` and the existing
+`resident_map_entries` Supabase table. Its backend/data rollout is separate from
+content migration. Google geocoding is optional via `GOOGLE_MAPS_GEOCODING_API_KEY`;
+otherwise it uses OpenStreetMap. Configure `RESIDENT_MAP_DELETE_SECRET` for map
+deletion; the existing shared-secret fallback is retained for compatibility.
+Removal-request notifications use `RESIDENT_MAP_NOTIFY_TO`.
 
-## Event comments
-
-- There is a “Leave a comment” form on each upcoming event card under the Events page. Comments are persisted as `eventComment` documents in Sanity, so the board can review questions within the Studio.
-- No extra configuration is required beyond the existing `SANITY_WRITE_TOKEN`, but make sure that token has permission to create documents (it already does for RSVPs).
-- The Team Notes board now mimics a cork wall with each note styled like a sticky. You can customize the cork texture by setting `NEXT_PUBLIC_TEAM_NOTES_CORK` to a URL (or keep the default gradient).  
-- Admin users can also purge a comment from the thread by enabling `NEXT_PUBLIC_ENABLE_ADMIN_DELETE=1` and providing the delete passphrase when prompted; the API checks `EVENT_COMMENT_DELETE_SECRET` (or falls back to `NEWS_DELETE_SECRET`) before removing the Sanity document, so keep that secret safe.
-
-## Admin news delete
-
-- When you need the delete button on each news card, set `NEXT_PUBLIC_ENABLE_ADMIN_DELETE=1` so the control appears. Remove that flag when you want to hide the delete UI for regular visitors.
-- `NEWS_DELETE_SECRET` secures the deletion API. When the button is clicked you’ll be prompted for that passphrase; the route rejects requests that don’t present the matching secret, so keep it secret and store it server-side (it is read-only and is already used to guard the client/delete flow).
-
-## Resident map pins
-
-- The homepage now includes a live "Community Yard Sale Map" section where residents can submit address, hours, and optional details.
-- Data is stored in Supabase table `resident_map_entries` through `GET/POST /api/resident-map`.
-- Geocoding is handled server-side. If `GOOGLE_MAPS_GEOCODING_API_KEY` is set, Google Geocoding is used first (recommended for address accuracy); otherwise it falls back to OpenStreetMap Nominatim.
-- Pin removal requests can be emailed privately using `POST /api/resident-map/remove-request`. Set `RESIDENT_MAP_NOTIFY_TO` to control recipient email (default: `joshking7988@gmail.com`).
-
-Create the table in Supabase SQL editor:
-
-```sql
-create table if not exists public.resident_map_entries (
-  id uuid primary key default gen_random_uuid(),
-  address text not null,
-  hours text not null,
-  details text,
-  lat double precision not null,
-  lng double precision not null,
-  created_at timestamptz not null default now()
-);
-
-create index if not exists resident_map_entries_created_at_idx
-  on public.resident_map_entries (created_at desc);
-```
-- Public map page: `/map` (shareable and QR-friendly). Scanning the QR opens this page.
-- Each pinned address now includes direct links to open in Google Maps or Apple Maps.
+Newsletters use verified subscribers and the account-authenticated admin tools.
+Local delivery is captured in Mailpit. Hosted staging requires an explicit test
+recipient allowlist; production delivery remains disabled until cutover.
+Scheduling uses a bearer `CRON_SECRET` (or matching `NEWSLETTER_CRON_SECRET`), not a CMS webhook secret.

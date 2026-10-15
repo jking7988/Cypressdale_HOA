@@ -1,6 +1,5 @@
 // src/components/portableTextComponents.tsx
 import React, { ReactNode } from 'react';
-import { stegaClean } from 'next-sanity';
 import type {TypedObject} from '@portabletext/types';
 // If this type import causes issues, you can delete the line and the type annotation below.
 // import type { PortableTextComponents } from '@portabletext/react';
@@ -8,25 +7,25 @@ import type {TypedObject} from '@portabletext/types';
 type BlockProps = { children?: ReactNode };
 
 const NormalBlock = ({ children }: BlockProps) => (
-  <p className="mb-3 leading-relaxed text-gray-800 whitespace-pre-line">
+  <p className="mb-3 min-h-[1.625em] leading-relaxed text-gray-800 whitespace-break-spaces">
     {children}
   </p>
 );
 
 const H1Block = ({ children }: BlockProps) => (
-  <h1 className="mt-6 mb-4 text-xl font-semibold text-gray-900">
+  <h1 className="mt-6 mb-4 text-xl font-semibold text-gray-900 whitespace-break-spaces">
     {children}
   </h1>
 );
 
 const H2Block = ({ children }: BlockProps) => (
-  <h2 className="mt-5 mb-3 text-lg font-semibold text-gray-900">
+  <h2 className="mt-5 mb-3 text-lg font-semibold text-gray-900 whitespace-break-spaces">
     {children}
   </h2>
 );
 
 const H3Block = ({ children }: BlockProps) => (
-  <h3 className="mt-4 mb-2 text-base font-semibold text-gray-900">
+  <h3 className="mt-4 mb-2 text-base font-semibold text-gray-900 whitespace-break-spaces">
     {children}
   </h3>
 );
@@ -44,11 +43,11 @@ const NumberList = ({ children }: BlockProps) => (
 );
 
 const BulletItem = ({ children }: BlockProps) => (
-  <li className="leading-relaxed">{children}</li>
+  <li className="leading-relaxed whitespace-break-spaces">{children}</li>
 );
 
 const NumberItem = ({ children }: BlockProps) => (
-  <li className="leading-relaxed">{children}</li>
+  <li className="leading-relaxed whitespace-break-spaces">{children}</li>
 );
 
 type PortableTextSpan = {
@@ -176,7 +175,7 @@ const TextColorMark = ({
       ? value.color.hex
       : undefined;
 
-  const color = raw ? stegaClean(raw).trim() : '';
+  const color = raw ? raw.trim() : '';
   if (!color) return <>{children}</>;
 
   return <span style={{ color }}>{children}</span>;
@@ -198,7 +197,7 @@ const TextSizeMark = ({
     typeof raw === 'number'
       ? raw
       : typeof raw === 'string' && raw
-      ? Number(stegaClean(raw))
+      ? Number(raw)
       : NaN;
 
   if (!Number.isFinite(parsed)) return <>{children}</>;
@@ -222,7 +221,7 @@ const TextWeightMark = ({
     typeof raw === "number"
       ? raw
       : typeof raw === "string" && raw
-      ? Number(stegaClean(raw))
+      ? Number(raw)
       : NaN;
 
   if (!Number.isFinite(parsed)) return <>{children}</>;
@@ -243,14 +242,14 @@ const TextStyleMark = ({
       : value?.color && typeof value.color === "object"
       ? value.color.hex
       : undefined;
-  const color = rawColor ? stegaClean(rawColor).trim() : "";
+  const color = rawColor ? rawColor.trim() : "";
 
   const rawSize = value?.size;
   const parsedSize =
     typeof rawSize === "number"
       ? rawSize
       : typeof rawSize === "string" && rawSize
-      ? Number(stegaClean(rawSize))
+      ? Number(rawSize)
       : NaN;
 
   const rawWeight = value?.weight;
@@ -258,7 +257,7 @@ const TextStyleMark = ({
     typeof rawWeight === "number"
       ? rawWeight
       : typeof rawWeight === "string" && rawWeight
-      ? Number(stegaClean(rawWeight))
+      ? Number(rawWeight)
       : NaN;
 
   const style: React.CSSProperties = {};
@@ -276,7 +275,7 @@ const TextStyleMark = ({
 
 function sanitizeHref(raw?: string) {
   if (!raw) return '';
-  const href = stegaClean(raw).trim();
+  const href = raw.trim();
   if (!href) return '';
   if (href.startsWith('/') || href.startsWith('#')) return href;
   if (/^(https?:|mailto:|tel:)/i.test(href)) return href;

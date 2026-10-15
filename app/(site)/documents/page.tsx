@@ -1,8 +1,8 @@
 // app/documents/page.tsx
 export const dynamic = 'force-dynamic';
 
-import { client } from '@/lib/sanity.client';
-import { documentsQuery } from '@/lib/queries';
+import { getPublicContent } from '@/lib/member-hub/public-content';
+import { Suspense } from 'react';
 import { FolderClosed, FolderOpen, FileText, ExternalLink } from 'lucide-react';
 
 type DocFile = {
@@ -25,12 +25,19 @@ type FolderGroup = {
   order: number;
   files: DocFile[];
 };
+type DocFolder = { _id: string; title: string; description?: string; sortOrder?: number };
 
 export default async function DocumentsPage() {
-  const docs = await client.fetch<DocFile[]>(documentsQuery);
+  const [docs, folderRecords] = await Promise.all([
+    getPublicContent<DocFile>('documentFile'), getPublicContent<DocFolder>('documentFolder'),
+  ]);
 
   // Group documents by folder
   const folderMap = new Map<string, FolderGroup>();
+  for (const folder of folderRecords) folderMap.set(folder._id, {
+    id: folder._id, title: folder.title, description: folder.description,
+    order: folder.sortOrder ?? 9999, files: [],
+  });
 
   docs.forEach((doc) => {
     const id = doc.folderId ?? 'uncategorized';
@@ -60,6 +67,7 @@ export default async function DocumentsPage() {
   );
 
   return (
+    <Suspense fallback={null}>
     <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-gradient-to-b from-amber-200 via-amber-100 to-amber-200 py-12 px-3 sm:px-6 overflow-x-hidden">
       <div className="max-w-5xl mx-auto relative">
         {/* Folder tab */}
@@ -115,6 +123,7 @@ export default async function DocumentsPage() {
                     </summary>
 
                     <div className="border-t border-amber-200/80 px-5 py-4 space-y-2">
+                      {!folder.files.length && <p className="text-sm text-amber-900/80">No documents in this folder.</p>}
                       {folder.files.map((file) => {
                         const ext =
                           file.fileName?.split('.').pop()?.toUpperCase() ||
@@ -205,5 +214,6 @@ export default async function DocumentsPage() {
         </div>
       </div>
     </div>
+    </Suspense>
   );
 }

@@ -6,6 +6,7 @@ node_modules
 out
 
 # Logs
+.logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -20,3 +21,9 @@ lerna-debug.log*
 
 # Misc
 .DS_Store
+
+# Private migration exports (comments and RSVPs may contain personal information)
+backups/
+.deployment/
+test-results/
+playwright-report/

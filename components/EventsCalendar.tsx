@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react';
 import { CalendarPlus, Download } from 'lucide-react';
 import Link from 'next/link';
-import { stegaClean } from 'next-sanity';
 import { EventCommentForm } from '@/components/EventCommentForm';
 
 type Event = {
@@ -146,7 +145,7 @@ function normalizeDate(d: Date) {
 }
 
 function cleanEventId(id: string) {
-  return stegaClean(id || '');
+  return id || '';
 }
 
 export default function EventsCalendar({ events }: Props) {
@@ -198,20 +197,25 @@ export default function EventsCalendar({ events }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalEvent, setModalEvent] = useState<Event | null>(null);
   const [modalKind, setModalKind] = useState<RsvpKind>('yes');
-  const [formName, setFormName] = useState('');
-  const [formEmail, setFormEmail] = useState('');
+  const [rsvpAccess, setRsvpAccess] = useState<{ canRespond: boolean; signedIn: boolean; response: RsvpKind | null } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  function openRsvpModal(event: Event, kind: RsvpKind) {
+  async function openRsvpModal(event: Event, kind: RsvpKind) {
     setModalEvent(event);
     setModalKind(kind);
-    setFormName('');
-    setFormEmail('');
+    setRsvpAccess(null);
     setErrorMsg(null);
     setSuccessMsg(null);
     setModalOpen(true);
+    try {
+      const res = await fetch(`/api/rsvp?eventId=${encodeURIComponent(event._id)}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to load RSVP.');
+      setRsvpAccess(data);
+      setRsvpState(prev => ({ ...prev, [event._id]: { yes: data.yes, maybe: data.maybe } }));
+    } catch (error) { setErrorMsg(error instanceof Error ? error.message : 'Unable to load RSVP.'); }
   }
 
   function closeRsvpModal() {
@@ -220,7 +224,7 @@ export default function EventsCalendar({ events }: Props) {
     setPendingEventId(null);
   }
 
-  async function submitRsvpForm() {
+  async function submitRsvpForm(response: RsvpKind | null = modalKind) {
     if (!modalEvent) return;
 
     try {
@@ -233,34 +237,23 @@ export default function EventsCalendar({ events }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventId: modalEvent._id,
-          response: modalKind,
-          name: formName,
-          email: formEmail,
+          response,
         }),
       });
 
-      if (!res.ok) {
-        throw new Error('RSVP failed');
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to save RSVP.');
+      setRsvpAccess(data);
+      setRsvpState(prev => ({ ...prev, [modalEvent._id]: { yes: data.yes, maybe: data.maybe } }));
+      window.dispatchEvent(new CustomEvent('hoa-rsvp', { detail: { eventId: modalEvent._id, ...data } }));
 
-      setRsvpState((prev) => {
-        const current = prev[modalEvent._id] || { yes: 0, maybe: 0 };
-        return {
-          ...prev,
-          [modalEvent._id]: {
-            yes: current.yes + (modalKind === 'yes' ? 1 : 0),
-            maybe: current.maybe + (modalKind === 'maybe' ? 1 : 0),
-          },
-        };
-      });
-
-      setSuccessMsg('RSVP received, thank you!');
+      setSuccessMsg(response ? 'RSVP saved.' : 'RSVP removed.');
       setTimeout(() => {
         closeRsvpModal();
       }, 800);
     } catch (err) {
       console.error(err);
-      setErrorMsg('Something went wrong. Please try again.');
+      setErrorMsg(err instanceof Error ? err.message : 'Unable to save RSVP.');
     } finally {
       setSubmitting(false);
       setPendingEventId(null);
@@ -509,7 +502,7 @@ export default function EventsCalendar({ events }: Props) {
                           ) : e.flyerMime === 'application/pdf' ? (
                             <div className="rounded-lg border border-emerald-100 overflow-hidden">
                               <iframe
-                                src={e.flyerUrl}
+                                src={`${e.flyerUrl}?view=1`}
                                 title={e.flyerName || `${e.title} flyer`}
                                 className="w-full h-64"
                               />
@@ -754,8 +747,8 @@ export default function EventsCalendar({ events }: Props) {
 
       {/* RSVP Modal */}
       {modalOpen && modalEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div role="dialog" aria-modal="true" aria-label="RSVP" className="bg-white rounded-md shadow-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-brand-800 mb-2">
               RSVP - {modalEvent.title}
             </h3>
@@ -764,29 +757,7 @@ export default function EventsCalendar({ events }: Props) {
             </p>
 
             <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Name (optional)
-                </label>
-                <input
-                  type="text"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Email (optional)
-                </label>
-                <input
-                  type="email"
-                  value={formEmail}
-                  onChange={(e) => setFormEmail(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="you@example.com"
-                />
-              </div>
+              {rsvpAccess && !rsvpAccess.canRespond && <p className="text-sm">{rsvpAccess.signedIn ? 'Approved access is required to RSVP.' : <Link href="/admin-sign-in" className="underline">Sign in to RSVP</Link>}</p>}
               {errorMsg && <p className="text-xs text-red-600">{errorMsg}</p>}
               {successMsg && <p className="text-xs text-emerald-600">{successMsg}</p>}
             </div>
@@ -802,12 +773,13 @@ export default function EventsCalendar({ events }: Props) {
               </button>
               <button
                 type="button"
-                onClick={submitRsvpForm}
-                disabled={submitting}
+                onClick={() => submitRsvpForm()}
+                disabled={submitting || !rsvpAccess?.canRespond}
                 className="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-60"
               >
                 {submitting ? 'Sending...' : 'Submit RSVP'}
               </button>
+              {rsvpAccess?.canRespond && rsvpAccess.response && <button type="button" disabled={submitting} onClick={() => submitRsvpForm(null)} className="px-3 py-1.5 text-xs text-red-700">Remove RSVP</button>}
             </div>
           </div>
         </div>

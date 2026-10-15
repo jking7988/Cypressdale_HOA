@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useId, useState } from 'react';
 
 type ToastKind = 'success' | 'error';
 
@@ -11,6 +11,7 @@ type Toast = {
 };
 
 export function NewsLetterSignup() {
+  const fieldId = useId();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [street, setStreet] = useState('');
@@ -73,6 +74,7 @@ export function NewsLetterSignup() {
           {toasts.map((toast) => (
             <div
               key={toast.id}
+              role={toast.kind === 'error' ? 'alert' : 'status'}
               className={`max-w-sm rounded-md border px-3 py-2 text-xs md:text-sm shadow-lg ${
                 toast.kind === 'success'
                   ? 'border-emerald-300 bg-emerald-50 text-emerald-900 shadow-emerald-900/20'
@@ -96,11 +98,13 @@ export function NewsLetterSignup() {
 
         <form onSubmit={handleSubmit} className="space-y-2">
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-emerald-900/90">
+            <label htmlFor={`${fieldId}-email`} className="block text-xs font-medium text-emerald-900/90">
               Email address
             </label>
             <input
               type="email"
+              id={`${fieldId}-email`}
+              maxLength={254}
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -110,11 +114,13 @@ export function NewsLetterSignup() {
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-emerald-900/90">
+            <label htmlFor={`${fieldId}-name`} className="block text-xs font-medium text-emerald-900/90">
               Name (optional)
             </label>
             <input
               type="text"
+              id={`${fieldId}-name`}
+              maxLength={200}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-md border border-emerald-200 bg-emerald-50/60 px-2.5 py-1.5 text-sm text-emerald-900 shadow-inner shadow-emerald-900/5 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
@@ -123,11 +129,13 @@ export function NewsLetterSignup() {
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-emerald-900/90">
+            <label htmlFor={`${fieldId}-street`} className="block text-xs font-medium text-emerald-900/90">
               Street (optional)
             </label>
             <input
               type="text"
+              id={`${fieldId}-street`}
+              maxLength={500}
               value={street}
               onChange={(e) => setStreet(e.target.value)}
               className="w-full rounded-md border border-emerald-200 bg-emerald-50/60 px-2.5 py-1.5 text-sm text-emerald-900 shadow-inner shadow-emerald-900/5 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"

@@ -1,17 +1,12 @@
 // app/(site)/events/page.tsx
 export const dynamic = 'force-dynamic';
 
-import { eventsQuery } from '@/lib/queries';
+import { getPublicContent } from '@/lib/member-hub/public-content';
 import EventsCalendar from '@/components/EventsCalendar';
 import { NewsLetterSignup } from '@/components/NewsLetterSignup';
-import { sanityFetch } from '@/lib/live';
 
 export default async function EventsPage() {
-  const { data } = await sanityFetch({
-    query: eventsQuery,
-    stega: true,
-  });
-  const events = (data ?? []) as any[];
+  const events = await getPublicContent<any>('event');
 
   return (
     <div className="space-y-6">

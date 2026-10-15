@@ -1,10 +1,7 @@
 import "../../styles/globals.css";
 import type { Metadata } from "next";
-import { draftMode } from "next/headers";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import SanityVisualEditing from "@/components/SanityVisualEditing";
-import { SanityLive } from "@/lib/live";
 import { Analytics } from "@vercel/analytics/next";
 import AutoSpanishTranslate from "@/components/AutoSpanishTranslate";
 
@@ -13,15 +10,7 @@ export const metadata: Metadata = {
   description: "Community info, events, and documents",
 };
 
-async function refreshOnLiveEvent(_tags: string[]) {
-  "use server";
-  return "refresh" as const;
-}
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const isDraftMode = (await draftMode()).isEnabled;
-  const enableStudioEditing = isDraftMode;
-
   return (
     <html lang="en" className="h-full">
       <body
@@ -34,16 +23,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Footer />
         </div>
 
-        {enableStudioEditing && <SanityVisualEditing />}
         <AutoSpanishTranslate />
-        {enableStudioEditing && (
-          <SanityLive
-            refreshOnMount
-            refreshOnReconnect
-            refreshOnFocus
-            revalidateSyncTags={refreshOnLiveEvent}
-          />
-        )}
         <Analytics />
       </body>
     </html>

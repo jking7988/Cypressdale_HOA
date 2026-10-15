@@ -1,55 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { writeClient } from '@/lib/sanity.server';
-
-type RSVPResponse = 'yes' | 'maybe'; // keep as-is
-
-export async function POST(req: NextRequest) {
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { getHubRequestContext, HubAccessError } from '@/lib/member-hub/server';
+const headers = { 'Cache-Control': 'private, no-store', Vary: 'Cookie, Authorization' };
+const id = z.string().regex(/^[a-zA-Z0-9_.:-]{1,200}$/);
+async function respond(request: Request, write: boolean) {
   try {
-    const body = await req.json().catch(() => null);
-    const eventId = body?.eventId as string | undefined;
-    const response = body?.response as RSVPResponse | undefined;
-    const name = (body?.name as string | undefined) ?? '';
-    const email = (body?.email as string | undefined) ?? '';
-
-    if (!eventId || !response || !['yes', 'maybe'].includes(response)) {
-      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-    }
-
-    if (!process.env.SANITY_WRITE_TOKEN) {
-      console.error('Missing SANITY_WRITE_TOKEN');
-      return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
-    }
-
-    const field = response === 'yes' ? 'rsvpYes' : 'rsvpMaybe';
-
-    const rsvpEntry = {
-      _type: 'rsvp',
-      _key: crypto.randomUUID(), // ✅ strong unique key
-      status: response,
-      name: name.trim(),
-      email: email.trim(),
-      createdAt: new Date().toISOString(),
-    };
-
-    // Transaction = atomic increment + append
-    await writeClient
-      .transaction()
-      .patch(eventId, (p) =>
-        p
-          // Ensure counts exist
-          .setIfMissing({ rsvpYes: 0, rsvpMaybe: 0 })
-          // Ensure rsvps exists AND isn’t null
-          .setIfMissing({ rsvps: [] })
-          // Increment the right counter
-          .inc({ [field]: 1 })
-          // Append RSVP entry
-          .append('rsvps', [rsvpEntry])
-      )
-      .commit();
-
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('RSVP error', err);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    const context = await getHubRequestContext(request, write ? 'member' : 'optional');
+    const parsed = z.object({ eventId: id, response: z.enum(['yes','maybe']).nullable().optional() })
+      .safeParse(write ? await request.json().catch(() => null) : { eventId: new URL(request.url).searchParams.get('eventId') });
+    if (!parsed.success || (write && parsed.data.response === undefined)) throw new HubAccessError(400, 'Choose going, maybe, or remove your RSVP.');
+    const { data, error } = await context.client.rpc(write ? 'hoa_set_rsvp' : 'hoa_rsvp_summary', {
+      event_id: parsed.data.eventId, ...(write ? { response: parsed.data.response } : {}) });
+    if (error?.code === 'P0002') throw new HubAccessError(404, 'Event not found.');
+    if (error) throw error;
+    return NextResponse.json({ ...data, signedIn: !!context.user }, { headers });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof HubAccessError ? error.message : 'Unable to update RSVP.' },
+      { status: error instanceof HubAccessError ? error.status : 500, headers });
   }
 }
+export async function GET(request: Request) { return respond(request, false); }
+export async function POST(request: Request) { return respond(request, true); }

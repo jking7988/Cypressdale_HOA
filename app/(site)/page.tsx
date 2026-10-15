@@ -4,8 +4,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PortableText } from '@portabletext/react';
-import { client } from '@/lib/sanity.client';
-import { postsQuery, eventsQuery } from '@/lib/queries';
+import { getPublicContent } from '@/lib/member-hub/public-content';
 import { NewsLetterSignup } from '@/components/NewsLetterSignup';
 import {
   Sun,
@@ -183,8 +182,8 @@ async function getTwelveHourForecast(): Promise<HourlyForecast[]> {
 
 export default async function HomePage() {
   const [posts, events, dailyForecast, hourlyForecast] = await Promise.all([
-    client.fetch<Post[]>(postsQuery),
-    client.fetch<Event[]>(eventsQuery),
+    getPublicContent<Post>('post'),
+    getPublicContent<Event>('event'),
     getSevenDayForecast(),
     getTwelveHourForecast(),
   ]);

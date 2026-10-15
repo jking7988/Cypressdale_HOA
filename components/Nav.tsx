@@ -1,9 +1,63 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { isYardSaleMapActive } from '@/lib/yardSale';
+import { ChevronDown, House, ShieldCheck } from 'lucide-react';
+import { holidayPages } from '@/lib/member-hub/holidays';
+
+function HolidayNavigation({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const container = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const id = useId();
+  const pathname = usePathname();
+  const active = pathname === '/holiday-decorating' || pathname.startsWith('/holiday-decorating/');
+
+  useEffect(() => {
+    setExpanded(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!container.current?.contains(event.target as Node)) setExpanded(false);
+    };
+    document.addEventListener('pointerdown', dismiss);
+    return () => document.removeEventListener('pointerdown', dismiss);
+  }, [expanded]);
+
+  return (
+    <div ref={container} className="relative" onBlur={event => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setExpanded(false);
+    }} onKeyDown={event => {
+      if (event.key === 'Escape' && expanded) {
+        event.preventDefault();
+        setExpanded(false);
+        trigger.current?.focus();
+      }
+    }}>
+      <button ref={trigger} type="button" aria-expanded={expanded} aria-controls={id}
+        onClick={() => setExpanded(value => !value)}
+        className={`flex items-center gap-1 rounded-lg text-left ${mobile ? 'w-full px-2 py-3 text-base' : 'px-3 py-2 text-sm'} ${active ? 'bg-emerald-100 text-emerald-800 font-medium' : 'text-brand-700 hover:bg-brand-100'}`}>
+        <span aria-hidden="true">{'\u{1F384}'}</span><span>Holiday Decorating</span>
+        <ChevronDown size={14} aria-hidden="true" className={`shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+      </button>
+      <ul id={id} hidden={!expanded} className={mobile ? 'ml-7 border-l border-brand-200 pl-2' : 'absolute right-0 top-full mt-1 w-48 rounded-lg border border-brand-200 bg-white p-1 shadow-lg'}>
+        {(['christmas', 'halloween'] as const).map(holiday => {
+          const info = holidayPages[holiday];
+          const selected = pathname === info.publicPath || (holiday === 'christmas' && pathname === '/holiday-decorating');
+          return <li key={holiday}><Link href={info.publicPath} aria-current={selected ? 'page' : undefined}
+            onClick={() => { setExpanded(false); onNavigate?.(); }}
+            className={`block rounded px-3 py-3 text-sm ${selected ? 'bg-emerald-100 font-medium text-emerald-800' : 'text-brand-700 hover:bg-brand-100'}`}>
+            {info.label}
+          </Link></li>;
+        })}
+      </ul>
+    </div>
+  );
+}
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
@@ -31,6 +85,14 @@ export default function Nav() {
       <div className="container py-3 flex flex-col items-center gap-3">
         {/* Top row: centered logo + mobile hamburger on the right */}
         <div className="relative w-full flex items-center justify-center">
+          <nav className="absolute left-0 flex items-center gap-3 text-sm text-brand-700" aria-label="Account portals">
+            <Link href="/admin/content" className="inline-flex items-center gap-1" aria-label="Admins" title="Admins">
+              <ShieldCheck size={18} /><span className="hidden lg:inline">Admins</span>
+            </Link>
+            <Link href="/homeowners" className="inline-flex items-center gap-1" aria-label="Homeowners" title="Homeowners">
+              <House size={18} /><span className="hidden lg:inline">Homeowners</span>
+            </Link>
+          </nav>
           <Link
             href="/"
             className="font-bold text-xl text-brand-700"
@@ -66,8 +128,9 @@ export default function Nav() {
         </div>
 
         {/* Desktop nav: centered row of links under the logo */}
-        <nav className="hidden md:flex items-center justify-center gap-1">
+        <nav aria-label="Main navigation" className="hidden md:flex items-center justify-center gap-1">
           {links.map((link) => {
+            if (link.href === '/holiday-decorating') return <HolidayNavigation key={link.href} />;
             const isActive = pathname === link.href;
 
             return (
@@ -94,8 +157,8 @@ export default function Nav() {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden border-t border-brand-100 bg-brand-50/95 backdrop-blur">
-          <nav className="container flex flex-col py-2">
-            {links.map((link) => (
+          <nav aria-label="Mobile navigation" className="container flex flex-col py-2">
+            {links.map((link) => link.href === '/holiday-decorating' ? <HolidayNavigation key={link.href} mobile onNavigate={() => setOpen(false)} /> : (
               <Link
                 key={link.href}
                 href={link.href}

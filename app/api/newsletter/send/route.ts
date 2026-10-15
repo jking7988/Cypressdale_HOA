@@ -1,13 +1,5 @@
-import { NextResponse } from 'next/server';
-import { runNewsletterSend } from '@/lib/newsletter/send';
-import { getCanonicalSiteUrl } from '@/lib/siteUrl';
-
+import { sendNewsletterRoute } from '@/lib/newsletter/routes';
 export const runtime = 'nodejs';
-
-export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const force = url.searchParams.get('force') === '1';
-  const baseUrl = getCanonicalSiteUrl(url.origin);
-  const result = await runNewsletterSend({ baseUrl, force });
-  return NextResponse.json(result.body, { status: result.statusCode });
-}
+export const maxDuration = 120;
+export async function GET(request: Request) { return sendNewsletterRoute(request); }
+export async function POST(request: Request) { return sendNewsletterRoute(request,true); }

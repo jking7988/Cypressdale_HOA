@@ -6,9 +6,10 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 type Props = {
   photos: string[];
   title: string;
+  layout?: 'gallery' | 'card';
 };
 
-export function YardLightbox({ photos, title }: Props) {
+export function YardLightbox({ photos, title, layout = 'gallery' }: Props) {
   const list = useMemo(() => (photos ?? []).filter(Boolean), [photos]);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -23,7 +24,7 @@ export function YardLightbox({ photos, title }: Props) {
     const d = dialogRef.current;
     if (!d) return;
 
-    lastActiveEl.current = document.activeElement as HTMLElement | null;
+    lastActiveEl.current = d.ownerDocument.activeElement as HTMLElement | null;
 
     setActiveIndex(Math.max(0, Math.min(index, list.length - 1)));
 
@@ -54,8 +55,9 @@ export function YardLightbox({ photos, title }: Props) {
       if (e.key === 'ArrowLeft' && list.length > 1) showPrev();
     };
 
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    const target = dialogRef.current?.ownerDocument.defaultView || window;
+    target.addEventListener('keydown', handler);
+    return () => target.removeEventListener('keydown', handler);
   }, [list.length, showNext, showPrev]);
 
   // When the dialog closes, restore focus
@@ -75,14 +77,15 @@ export function YardLightbox({ photos, title }: Props) {
       {/* Main image */}
       <button
         type="button"
-        className="relative w-full max-h-[380px] overflow-hidden rounded-2xl border border-emerald-100 group"
+        className={layout === 'card' ? 'relative block aspect-[4/3] w-full bg-emerald-50 group' : 'relative w-full max-h-[380px] overflow-hidden rounded-2xl border border-emerald-100 group'}
+        aria-label={`View photos of ${title}`}
         onClick={() => openAt(0)}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={mainPhoto}
           alt={title}
-          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform"
+          className={layout === 'card' ? 'w-full h-full object-contain' : 'w-full h-full object-cover group-hover:scale-[1.02] transition-transform'}
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors" />
         <div className="absolute bottom-3 right-3 rounded-full bg-black/70 text-white text-xs px-3 py-1 flex items-center gap-1">
@@ -94,7 +97,7 @@ export function YardLightbox({ photos, title }: Props) {
       </button>
 
       {/* Thumbnails (extra photos) */}
-      {list.length > 1 && (
+      {layout !== 'card' && list.length > 1 && (
         <div className="grid gap-2 grid-cols-3 md:grid-cols-4">
           {list.map((url, idx) => (
             <button
@@ -117,6 +120,7 @@ export function YardLightbox({ photos, title }: Props) {
       {/* FULLSCREEN LIGHTBOX (Top-layer dialog) */}
       <dialog
         ref={dialogRef}
+        aria-label={`Photos of ${title}`}
         className="p-0 m-0 border-0 bg-transparent max-w-none w-screen h-screen"
         // Esc / browser cancel
         onCancel={(e) => {

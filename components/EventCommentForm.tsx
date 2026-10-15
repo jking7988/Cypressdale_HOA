@@ -1,391 +1,85 @@
-﻿'use client';
+'use client';
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Trash2, Reply } from 'lucide-react';
+import { FormEvent, useCallback, useEffect, useId, useState } from 'react';
+import Link from 'next/link';
+import { Trash2, Reply, Send, X } from 'lucide-react';
 
-type BaseCommentFormProps = {
-  targetId: string;
-  targetType: 'event' | 'post';
-};
+type Comment = { _id: string; name: string; message: string; createdAt: string; parentId: string | null };
 
-type EventCommentFormProps = {
-  eventId: string;
-};
-
-type NewsCommentFormProps = {
-  postId: string;
-};
-
-type SiteComment = {
-  _id: string;
-  name?: string | null;
-  email?: string | null;
-  message: string;
-  createdAt?: string | null;
-  parentId?: string | null;
-};
-
-type ReplyDraft = {
-  message: string;
-  name: string;
-  email: string;
-};
-
-function CommentsThreadForm({ targetId, targetType }: BaseCommentFormProps) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+function CommentsThreadForm({ targetId, targetType }: { targetId: string; targetType: 'event' | 'post' }) {
+  const inputId = useId();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [permissions, setPermissions] = useState({ canComment: false, isAdmin: false, signedIn: false });
+  const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState('');
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
-  const [error, setError] = useState<string | null>(null);
-  const [comments, setComments] = useState<SiteComment[]>([]);
-  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
-  const [replyingToId, setReplyingToId] = useState<string | null>(null);
-  const [replyDrafts, setReplyDrafts] = useState<Record<string, ReplyDraft>>({});
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const api = targetType === 'event' ? '/api/events/comments' : '/api/news/comments';
+  const parameter = targetType === 'event' ? 'eventId' : 'postId';
+  const load = useCallback(async () => {
+    const response = await fetch(`${api}?${parameter}=${encodeURIComponent(targetId)}`, { cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Unable to load comments.');
+    setComments(result.comments); setPermissions(result); setLoaded(true);
+  }, [api, parameter, targetId]);
+  useEffect(() => { load().catch(error => setError(error.message)); }, [load]);
 
-  const adminDeleteEnabled = process.env.NEXT_PUBLIC_ENABLE_ADMIN_DELETE === '1';
-  const router = useRouter();
-
-  const apiBase = targetType === 'event' ? '/api/events/comments' : '/api/news/comments';
-  const idParam = targetType === 'event' ? 'eventId' : 'postId';
-
-  const canSubmit = message.trim().length > 0 && status !== 'submitting';
-
-  const fetchComments = useCallback(async () => {
+  async function submit(event: FormEvent) {
+    event.preventDefault(); if (busy || !message.trim()) return;
+    setBusy(true); setError('');
     try {
-      const res = await fetch(`${apiBase}?${idParam}=${encodeURIComponent(targetId)}`, {
-        cache: 'no-store',
-      });
-      if (!res.ok) throw new Error('Unable to load comments');
-      const data = await res.json();
-      setComments(data.comments ?? []);
-    } catch (err) {
-      console.error('Failed to load comments', err);
-    }
-  }, [apiBase, idParam, targetId]);
-
-  useEffect(() => {
-    fetchComments();
-  }, [fetchComments]);
-
-  async function submitComment(payload: {
-    message: string;
-    name?: string;
-    email?: string;
-    parentCommentId?: string;
-  }) {
-    const body: Record<string, string> = {
-      [idParam]: targetId,
-      message: payload.message,
-      name: payload.name ?? '',
-      email: payload.email ?? '',
-    };
-
-    if (payload.parentCommentId) body.parentCommentId = payload.parentCommentId;
-
-    const res = await fetch(apiBase, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) {
-      throw new Error('Failed to submit comment');
-    }
+      const response = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [parameter]: targetId, message, ...(replyTo ? { parentCommentId: replyTo } : {}) }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to send comment.');
+      setMessage(''); setReplyTo(null); await load();
+    } catch (error) { setError(error instanceof Error ? error.message : 'Unable to send comment.'); }
+    finally { setBusy(false); }
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canSubmit) return;
-
-    setStatus('submitting');
-    setError(null);
-
+  async function remove(id: string) {
+    if (busy || !window.confirm('Delete this comment permanently?')) return;
+    setBusy(true); setError('');
     try {
-      await submitComment({
-        message: message.trim(),
-        name: name.trim(),
-        email: email.trim(),
-      });
-
-      setName('');
-      setEmail('');
-      setMessage('');
-      setStatus('success');
-      await fetchComments();
-      router.refresh();
-    } catch (err) {
-      console.error(err);
-      setStatus('error');
-      setError('Unable to send comment right now. Please try again.');
-    }
+      const response = await fetch(`/api/events/comments/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to delete comment.');
+      if (replyTo === id) setReplyTo(null);
+      await load();
+    } catch (error) { setError(error instanceof Error ? error.message : 'Unable to delete comment.'); }
+    finally { setBusy(false); }
   }
 
-  const sortedComments = useMemo(
-    () => [...comments].sort((a, b) => {
-      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return aTime - bTime;
-    }),
-    [comments],
-  );
-
-  const rootComments = useMemo(
-    () => sortedComments.filter((c) => !c.parentId),
-    [sortedComments],
-  );
-
-  const childrenByParent = useMemo(() => {
-    const map = new Map<string, SiteComment[]>();
-    for (const comment of sortedComments) {
-      if (!comment.parentId) continue;
-      const list = map.get(comment.parentId) ?? [];
-      list.push(comment);
-      map.set(comment.parentId, list);
-    }
-    return map;
-  }, [sortedComments]);
-
-  function formatTimestamp(ts?: string | null) {
-    if (!ts) return '';
-    const date = new Date(ts);
-    if (isNaN(date.getTime())) return '';
-    return date.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  }
-
-  function getReplyDraft(commentId: string): ReplyDraft {
-    return (
-      replyDrafts[commentId] ?? {
-        message: '',
-        name: name,
-        email: email,
-      }
-    );
-  }
-
-  function setReplyDraft(commentId: string, patch: Partial<ReplyDraft>) {
-    setReplyDrafts((prev) => {
-      const current = getReplyDraft(commentId);
-      return {
-        ...prev,
-        [commentId]: { ...current, ...patch },
-      };
-    });
-  }
-
-  async function handleSubmitReply(parentCommentId: string, event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const draft = getReplyDraft(parentCommentId);
-    const replyMessage = draft.message.trim();
-    if (!replyMessage) return;
-
-    try {
-      await submitComment({
-        message: replyMessage,
-        name: draft.name.trim(),
-        email: draft.email.trim(),
-        parentCommentId,
-      });
-
-      setReplyDraft(parentCommentId, { message: '' });
-      setReplyingToId(null);
-      await fetchComments();
-      router.refresh();
-    } catch (err) {
-      console.error(err);
-      window.alert('Unable to send reply right now. Please try again.');
-    }
-  }
-
-  async function handleDeleteComment(comment: SiteComment) {
-    if (deletingCommentId) return;
-
-    const confirmDelete = window.confirm('Delete this comment permanently?');
-    if (!confirmDelete) return;
-
-    const secret = window.prompt('Enter the delete passphrase:');
-    if (!secret) return;
-
-    setDeletingCommentId(comment._id);
-
-    try {
-      const response = await fetch(`/api/events/comments/${comment._id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-event-comment-delete-secret': secret,
-        },
-        body: JSON.stringify({ commentId: comment._id }),
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error || 'Unable to delete comment. Please try again.');
-      }
-
-      await fetchComments();
-    } catch (err) {
-      console.error(err);
-      window.alert(err instanceof Error ? err.message : 'Unable to delete comment.');
-    } finally {
-      setDeletingCommentId(null);
-    }
-  }
-
-  function renderComment(comment: SiteComment, isReply = false) {
-    const deleting = deletingCommentId === comment._id;
-    const childReplies = childrenByParent.get(comment._id) ?? [];
-    const isReplyOpen = replyingToId === comment._id;
-    const replyDraft = getReplyDraft(comment._id);
-
-    return (
-      <div key={comment._id} className={isReply ? 'ml-5 border-l border-emerald-100 pl-3 mt-2' : ''}>
-        <div className="relative rounded-2xl border border-emerald-100 bg-white/80 p-3 shadow-sm">
-          <div className="flex items-center justify-between text-[11px] text-emerald-800 uppercase tracking-wide">
-            <span>{comment.name || 'Neighbor'}</span>
-            <span className="text-emerald-600">{formatTimestamp(comment.createdAt)}</span>
-          </div>
-          <p className="text-sm text-emerald-900 mt-1 whitespace-pre-wrap">{comment.message}</p>
-
-          <div className="mt-2 flex items-center gap-3 text-[11px]">
-            <button
-              type="button"
-              onClick={() => setReplyingToId(isReplyOpen ? null : comment._id)}
-              className="inline-flex items-center gap-1 text-emerald-700 hover:underline"
-            >
-              <Reply className="h-3.5 w-3.5" />
-              Reply
-            </button>
-          </div>
-
-          {adminDeleteEnabled && (
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={() => handleDeleteComment(comment)}
-              className="absolute top-2 right-2 h-6 w-6 rounded-full border border-red-100 bg-white text-red-600 shadow hover:bg-red-50 disabled:opacity-50"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
-          )}
+  function thread(comment: Comment, depth = 0): React.ReactNode {
+    return <div key={comment._id} className={depth && depth <= 8 ? 'ml-3 border-l border-emerald-100 pl-3 mt-2' : ''}>
+      <article className="border-b border-emerald-100 py-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-emerald-800">
+          <strong className="break-words">{comment.name || 'Neighbor'}</strong>
+          <time className="text-gray-500" dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleDateString('en-US', { timeZone: 'America/Chicago' })}</time>
+          {permissions.isAdmin && <button title="Delete comment" aria-label="Delete comment" disabled={busy} onClick={() => remove(comment._id)} className="ml-auto p-2 text-red-700"><Trash2 size={15} /></button>}
         </div>
-
-        {isReplyOpen && (
-          <form
-            className="mt-2 rounded-xl border border-emerald-100 bg-emerald-50/50 p-2 space-y-2"
-            onSubmit={(ev) => handleSubmitReply(comment._id, ev)}
-          >
-            <textarea
-              className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              placeholder="Write a reply..."
-              rows={2}
-              value={replyDraft.message}
-              onChange={(e) => setReplyDraft(comment._id, { message: e.target.value })}
-              required
-            />
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <input
-                type="text"
-                className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="Name (optional)"
-                value={replyDraft.name}
-                onChange={(e) => setReplyDraft(comment._id, { name: e.target.value })}
-              />
-              <input
-                type="email"
-                className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="Email (optional)"
-                value={replyDraft.email}
-                onChange={(e) => setReplyDraft(comment._id, { email: e.target.value })}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white hover:bg-emerald-700"
-              >
-                Submit reply
-              </button>
-              <button
-                type="button"
-                onClick={() => setReplyingToId(null)}
-                className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 hover:bg-emerald-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-
-        {childReplies.map((reply) => renderComment(reply, true))}
-      </div>
-    );
+        <p className="mt-1 text-sm whitespace-pre-wrap break-words">{comment.message}</p>
+        {permissions.canComment && depth < 8 && <button disabled={busy} onClick={() => setReplyTo(comment._id)} className="mt-2 inline-flex items-center gap-1 text-xs text-emerald-700"><Reply size={14} />Reply</button>}
+      </article>
+      {comments.filter(child => child.parentId === comment._id).map(child => thread(child, depth + 1))}
+    </div>;
   }
 
-  return (
-    <div className="space-y-2 mt-4 border-t border-dotted border-emerald-100 pt-4">
-      <p className="text-xs text-emerald-900 font-semibold">
-        {sortedComments.length > 0 ? 'Discussion thread' : 'Start the conversation'}
-      </p>
-
-      {rootComments.length > 0 ? (
-        <div className="space-y-2 max-h-64 overflow-auto pr-1">
-          {rootComments.map((comment) => renderComment(comment))}
-        </div>
-      ) : (
-        <p className="text-[11px] text-gray-500">No comments yet; be the first to ask.</p>
-      )}
-
-      <form className="space-y-2" onSubmit={handleSubmit}>
-        <textarea
-          className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-          placeholder="Leave a quick question or comment for the HOA team..."
-          rows={3}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          required
-        />
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <input
-            type="text"
-            className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            placeholder="Name (optional)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            type="email"
-            className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            placeholder="Email (optional)"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        {status === 'success' && (
-          <p className="text-xs text-emerald-600">Thanks! Your comment has been submitted.</p>
-        )}
-        {status === 'error' && error && <p className="text-xs text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white hover:bg-emerald-700 disabled:opacity-50"
-        >
-          {status === 'submitting' ? 'Sending...' : 'Submit comment'}
-        </button>
-      </form>
-    </div>
-  );
+  return <section className="mt-4 border-t border-emerald-100 pt-4 space-y-3" aria-label="Discussion">
+    <h2 className="text-sm font-semibold">Discussion</h2>
+    {comments.filter(comment => !comment.parentId).map(comment => thread(comment))}
+    {loaded && !comments.length && <p className="text-xs text-gray-500">No comments yet.</p>}
+    {loaded && !permissions.canComment && <p className="text-sm text-gray-600">{permissions.signedIn ? 'Approved membership is required to comment.' : <Link className="text-emerald-700 underline" href="/admin-sign-in">Sign in to comment</Link>}</p>}
+    {permissions.canComment && <form onSubmit={submit} className="space-y-2">
+      {replyTo && <div className="flex items-center gap-2 text-xs">Reply to {comments.find(comment => comment._id === replyTo)?.name}<button type="button" title="Cancel reply" aria-label="Cancel reply" onClick={() => setReplyTo(null)}><X size={16} /></button></div>}
+      <label className="block text-xs font-semibold" htmlFor={inputId}>Comment</label>
+      <textarea id={inputId} value={message} onChange={event => setMessage(event.target.value)} required maxLength={5000} rows={3} disabled={busy} className="w-full rounded-md border border-emerald-200 px-3 py-2 text-sm" />
+      <button disabled={busy || !message.trim()} className="inline-flex items-center gap-2 rounded-md bg-emerald-700 px-3 py-2 text-xs text-white disabled:opacity-50"><Send size={14} />{busy ? 'Sending...' : 'Submit comment'}</button>
+    </form>}
+    {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+  </section>;
 }
 
-export function EventCommentForm({ eventId }: EventCommentFormProps) {
-  return <CommentsThreadForm targetId={eventId} targetType="event" />;
-}
-
-export function NewsCommentForm({ postId }: NewsCommentFormProps) {
-  return <CommentsThreadForm targetId={postId} targetType="post" />;
-}
+export function EventCommentForm({ eventId }: { eventId: string }) { return <CommentsThreadForm targetId={eventId} targetType="event" />; }
+export function NewsCommentForm({ postId }: { postId: string }) { return <CommentsThreadForm targetId={postId} targetType="post" />; }
