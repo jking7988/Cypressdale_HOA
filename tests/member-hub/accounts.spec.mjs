@@ -66,6 +66,7 @@ test('registration, verification, approval, revocation, recovery and self-deleti
     await page.getByRole('button', { name: 'Create Account' }).click();
     await expect(page.getByRole('status')).toContainText('Check your email');
     await page.goto(await emailLink(request, email, 'Confirm your'));
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(page).toHaveURL(/\/members$/);
     await expect(page.getByText('Awaiting Approval', { exact: true })).toBeVisible();
     await page.goto('/admin/members');
@@ -110,6 +111,7 @@ test('registration, verification, approval, revocation, recovery and self-deleti
     await page.getByRole('button', { name: 'Send Reset Link' }).click();
     await expect(page.getByRole('status')).toContainText('If an account exists');
     await page.goto(await emailLink(request, email, 'Reset your'));
+    await page.getByRole('button', { name: 'Continue to password reset', exact: true }).click();
     await expect(page).toHaveURL(/\/reset-password$/);
     await page.getByLabel('New Password', { exact: true }).fill(resetPassword);
     await page.getByLabel('Confirm Password', { exact: true }).fill(resetPassword);
@@ -160,6 +162,7 @@ test('email invitation grants admin access and the last admin cannot self-delete
     await page.getByRole('button', { name: 'Send Invitation' }).click();
     await expect(page.getByRole('status')).toContainText('Admin invitation sent');
     await invitedPage.goto(await emailLink(request, email, 'admin invitation'));
+    await invitedPage.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(invitedPage).toHaveURL(/\/members\/accept-invite\?id=/);
     await invitedPage.getByLabel('Full Name').fill('Invited Local Admin');
     await invitedPage.getByLabel('Set Password').fill('InvitedAdminPassword2026!');

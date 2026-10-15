@@ -29,6 +29,7 @@ test('an existing resident can accept an emailed admin invitation', async ({ bro
     const link = data.HTML.match(/href="([^"]+)"/)[1].replace(/&amp;/g, '&');
     const invited = await context.newPage();
     await invited.goto(link);
+    await invited.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(invited).toHaveURL(/\/members\/accept-invite\?id=/);
     await invited.getByLabel('Set Password').fill('ExistingAdminPassword2026!');
     await invited.getByRole('button', { name: 'Accept Admin Invitation' }).click();
