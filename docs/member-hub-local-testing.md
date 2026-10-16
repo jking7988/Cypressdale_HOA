@@ -1,7 +1,8 @@
 # Local member hub
 
 All changes live in `feature/member-hub` in the separate migration worktree.
-No live Supabase migrations have been applied and no preview has been published.
+The site is now deployed. This guide covers ISOLATED Docker tests only; the normal
+development command uses hosted data. See [hosted development](hosted-development.md).
 
 ## Try the member hub
 
@@ -10,10 +11,11 @@ Start Docker Desktop, then run these commands from the migration worktree:
 ```powershell
 npm run member-hub:start
 npm run member-hub:seed
-npm run member-hub:dev
+npm run member-hub:dev:local
 ```
 
-Open `http://localhost:3001/admin-sign-in`. The local-only test admin is
+Open `http://localhost:3002/admin-sign-in`. Hosted-data development stays on port
+3001; isolated tests use a separate `.next-isolated` build cache. The local-only test admin is
 `admin@cypressdale.test` with password `CypressdaleLocal2026!`.
 Register test residents at `/register`. Confirmation, recovery and invitation
 emails are captured at `http://127.0.0.1:55424`; no email goes to a real inbox.
@@ -30,6 +32,16 @@ and draft copies overlapped; the importer deduplicates their source keys.
 No existing member accounts were reset or modified during import.
 
 Admins create and edit news, events, and custom pages in the content editor.
+Titles use the same rich-text toolbar as the body. Formatting, alignment and line
+breaks persist in drafts and published detail pages; content lists, search and
+newsletters retain a plain-text title. Existing titles load automatically without
+re-entry. Title text remains limited to 300 characters.
+The File / Flyer section supports a content title plus a PDF or image without
+requiring body text or an Image & Text section. Upload directly inside the section
+to attach automatically, or select an existing Files asset. Uploads join Files,
+never the document folder library. PDF pages render in preview and publication
+(up to ten preview pages), with Open/Download links for the entire file. Normal
+public/member access and in-use-file protection apply to these sections too.
 The Content list groups a saved record and its `drafts.*` version into one row.
 Paired entries show Published and Draft changes together; Edit opens the draft,
 while Preview opens the published version. Draft-only previews open the editor's

@@ -34,8 +34,9 @@ export function hubConfig(environment: NodeJS.ProcessEnv = process.env) {
     throw new HubAccessError(503, 'Member hub is not available yet.');
   }
   const mode = environment.MEMBER_HUB_ENVIRONMENT;
-  const url = normalizedUrl(environment.MEMBER_HUB_SUPABASE_URL || (mode === 'production' ? environment.NEXT_PUBLIC_SUPABASE_URL : undefined));
-  const publishableKey = environment.MEMBER_HUB_SUPABASE_PUBLISHABLE_KEY || (mode === 'production'
+  const shared = mode === 'production' || mode === 'hosted-development';
+  const url = normalizedUrl(environment.MEMBER_HUB_SUPABASE_URL || (shared ? environment.NEXT_PUBLIC_SUPABASE_URL : undefined));
+  const publishableKey = environment.MEMBER_HUB_SUPABASE_PUBLISHABLE_KEY || (shared
     ? environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || environment.NEXT_PUBLIC_SUPABASE_ANON_KEY : undefined);
   const productionUrl = normalizedUrl(environment.MEMBER_HUB_PRODUCTION_SUPABASE_URL || environment.NEXT_PUBLIC_SUPABASE_URL);
   const existingUrl = normalizedUrl(environment.NEXT_PUBLIC_SUPABASE_URL);
@@ -48,20 +49,26 @@ export function hubConfig(environment: NodeJS.ProcessEnv = process.env) {
     && (!existingUrl || existingUrl.origin === url.origin)
     && (!environment.VERCEL_ENV || environment.VERCEL_ENV === 'production');
   if (production) siteOrigin(environment);
+  const hostedDevelopment = mode === 'hosted-development' && environment.MEMBER_HUB_SHARED_DATABASE === 'true'
+    && environment.NODE_ENV === 'development' && !environment.VERCEL && !environment.VERCEL_ENV
+    && url && existingUrl && url.origin === existingUrl.origin && url.protocol === 'https:'
+    && url.hostname.endsWith('.supabase.co') && !url.port
+    && (!productionUrl || productionUrl.origin === url.origin);
+  if (hostedDevelopment) siteOrigin(environment);
   const isolated = url && (mode === 'local'
     ? localHost && ['http:', 'https:'].includes(url.protocol)
     : mode === 'staging' && productionUrl && url.protocol === 'https:'
       && !excludedHosts.includes(url.hostname.replace(/\.$/, '')));
-  if ((!isolated && !production) || !url || !publishableKey || !isPublishableKey(publishableKey)) {
+  if ((!isolated && !production && !hostedDevelopment) || !url || !publishableKey || !isPublishableKey(publishableKey)) {
     throw new HubAccessError(503, 'Member hub environment configuration is not approved.');
   }
-  return { url: url.origin, publishableKey, secureCookies: mode !== 'local' };
+  return { url: url.origin, publishableKey, secureCookies: mode !== 'local' && mode !== 'hosted-development' };
 }
 
 function siteOrigin(environment: NodeJS.ProcessEnv) {
   const url = normalizedUrl(environment.MEMBER_HUB_SITE_URL);
   const localHost = url && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
-  const valid = url && (environment.MEMBER_HUB_ENVIRONMENT === 'local'
+  const valid = url && (['local', 'hosted-development'].includes(environment.MEMBER_HUB_ENVIRONMENT || '')
     ? localHost && ['http:', 'https:'].includes(url.protocol)
     : url.protocol === 'https:' && !localHost);
   if (!valid || !url) throw new HubAccessError(503, 'Member site URL is not configured safely.');
@@ -76,7 +83,7 @@ export function hubSiteOrigin(environment: NodeJS.ProcessEnv = process.env) {
 export function hubServiceRoleKey(environment: NodeJS.ProcessEnv = process.env) {
   hubConfig(environment);
   const key = environment.MEMBER_HUB_SUPABASE_SERVICE_ROLE_KEY
-    || (environment.MEMBER_HUB_ENVIRONMENT === 'production' ? environment.SUPABASE_SERVICE_ROLE_KEY : undefined);
+    || (['production', 'hosted-development'].includes(environment.MEMBER_HUB_ENVIRONMENT || '') ? environment.SUPABASE_SERVICE_ROLE_KEY : undefined);
   let serviceRole = false;
   try { serviceRole = !!key && JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString('utf8')).role === 'service_role'; }
   catch { /* New Supabase secret keys are not JWTs. */ }

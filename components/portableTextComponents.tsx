@@ -1,31 +1,32 @@
 // src/components/portableTextComponents.tsx
 import React, { ReactNode } from 'react';
 import type {TypedObject} from '@portabletext/types';
+import { blockTextAlignment } from '@/lib/member-hub/text-alignment';
 // If this type import causes issues, you can delete the line and the type annotation below.
 // import type { PortableTextComponents } from '@portabletext/react';
 
-type BlockProps = { children?: ReactNode };
+type BlockProps = { children?: ReactNode; value?: unknown };
 
-const NormalBlock = ({ children }: BlockProps) => (
-  <p className="mb-3 min-h-[1.625em] leading-relaxed text-gray-800 whitespace-break-spaces">
+const NormalBlock = ({ children, value }: BlockProps) => (
+  <p style={{ textAlign: blockTextAlignment(value) }} className="mb-3 min-h-[1.625em] leading-relaxed text-gray-800 whitespace-break-spaces">
     {children}
   </p>
 );
 
-const H1Block = ({ children }: BlockProps) => (
-  <h1 className="mt-6 mb-4 text-xl font-semibold text-gray-900 whitespace-break-spaces">
+const H1Block = ({ children, value }: BlockProps) => (
+  <h1 style={{ textAlign: blockTextAlignment(value) }} className="mt-6 mb-4 text-xl font-semibold text-gray-900 whitespace-break-spaces">
     {children}
   </h1>
 );
 
-const H2Block = ({ children }: BlockProps) => (
-  <h2 className="mt-5 mb-3 text-lg font-semibold text-gray-900 whitespace-break-spaces">
+const H2Block = ({ children, value }: BlockProps) => (
+  <h2 style={{ textAlign: blockTextAlignment(value) }} className="mt-5 mb-3 text-lg font-semibold text-gray-900 whitespace-break-spaces">
     {children}
   </h2>
 );
 
-const H3Block = ({ children }: BlockProps) => (
-  <h3 className="mt-4 mb-2 text-base font-semibold text-gray-900 whitespace-break-spaces">
+const H3Block = ({ children, value }: BlockProps) => (
+  <h3 style={{ textAlign: blockTextAlignment(value) }} className="mt-4 mb-2 text-base font-semibold text-gray-900 whitespace-break-spaces">
     {children}
   </h3>
 );
@@ -42,12 +43,16 @@ const NumberList = ({ children }: BlockProps) => (
   </ol>
 );
 
-const BulletItem = ({ children }: BlockProps) => (
-  <li className="leading-relaxed whitespace-break-spaces">{children}</li>
+const QuoteBlock = ({ children, value }: BlockProps) => (
+  <blockquote style={{ textAlign: blockTextAlignment(value) }} className="mb-3 border-l-2 border-emerald-200 pl-4 leading-relaxed whitespace-break-spaces">{children}</blockquote>
 );
 
-const NumberItem = ({ children }: BlockProps) => (
-  <li className="leading-relaxed whitespace-break-spaces">{children}</li>
+const BulletItem = ({ children, value }: BlockProps) => (
+  <li style={{ textAlign: blockTextAlignment(value) }} className="leading-relaxed whitespace-break-spaces">{children}</li>
+);
+
+const NumberItem = ({ children, value }: BlockProps) => (
+  <li style={{ textAlign: blockTextAlignment(value) }} className="leading-relaxed whitespace-break-spaces">{children}</li>
 );
 
 type PortableTextSpan = {
@@ -311,6 +316,7 @@ export const portableTextComponents /* : PortableTextComponents */ = {
     h1: H1Block,
     h2: H2Block,
     h3: H3Block,
+    blockquote: QuoteBlock,
   },
   list: {
     bullet: BulletList,

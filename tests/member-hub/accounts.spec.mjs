@@ -27,7 +27,7 @@ async function emailLink(request, recipient, subject) {
   const match = data.HTML.match(/href="([^"]+)"/);
   expect(match).toBeTruthy();
   const url = match[1].replace(/&amp;/g, '&');
-  expect(new URL(url).origin).toBe('http://localhost:3001');
+  expect(new URL(url).origin).toBe('http://localhost:3002');
   return url;
 }
 

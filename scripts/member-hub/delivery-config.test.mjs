@@ -9,6 +9,25 @@ test('local always captures mail even with inherited live provider credentials a
   assert.equal(newsletterDelivery({ ...production, MEMBER_HUB_ENVIRONMENT: 'local', NEWSLETTER_DELIVERY_MODE: 'live', NEWSLETTER_PRODUCTION_DELIVERY_READY: 'true' }).transport, 'mailpit');
 });
 
+test('shared hosted-data development never sends newsletters even with inherited live flags', () => {
+  assert.equal(newsletterDelivery({ ...production, MEMBER_HUB_ENVIRONMENT: 'hosted-development',
+    NEWSLETTER_DELIVERY_MODE: 'live', NEWSLETTER_PRODUCTION_DELIVERY_READY: 'true' }).transport, 'disabled');
+});
+
+test('hosted development test recipients cannot be widened by production flags or used on Vercel', () => {
+  const local = { ...production, VERCEL_ENV: undefined, NODE_ENV: 'development', MEMBER_HUB_ENVIRONMENT: 'hosted-development',
+    NEWSLETTER_DELIVERY_MODE: 'test', MEMBER_HUB_NEWSLETTER_TEST_RECIPIENTS: 'tester@example.test', NEWSLETTER_TEST_RECIPIENTS: 'other@example.test' };
+  const config = newsletterDelivery(local);
+  assert.equal(config.transport, 'resend'); assert.equal(config.live, false);
+  assert.equal(newsletterRecipientAllowed('tester@example.test', config), true);
+  assert.equal(newsletterRecipientAllowed('other@example.test', config), false);
+  assert.equal(newsletterCampaignScope(config), 'resend:test');
+  for (const change of [{ NODE_ENV: 'production' }, { VERCEL_ENV: 'production' }, { VERCEL: '1' },
+    { NEWSLETTER_DELIVERY_MODE: 'live' }, { MEMBER_HUB_NEWSLETTER_TEST_RECIPIENTS: '' }]) {
+    assert.equal(newsletterDelivery({ ...local, ...change }).transport, 'disabled');
+  }
+});
+
 test('hosted delivery defaults to a tester allowlist and refuses arbitrary recipients', () => {
   assert.equal(newsletterDelivery(production).transport, 'disabled');
   const config = newsletterDelivery({ ...production, NEWSLETTER_TEST_RECIPIENTS: ' Tester@Example.test, second@example.test ' });

@@ -1,6 +1,6 @@
 import { assetUrl, type ContentRecord } from './content';
 
-type StoredContent = ContentRecord & { created_at?: string; updated_at?: string };
+type StoredContent = ContentRecord & { created_at?: string; updated_at?: string; published_at?: string | null };
 type Asset = { id: string; mime_type: string; original_filename: string };
 
 export function projectContent(row: StoredContent, assets: Map<string, Asset>, folders: Map<string, StoredContent>) {
@@ -11,9 +11,13 @@ export function projectContent(row: StoredContent, assets: Map<string, Asset>, f
   const photoUrls = (settings.photos ?? []).map(assetUrl).filter(Boolean);
   return {
     ...settings, _id: row.id, title: row.title, slug: row.slug ? { current: row.slug } : undefined,
-    body: row.body, _createdAt: row.created_at, _updatedAt: row.updated_at,
-    sections: row.sections.map(section => ({ ...section, imageUrl: assetUrl(section.image),
-      imageAlt: section.image?.alt ?? '', backgroundImageUrl: assetUrl(section.backgroundImage) })),
+    body: row.body, _createdAt: row.created_at, _updatedAt: row.updated_at, _publishedAt: row.published_at,
+    sections: row.sections.map(section => {
+      const attachment = assets.get(section.file?.asset?._ref);
+      return { ...section, imageUrl: assetUrl(section.image),
+        imageAlt: section.image?.alt ?? '', backgroundImageUrl: assetUrl(section.backgroundImage),
+        fileUrl: assetUrl(section.file), fileMime: attachment?.mime_type, fileName: attachment?.original_filename };
+    }),
     startDate: settings.startDate ?? settings.start, endDate: settings.endDate ?? settings.end,
     rsvpYes: settings.rsvpYes ?? 0, rsvpMaybe: settings.rsvpMaybe ?? 0,
     flyerUrl: assetUrl(settings.flyer), flyerMime: flyer?.mime_type, flyerName: flyer?.original_filename,

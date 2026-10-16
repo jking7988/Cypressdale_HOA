@@ -5,6 +5,7 @@ import { getHubRequestContext, HubAccessError } from '@/lib/member-hub/server';
 import { runNewsletterSend } from './send';
 import { newsletterCronSecret } from './delivery-config';
 import { escapeHtml } from './template';
+import { newsletterSendRequestSchema } from './campaign';
 export const newsletterHeaders = { 'Cache-Control':'private, no-store', 'Referrer-Policy':'no-referrer' };
 export function newsletterError(error: unknown) {
   return NextResponse.json({error:error instanceof HubAccessError ? error.message : 'Unable to complete this newsletter request.'},
@@ -12,7 +13,23 @@ export function newsletterError(error: unknown) {
 }
 export async function sendNewsletterRoute(request: Request, admin = false) {
   try {
-    if (admin) await getHubRequestContext(request,'admin');
+    let expectedSettingsVersion: number | undefined;
+    let resendRequestId: string | undefined;
+    let requestedBy: string | undefined;
+    if (admin) {
+      const account = await getHubRequestContext(request,'admin');
+      const body = await request.text();
+      let raw: unknown = {};
+      if (body.trim()) {
+        try { raw = JSON.parse(body); }
+        catch { throw new HubAccessError(400, 'Invalid newsletter send request.'); }
+      }
+      const input = newsletterSendRequestSchema.safeParse(raw);
+      if (!input.success) throw new HubAccessError(400, 'Invalid newsletter send request. Check the customization version and resend confirmation.');
+      expectedSettingsVersion = input.data.settingsVersion;
+      resendRequestId = input.data.overrideDailyLimit ? input.data.resendRequestId : undefined;
+      requestedBy = account.user?.id;
+    }
     else {
       const expected = newsletterCronSecret();
       const actual = request.headers.get('authorization') ?? '';
@@ -21,7 +38,7 @@ export async function sendNewsletterRoute(request: Request, admin = false) {
       if (!expected || actualBytes.length !== wantedBytes.length || !timingSafeEqual(actualBytes,wantedBytes))
         throw new HubAccessError(401,'Authorized newsletter scheduling is required.');
     }
-    const result = await runNewsletterSend({force:admin});
+    const result = await runNewsletterSend({force:admin,expectedSettingsVersion,resendRequestId,requestedBy});
     return NextResponse.json(result.body,{status:result.statusCode,headers:newsletterHeaders});
   } catch(error) { return newsletterError(error); }
 }

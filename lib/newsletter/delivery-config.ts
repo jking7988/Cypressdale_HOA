@@ -1,12 +1,15 @@
 export function newsletterDelivery(environment: NodeJS.ProcessEnv = process.env) {
   const disabled = { transport: 'disabled' as const, recipients: [] as string[], live: false, from: '' };
   if (environment.MEMBER_HUB_ENVIRONMENT === 'local') return { ...disabled, transport: 'mailpit' as const };
-  if (!['staging', 'production'].includes(environment.MEMBER_HUB_ENVIRONMENT || '')) return disabled;
+  const hostedDevelopment = environment.MEMBER_HUB_ENVIRONMENT === 'hosted-development';
+  if (hostedDevelopment && (environment.NODE_ENV !== 'development' || environment.VERCEL || environment.VERCEL_ENV
+    || environment.NEWSLETTER_DELIVERY_MODE !== 'test' || !environment.MEMBER_HUB_NEWSLETTER_TEST_RECIPIENTS?.trim())) return disabled;
+  if (!['staging', 'production', 'hosted-development'].includes(environment.MEMBER_HUB_ENVIRONMENT || '')) return disabled;
   if (environment.MEMBER_HUB_ENVIRONMENT === 'production' && (environment.MEMBER_HUB_PRODUCTION_READY !== 'true'
     || (environment.VERCEL_ENV && environment.VERCEL_ENV !== 'production'))) return disabled;
   const from = environment.NEWSLETTER_FROM?.trim() || '';
   if (environment.NEWSLETTER_DELIVERY_ENABLED !== 'true' || !environment.RESEND_API_KEY || !from || /[\r\n]/.test(from)) return disabled;
-  const recipients = [...new Set((environment.NEWSLETTER_TEST_RECIPIENTS || environment.NEWSLETTER_STAGING_RECIPIENTS || '')
+  const recipients = [...new Set((hostedDevelopment ? environment.MEMBER_HUB_NEWSLETTER_TEST_RECIPIENTS! : environment.NEWSLETTER_TEST_RECIPIENTS || environment.NEWSLETTER_STAGING_RECIPIENTS || '')
     .split(',').map(value => value.trim().toLowerCase()).filter(Boolean))].sort();
   const mode = environment.NEWSLETTER_DELIVERY_MODE || 'test';
   const live = environment.MEMBER_HUB_ENVIRONMENT === 'production' && mode === 'live'

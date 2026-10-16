@@ -5,28 +5,29 @@ admin editing, discussions, RSVPs and newsletters use the member-hub backend.
 There is no CMS Studio or external CMS connection in this application.
 
 Work is isolated in `Cypressdale_HOA-member-hub` on `feature/member-hub`.
-The existing production site on `main` has not been changed or redeployed.
-The existing-project production cutover still needs to be configured and verified.
+The migrated site is deployed from `main` and uses the existing hosted project.
 
 ## Local Development
 
-Use Node.js 22.18+ and Docker Desktop. From the migration worktree:
+Use Node.js 22.18+. Keep the existing hosted credentials and public anon key in your
+ignored `.env.local`. From the member-hub worktree:
 
 ```powershell
 npm ci
-npm run member-hub:start
-npm run member-hub:seed
 npm run member-hub:dev
 ```
 
 - Website: http://localhost:3001
 - Admin login: http://localhost:3001/admin-sign-in
-- Captured test emails: http://127.0.0.1:55424
-- Local-only admin: `admin@cypressdale.test` / `CypressdaleLocal2026!`
+- Sign in with your real hosted admin account.
 
-The launcher reads credentials from the isolated local Supabase stack. Never copy
-production credentials into local testing. Seeding preserves existing accounts.
-To stop database containers without deleting data, run `npx supabase stop`.
+This uses the LIVE database and files without Docker. Code stays local until
+pushed, but content/file/account edits affect production immediately. Newsletters
+are disabled locally by default; explicit test-only sending requires a dedicated
+recipient allowlist. Supabase Auth emails still use the hosted sender.
+See [hosted-data development](docs/hosted-development.md) for setup and safeguards.
+For isolated Docker testing, use `npm run member-hub:dev:local` on port 3002.
+It can run alongside hosted development on port 3001 without switching databases.
 
 See [local setup and administration](docs/member-hub-local-testing.md),
 [migration status and rollout](docs/member-hub-migration.md), and
@@ -64,7 +65,8 @@ npm run member-hub:e2e
 npm run build
 ```
 
-Browser tests require the local Docker stack and development server. They create
+Browser tests require the Docker stack and `member-hub:dev:local` server, not the
+shared-data server. A startup guard prevents running browser fixtures on live data. They create
 their own fixtures and preserve accounts/content entered by testers.
 
 ## Optional Website Integrations

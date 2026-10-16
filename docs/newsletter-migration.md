@@ -27,6 +27,29 @@ export at cutover and reconcile consent changes before enabling production deliv
 ## Local Testing
 
 Open `/admin/newsletter` to preview and send the current public digest to Mailpit.
+Admins can customize the subject, heading, inbox preview text, greeting,
+introduction, footer, section titles/order/inclusion/counts, dates, layout, font,
+text alignment, width and colors. The adjacent email preview updates immediately.
+Save Customization persists these shared settings for manual and scheduled sends;
+unsaved edits cannot be sent. Preview refresh asks before discarding edits, and
+conflicting admin saves require a refresh instead of overwriting newer settings.
+
+Normal sends retain the once-per-day block. Send Again is an admin-only,
+separately confirmed override that creates a new campaign with the current saved
+customization and the same delivery restrictions. It cannot widen the local/test
+recipient allowlist or be requested by cron/webhooks. Pending/failed override
+requests show Retry Resend and reuse their request ID, so retries process only
+unsent jobs. Completed request IDs cannot deliver twice, even across midnight.
+Manual resends and the requesting admin ID are retained in the campaign payload.
+
+Settings live in the existing `hoa_content` table as the admin-only draft
+`settings-newsletter`, excluded from Content and redirected to Newsletter when
+opened directly. No new database, table or migration is required. Campaigns retain
+the settings in their payload, and content/customization digests detect changes
+before retries. HTML uses escaped text, validated inline styles, email-safe tables
+and a mandatory unsubscribe link; the plain-text alternative keeps the same copy
+and content choices. No template exposes member-only or unpublished content.
+
 The separate `/admin/subscribers` page lists names, emails, streets, status and
 record creation dates. Admins can search, filter subscribed/unconfirmed/unsubscribed
 records, refresh the directory and remove a subscriber after explicit confirmation.

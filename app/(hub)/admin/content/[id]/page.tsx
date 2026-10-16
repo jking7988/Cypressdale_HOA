@@ -9,6 +9,7 @@ export default async function EditContent({ params, searchParams }: { params: Pr
   const { account, error } = await loadHubPage('admin');
   if (!account) return <p className="hub-message">{error}</p>;
   const { id } = await params;
+  if (id === 'settings-newsletter') redirect('/admin/newsletter');
   const [row, media, folders, published] = await Promise.all([
     id === 'new' ? Promise.resolve({ data: { ...newContent('post'), id: 'new' }, error: null }) : account.client.from('hoa_content').select('*').eq('id', id).maybeSingle(),
     account.client.from('hoa_assets').select('id, original_filename, mime_type, object_path, library').order('created_at', { ascending: false }).limit(1000),

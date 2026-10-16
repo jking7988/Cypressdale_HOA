@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createHubStorageClient, getHubRequestContext, HubAccessError } from '@/lib/member-hub/server';
+import { newsletterBackgroundAsset } from '@/lib/newsletter/background';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,9 +9,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const { id } = await context.params;
     const { client } = await getHubRequestContext(request, 'optional');
     // Resolve metadata with the caller's RLS permissions before using storage credentials.
-    const { data: asset, error } = await client.from('hoa_assets')
+    const { data: visibleAsset, error } = await client.from('hoa_assets')
       .select('bucket_id, object_path, original_filename, mime_type').eq('id', id).maybeSingle();
     if (error) throw new HubAccessError(503, 'File access is temporarily unavailable.');
+    const asset = visibleAsset ?? await newsletterBackgroundAsset(id);
     if (!asset) throw new HubAccessError(404, 'File not found.');
     const { data: file, error: downloadError } = await createHubStorageClient().storage
       .from(asset.bucket_id).download(asset.object_path);

@@ -57,7 +57,7 @@ test('default Supabase verification URLs finish the PKCE recovery flow', async (
     const standard=new URL('/auth/v1/verify',status.API_URL);
     standard.searchParams.set('token',custom.searchParams.get('token_hash'));
     standard.searchParams.set('type','recovery');
-    standard.searchParams.set('redirect_to','http://localhost:3001/auth/confirm?next=/reset-password');
+    standard.searchParams.set('redirect_to','http://localhost:3002/auth/confirm?next=/reset-password');
     await page.goto(standard.toString());
     await expect(page).toHaveURL(/\/auth\/confirm\?.*code=/);
     await page.getByRole('button',{name:'Continue to password reset',exact:true}).click();

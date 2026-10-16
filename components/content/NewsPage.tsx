@@ -1,6 +1,8 @@
 
 import Link from "next/link";
 import ContentText from './ContentText';
+import FileAttachment from './FileAttachment';
+import RichTitle from './RichTitle';
 import { PortableText } from "@portabletext/react";
 import { normalizePortableTextValue, portableTextComponents } from "@/components/portableTextComponents";
 import React from "react";
@@ -12,6 +14,7 @@ import { sidebarOptions } from "@/lib/member-hub/sidebar";
 export type Post = {
   _id: string;
   title: string;
+  titleRichText?: unknown;
   topic?: string;
   excerpt?: any;
   body?: any;
@@ -267,7 +270,7 @@ export default function NewsPage({ post, preview = false }: { post: Post; previe
             <span>{topic.label}</span>
           </div>
 
-          <h1 className="text-xl md:text-2xl font-semibold leading-snug text-brand-900"><ContentText>{post.title}</ContentText></h1>
+          <RichTitle title={post.title} value={post.titleRichText} className="text-xl md:text-2xl font-semibold leading-snug text-brand-900" />
           {!!post.body?.length && <div className="text-sm md:text-[15px] leading-relaxed text-gray-800 space-y-3">
             <PortableText value={normalizePortableTextValue(post.body)} components={portableTextComponents} />
           </div>}
@@ -276,6 +279,11 @@ export default function NewsPage({ post, preview = false }: { post: Post; previe
             <div className="space-y-6 pt-4 border-t border-emerald-50">
               {post.sections.map((section: any, idx: number) => {
                 switch (section._type) {
+                  case "fileSection":
+                    return <section key={section._key || idx} className={`${sectionWidthClasses(section.width)} ${sectionSpacingClasses(section.spacing)} ${sectionBorderClasses(section.borderStyle, section.borderThickness)} rounded px-4 md:px-6`} style={{ ...buildSectionStyle(section), ...sectionTextAlign(section.alignment) }}>
+                      {section.title && <h2 className="mb-2 leading-tight text-brand-900" style={sectionTitleStyle(section)}><ContentText>{section.title}</ContentText></h2>}
+                      <FileAttachment url={section.fileUrl} mime={section.fileMime} name={section.fileName} />
+                    </section>;
                   case "textSection": {
                     const widthClasses = sectionWidthClasses(section.width as SectionWidth);
                     const spacingClasses = sectionSpacingClasses(section.spacing as SectionSpacing);

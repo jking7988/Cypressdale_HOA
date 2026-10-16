@@ -1,5 +1,7 @@
 import { PortableText } from '@portabletext/react';
 import ContentText from '@/components/content/ContentText';
+import FileAttachment from '@/components/content/FileAttachment';
+import RichTitle from '@/components/content/RichTitle';
 import type { CSSProperties } from 'react';
 import { assetUrl, type ContentRecord, type MediaAsset } from '@/lib/member-hub/content';
 import ContentSidebar from './ContentSidebar';
@@ -34,7 +36,7 @@ export default function ContentView({ content, assets = [] }: { content: Content
   const attachment = settings.file || settings.flyer;
   const attachmentMime = assets.find(asset => asset.id === attachment?.asset?._ref)?.mime_type;
   return <div className={hasSidebar ? 'hub-read-columns' : ''}><article className={`hub-content-view hub-layout-${settings.layoutVariant || 'standard'}`}>
-    <header><p className="hub-eyebrow">{content.visibility === 'members' ? 'Members Only' : 'Cypressdale HOA'}</p><h1><ContentText>{content.title}</ContentText></h1></header>
+    <header><p className="hub-eyebrow">{content.visibility === 'members' ? 'Members Only' : 'Cypressdale HOA'}</p><RichTitle title={content.title} value={settings.titleRichText} /></header>
     {settings.description && <p className="hub-content-description"><ContentText>{settings.description}</ContentText></p>}
     {settings.location && <p className="hub-content-detail"><ContentText>{settings.location}</ContentText></p>}
     {(settings.startDate || settings.start) && <p className="hub-content-detail">{new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', dateStyle: 'full', timeStyle: 'short' }).format(new Date(settings.startDate || settings.start))}</p>}
@@ -50,7 +52,10 @@ export default function ContentView({ content, assets = [] }: { content: Content
         {section._type === 'imageWithText' && section.imagePosition !== 'right' && assetUrl(section.image) && <img src={assetUrl(section.image)} alt={section.image?.alt || ''} />}
         <div>{section.topicLabel && <p className="hub-eyebrow">{section.icon} <ContentText>{section.topicLabel}</ContentText></p>}
           {section.title && <h2 style={titleStyle(section)}><ContentText>{section.title}</ContentText></h2>}
-          {section.body && <RichText value={section.body} />}
+          {section._type === 'fileSection' ? <FileAttachment url={assetUrl(section.file)}
+            mime={assets.find(asset => asset.id === section.file?.asset?._ref)?.mime_type}
+            name={assets.find(asset => asset.id === section.file?.asset?._ref)?.original_filename} />
+            : section.body && <RichText value={section.body} />}
         </div>
         {section._type === 'imageWithText' && section.imagePosition === 'right' && assetUrl(section.image) && <img src={assetUrl(section.image)} alt={section.image?.alt || ''} />}
       </section>

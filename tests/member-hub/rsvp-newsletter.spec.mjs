@@ -77,7 +77,7 @@ test('newsletter confirmations, consent, private filtering, Mailpit delivery and
     let sub=(await service.from('newsletter_subscribers').select('*').eq('email',email).single()).data;
     expect(sub.active).toBe(false);expect(sub.verified).toBe(false);
     const confirmation=await mail(request,email,'Confirm your Cypressdale newsletter subscription');
-    const url=confirmation.HTML.match(/href="([^"]+)"/)[1].replace(/&amp;/g,'&');expect(new URL(url).origin).toBe('http://localhost:3001');
+    const url=confirmation.HTML.match(/href="([^"]+)"/)[1].replace(/&amp;/g,'&');expect(new URL(url).origin).toBe('http://localhost:3002');
     await page.goto(url);expect((await service.from('newsletter_subscribers').select('verified').eq('email',email).single()).data.verified).toBe(false);
     await page.getByRole('button',{name:'Confirm subscription',exact:true}).click();
     await expect(page.getByText('Your newsletter subscription is confirmed.',{exact:true})).toBeVisible();

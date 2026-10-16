@@ -9,6 +9,9 @@ export async function saveContent(input: unknown, version: number | null, publis
   try {
     const parsed = contentSchema.safeParse(input);
     if (!parsed.success) return { error: parsed.error.issues[0]?.message || 'Check the page fields.' };
+    if (parsed.data.id.replace(/^drafts\./, '') === 'settings-newsletter' && (parsed.data.kind !== 'page' || parsed.data.status !== 'draft' || parsed.data.visibility !== 'members')) {
+      return { error: 'Newsletter customization must remain an admin-only draft.' };
+    }
     const client = await createHubSessionClient();
     await getHubAccount(client, 'admin');
     const { data, error } = await client.rpc('hoa_save_content', { document: parsed.data, expected_version: version, published_version: publishedVersion });
@@ -23,6 +26,7 @@ export async function uploadMedia(form: FormData) {
 }
 
 export async function removeContent(id: string, version: number) {
+  if (id === 'settings-newsletter') return { error: 'Manage newsletter customization in the Newsletter section.' };
   try {
     const client = await createHubSessionClient();
     await getHubAccount(client, 'admin');

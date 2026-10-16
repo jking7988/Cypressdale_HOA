@@ -1,311 +1,41 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-type MiniPost = { id: string; title: string };
+const iconButton = 'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-emerald-200 bg-white text-emerald-900 hover:bg-emerald-50';
 
-type NewsCalendarProps = {
-  baseDateIso: string;
-  dateKeysWithPosts: string[];
-  postsForDate: Record<string, MiniPost[]>;
-};
+export function NewsCalendar({ month, today, selectedDay, counts, onMonthChange, onSelectDay }: {
+  month: string;
+  today: string;
+  selectedDay: string | null;
+  counts: Record<string, number>;
+  onMonthChange: (month: string) => void;
+  onSelectDay: (day: string) => void;
+}) {
+  const [year, monthNumber] = month.split('-').map(Number);
+  const date = new Date(Date.UTC(year, monthNumber - 1, 1));
+  const dayCount = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  const label = date.toLocaleDateString('en-US', { timeZone: 'UTC', month: 'long', year: 'numeric' });
+  const changeMonth = (offset: number) => onMonthChange(new Date(Date.UTC(year, monthNumber - 1 + offset, 1)).toISOString().slice(0, 7));
 
-export function NewsCalendar({
-  baseDateIso,
-  dateKeysWithPosts,
-  postsForDate,
-}: NewsCalendarProps) {
-  const router = useRouter();
-
-  const initial = new Date(baseDateIso);
-
-  const [currentYear, setCurrentYear] = useState(initial.getFullYear());
-  const [currentMonth, setCurrentMonth] = useState(initial.getMonth());
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-  const [drawerKey, setDrawerKey] = useState<string | null>(null);
-
-  const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  const todayKey = useMemo(
-    () => new Date().toISOString().slice(0, 10),
-    [],
-  );
-
-  const goMonth = (delta: number) => {
-    const d = new Date(currentYear, currentMonth + delta, 1);
-    setCurrentYear(d.getFullYear());
-    setCurrentMonth(d.getMonth());
-  };
-
-  const goToday = () => {
-    const today = new Date();
-    const y = today.getFullYear();
-    const m = today.getMonth();
-    setCurrentYear(y);
-    setCurrentMonth(m);
-
-    const key = today.toISOString().slice(0, 10);
-
-    if (dateKeysWithPosts.includes(key)) {
-      setSelectedKey(key);
-      const el = document.getElementById(`news-${key}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    } else {
-      setSelectedKey(null);
-    }
-
-    setDrawerKey(null);
-  };
-
-  const monthKeysWithPosts = useMemo(
-    () => new Set(dateKeysWithPosts.map((k) => k.slice(0, 7))),
-    [dateKeysWithPosts],
-  );
-
-  const currentMonthKey = `${currentYear}-${String(currentMonth + 1).padStart(
-    2,
-    '0',
-  )}`;
-
-  const firstOfMonth = new Date(currentYear, currentMonth, 1);
-  const firstWeekday = firstOfMonth.getDay();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-  const daysWithPosts = useMemo(() => {
-    const set = new Set<number>();
-    for (const key of dateKeysWithPosts) {
-      const [yStr, mStr, dStr] = key.split('-');
-      const y = Number(yStr);
-      const m = Number(mStr) - 1;
-      const d = Number(dStr);
-      if (y === currentYear && m === currentMonth) {
-        set.add(d);
-      }
-    }
-    return set;
-  }, [dateKeysWithPosts, currentYear, currentMonth]);
-
-  const handleDayClick = (dateKey: string) => {
-    setSelectedKey(dateKey);
-
-    const posts = postsForDate[dateKey] ?? [];
-
-    if (posts.length === 1) {
-      router.push(`/news/${posts[0].id}`);
-      return;
-    }
-
-    if (posts.length > 1) {
-      setDrawerKey(dateKey);
-    } else {
-      setDrawerKey(null);
-    }
-
-    const el = document.getElementById(`news-${dateKey}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  const handleDayHover = (dateKey: string | null) => {
-    setHoveredKey(dateKey);
-  };
-
-  const hoveredPosts = hoveredKey ? postsForDate[hoveredKey] ?? [] : [];
-  const drawerPosts = drawerKey ? postsForDate[drawerKey] ?? [] : [];
-
-  return (
-    <aside className="card space-y-3">
-      {/* Header + controls */}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h2 className="text-sm font-semibold text-brand-900">
-            News by date
-          </h2>
-          <p className="text-xs text-gray-600">
-            Click a highlighted day to jump to that day&apos;s news.
-          </p>
-        </div>
-
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => goMonth(-1)}
-              className="h-6 w-6 rounded-full border border-emerald-100 text-xs text-emerald-800 hover:bg-emerald-50"
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              onClick={() => goMonth(1)}
-              className="h-6 w-6 rounded-full border border-emerald-100 text-xs text-emerald-800 hover:bg-emerald-50"
-            >
-              ›
-            </button>
-          </div>
-
-          <button
-            type="button"
-            onClick={goToday}
-            className="mt-1 h-6 rounded-full px-2 text-[10px] border border-emerald-100 text-emerald-800 hover:bg-emerald-50"
-          >
-            Today
-          </button>
-        </div>
-      </div>
-
-      {/* Month label */}
-      <div className="flex items-center justify-between mb-1 text-xs font-medium text-gray-700">
-        <span>
-          {firstOfMonth.toLocaleDateString(undefined, {
-            month: 'long',
-            year: 'numeric',
-          })}
-        </span>
-        {!monthKeysWithPosts.has(currentMonthKey) && (
-          <span className="text-[10px] text-gray-400">
-            No news this month
-          </span>
-        )}
-      </div>
-
-      {/* Weekday header */}
-      <div className="grid grid-cols-7 text-[10px] text-gray-500 mb-1">
-        {weekdayLabels.map((label) => (
-          <div key={label} className="text-center">
-            {label}
-          </div>
-        ))}
-      </div>
-
-      {/* Days grid */}
-      <div className="grid grid-cols-7 gap-1 text-xs">
-        {Array.from({ length: firstWeekday }).map((_, i) => (
-          <div key={`empty-${i}`} />
-        ))}
-
-        {Array.from({ length: daysInMonth }).map((_, idx) => {
-          const dayNum = idx + 1;
-          const hasNews = daysWithPosts.has(dayNum);
-
-          const dateKey = `${currentYear}-${String(
-            currentMonth + 1,
-          ).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-
-          const isSelected = selectedKey === dateKey;
-          const isToday = todayKey === dateKey;
-
-          const baseClasses =
-            'h-7 flex items-center justify-center rounded-full text-[11px]';
-
-          let classes = `${baseClasses} text-gray-500`;
-
-          if (hasNews) {
-            classes = isSelected
-              ? `${baseClasses} bg-brand-600 text-white border border-brand-600`
-              : `${baseClasses} bg-emerald-100 text-emerald-800 font-semibold hover:bg-emerald-200 border border-emerald-200 cursor-pointer`;
-          }
-
-          if (isToday) {
-            // if today has NO news, give it its own blue pill
-            if (!hasNews) {
-              classes = `${baseClasses} bg-sky-50 text-sky-700 border border-sky-300`;
-            }
-            // blue ring around today (regardless of hasNews)
-            classes += ' ring-2 ring-offset-1 ring-sky-300';
-          }
-
-          if (hasNews) {
-            return (
-              <button
-                key={dayNum}
-                type="button"
-                onClick={() => handleDayClick(dateKey)}
-                onMouseEnter={() => handleDayHover(dateKey)}
-                onMouseLeave={() => handleDayHover(null)}
-                className={classes}
-              >
-                {dayNum}
-              </button>
-            );
-          }
-
-          return (
-            <div key={dayNum} className={classes}>
-              {dayNum}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Legend (no "Selected" now) */}
-      <div className="mt-2 flex flex-wrap gap-3 items-center">
-        <div className="flex items-center gap-1 text-[10px] text-gray-500">
-          <span className="inline-block h-3 w-3 rounded-full bg-emerald-100 border border-emerald-200" />
-          <span>Has news</span>
-        </div>
-        <div className="flex items-center gap-1 text-[10px] text-gray-500">
-          <span className="inline-block h-3 w-3 rounded-full bg-sky-50 border border-sky-300 ring-2 ring-sky-300" />
-          <span>Today</span>
-        </div>
-      </div>
-
-      {/* Hover preview */}
-      {hoveredPosts.length > 0 && (
-        <div className="mt-2 rounded-xl border border-emerald-50 bg-emerald-50/40 px-3 py-2">
-          <p className="text-[11px] font-semibold text-emerald-900 mb-1">
-            {hoveredPosts.length === 1
-              ? 'News on this day'
-              : `${hoveredPosts.length} news items on this day`}
-          </p>
-          <ul className="space-y-0.5">
-            {hoveredPosts.slice(0, 3).map((p) => (
-              <li key={p.id} className="text-[11px] text-gray-700 line-clamp-1">
-                • {p.title}
-              </li>
-            ))}
-            {hoveredPosts.length > 3 && (
-              <li className="text-[11px] text-gray-500">…more</li>
-            )}
-          </ul>
-        </div>
-      )}
-
-      {/* Drawer for multiple posts on selected day */}
-      {drawerKey && drawerPosts.length > 1 && (
-        <div className="mt-3 rounded-xl border border-emerald-100 bg-white shadow-sm px-3 py-2">
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-[11px] font-semibold text-emerald-900">
-              All news on this day
-            </p>
-            <button
-              type="button"
-              onClick={() => setDrawerKey(null)}
-              className="text-[10px] text-gray-400 hover:text-gray-600"
-            >
-              Close
-            </button>
-          </div>
-          <ul className="space-y-1">
-            {drawerPosts.map((p) => (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  onClick={() => router.push(`/news/${p.id}`)}
-                  className="text-[11px] text-emerald-700 hover:underline text-left w-full"
-                >
-                  • {p.title}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </aside>
-  );
+  return <div className="rounded-lg border border-emerald-200 bg-white p-4 sm:p-6" aria-label="News calendar">
+    <div className="mb-5 flex items-center justify-between gap-3">
+      <button className={iconButton} type="button" aria-label="Previous month" title="Previous month" onClick={() => changeMonth(-1)}><ChevronLeft size={18} /></button>
+      <h2 className="text-lg font-semibold text-emerald-950">{label}</h2>
+      <button className={iconButton} type="button" aria-label="Next month" title="Next month" onClick={() => changeMonth(1)}><ChevronRight size={18} /></button>
+    </div>
+    <div className="grid grid-cols-7 gap-1 sm:gap-2">
+      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day} className="pb-2 text-center text-xs text-gray-600">{day}</div>)}
+      {Array.from({ length: date.getUTCDay() }, (_, index) => <div key={`blank-${index}`} />)}
+      {Array.from({ length: dayCount }, (_, index) => {
+        const day = `${month}-${String(index + 1).padStart(2, '0')}`;
+        const count = counts[day] || 0;
+        return <button key={day} type="button" aria-label={`${day}, ${count} updates`} aria-pressed={selectedDay === day}
+          onClick={() => onSelectDay(day)}
+          className={`flex h-12 flex-col items-center justify-center rounded-md border text-sm sm:h-16 ${selectedDay === day ? 'border-emerald-800 bg-emerald-800 text-white' : count ? 'border-emerald-400 bg-emerald-50 text-emerald-950' : 'border-gray-100 text-gray-600'} ${today === day ? 'font-bold ring-1 ring-emerald-600' : ''}`}>
+          {index + 1}<span className="h-2 text-[10px] leading-none">{count > 0 ? count : ''}</span>
+        </button>;
+      })}
+    </div>
+  </div>;
 }

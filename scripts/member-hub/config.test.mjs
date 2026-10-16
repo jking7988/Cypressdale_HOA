@@ -55,6 +55,23 @@ test('production reuses existing credentials only after an explicit launch gate 
   ]) assert.throws(() => hubConfig({ ...production, ...change }), HubAccessError);
 });
 
+test('shared hosted-data development requires explicit acknowledgement and local development only', () => {
+  const shared = { ...production, NODE_ENV: 'development', VERCEL_ENV: undefined,
+    MEMBER_HUB_ENVIRONMENT: 'hosted-development', MEMBER_HUB_SHARED_DATABASE: 'true',
+    MEMBER_HUB_SITE_URL: 'http://localhost:3001', MEMBER_HUB_PRODUCTION_READY: 'false' };
+  assert.equal(hubConfig(shared).url, production.NEXT_PUBLIC_SUPABASE_URL);
+  assert.equal(hubConfig(shared).secureCookies, false);
+  assert.equal(hubSiteOrigin(shared), 'http://localhost:3001');
+  assert.equal(hubServiceRoleKey(shared), 'sb_secret_existing');
+  for (const change of [{ NODE_ENV: 'production' }, { NODE_ENV: undefined }, { VERCEL: '1' },
+    { VERCEL_ENV: 'preview' }, { VERCEL_ENV: 'production' }, { VERCEL_ENV: 'development' },
+    { MEMBER_HUB_SHARED_DATABASE: undefined }, { MEMBER_HUB_SHARED_DATABASE: 'false' },
+    { MEMBER_HUB_SITE_URL: 'https://public.example.test' }, { NEXT_PUBLIC_SUPABASE_URL: undefined },
+    { MEMBER_HUB_SUPABASE_URL: 'https://different.supabase.co' },
+    { MEMBER_HUB_PRODUCTION_SUPABASE_URL: 'https://different.supabase.co' }])
+    assert.throws(() => hubConfig({ ...shared, ...change }), HubAccessError);
+});
+
 test('local/staging never borrow existing production secrets; storage rejects public credentials', () => {
   const local = { MEMBER_HUB_ENABLED: 'true', MEMBER_HUB_ENVIRONMENT: 'local',
     MEMBER_HUB_SUPABASE_URL: 'http://localhost:54321', MEMBER_HUB_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_local',

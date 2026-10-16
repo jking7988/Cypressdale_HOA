@@ -1,6 +1,8 @@
 
 import Link from "next/link";
 import ContentText from './ContentText';
+import FileAttachment from './FileAttachment';
+import RichTitle from './RichTitle';
 import React from "react";
 import { PortableText } from "@portabletext/react";
 import { normalizePortableTextValue, portableTextComponents } from "@/components/portableTextComponents";
@@ -8,10 +10,12 @@ import ContentSidebar from "@/components/member-hub/ContentSidebar";
 import { sidebarOptions } from "@/lib/member-hub/sidebar";
 import { CalendarDays, MapPin, Users, FileText } from "lucide-react";
 import RsvpControls from '@/components/member-hub/RsvpControls';
+import { EventCommentForm } from '@/components/EventCommentForm';
 
 export type Event = {
   _id: string;
   title: string;
+  titleRichText?: unknown;
   description?: string;
   excerpt?: any;
   body?: any;
@@ -344,7 +348,7 @@ export default function EventPage({ event, preview = false }: { event: Event; pr
                   <CalendarDays className="h-3.5 w-3.5" />
                   <span>Community Event</span>
                 </div>
-                <h1 className="text-xl md:text-2xl font-semibold leading-snug text-emerald-950"><ContentText>{event.title}</ContentText></h1>
+                <RichTitle title={event.title} value={event.titleRichText} className="text-xl md:text-2xl font-semibold leading-snug text-emerald-950" />
               </div>
 
               <div className="flex flex-col items-start md:items-end gap-1 text-[11px] md:text-xs">
@@ -376,7 +380,7 @@ export default function EventPage({ event, preview = false }: { event: Event; pr
                   </div>
                 )}
 
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-emerald-900">
+                <div className="text-emerald-900">
                   {preview ? <span>{goingCount} going | {maybeCount} maybe</span> : <RsvpControls eventId={event._id} yes={goingCount} maybe={maybeCount} />}
                 </div>
               </div>
@@ -444,6 +448,11 @@ export default function EventPage({ event, preview = false }: { event: Event; pr
             <div className="space-y-6 pt-4 border-t border-emerald-50">
               {event.sections.map((section: any, idx: number) => {
                 switch (section._type) {
+                  case "fileSection":
+                    return <section key={section._key || idx} className={`${sectionWidthClasses(section.width)} ${sectionSpacingClasses(section.spacing)} ${sectionBorderClasses(section.borderStyle, section.borderThickness)} rounded px-4 md:px-6`} style={{ ...buildSectionStyle(section), ...sectionTextAlign(section.alignment) }}>
+                      {section.title && <h2 className="mb-2 leading-tight text-emerald-900" style={sectionTitleStyle(section)}><ContentText>{section.title}</ContentText></h2>}
+                      <FileAttachment url={section.fileUrl} mime={section.fileMime} name={section.fileName} />
+                    </section>;
                   case "textSection": {
                     const wrapperClasses = [
                       sectionWidthClasses(section.width as SectionWidth),
@@ -572,6 +581,7 @@ export default function EventPage({ event, preview = false }: { event: Event; pr
             </div>
           )}
 
+          {!preview && <EventCommentForm eventId={event._id} />}
           <footer className="pt-4 border-t border-emerald-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-emerald-900/70">
             <span>Prepared by the Cypressdale HOA Events team.</span>
             <Link

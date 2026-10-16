@@ -57,7 +57,7 @@ test('published content and its draft share one row, with safe edit, preview, di
     await page.goto('/admin/content');
     await page.getByLabel('Search content', { exact: true }).fill(prefix);
     await page.getByRole('link', { name: `Edit ${draftTitle}`, exact: true }).click();
-    await expect(page.getByLabel('Title', { exact: true })).toHaveValue(draftTitle);
+    await expect(page.getByLabel('Title', { exact: true })).toHaveText(draftTitle);
     await expect(page.getByRole('link', { name: 'Open Saved Page', exact: true })).toHaveAttribute('href', `/content/${id}`);
     await page.getByRole('button', { name: 'Publish', exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/admin/content/${id}$`));

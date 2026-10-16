@@ -25,7 +25,7 @@ test('create, format, upload, publish and restrict a member page', async ({ page
     const text = page.locator('[contenteditable="true"][aria-label="Page Body"]');
     await text.click(); await text.pressSequentially('A member-only update.');
     await text.locator('[data-slate-string]').click({ clickCount: 3 });
-    await page.locator('.hub-rich-editor').first().getByRole('button', { name: 'Bold', exact: true }).click();
+    await page.locator('.hub-rich-editor[data-editor-label="Page Body"]').getByRole('button', { name: 'Bold', exact: true }).click();
     await expect(text.locator('strong')).toHaveText('A member-only update.');
     await page.getByRole('button', { name: 'Page Settings', exact: true }).click();
     await page.getByLabel('Members Only', { exact: true }).check();
@@ -78,7 +78,7 @@ test('create, format, upload, publish and restrict a member page', async ({ page
 test('publishing an imported draft preserves its URL and does not restore it on reimport', async ({ page }) => {
   const { service } = await seedAdmin();
   const id = `local-publish-${randomUUID()}`;
-  const document = { kind: 'event', title: 'Published Fixture', status: 'published', visibility: 'public', body: [], sections: [], settings: {} };
+  const document = { kind: 'event', title: 'Published Fixture', status: 'published', visibility: 'public', body: [], sections: [], settings: { startDate: '2099-11-01T15:00:00.000Z' } };
   expect((await service.from('hoa_content').insert([{ ...document, id }, { ...document, id: `drafts.${id}`, title: 'Draft Fixture', status: 'draft', source_revision: 'fixture-rev' }])).error).toBeNull();
   const parent = randomUUID(), reply = randomUUID();
   await service.from('hoa_comments').insert({ id: parent, content_id: `drafts.${id}`, display_name: 'Fixture', message: 'Parent retained' });

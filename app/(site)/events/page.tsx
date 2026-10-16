@@ -4,9 +4,10 @@ export const dynamic = 'force-dynamic';
 import { getPublicContent } from '@/lib/member-hub/public-content';
 import EventsCalendar from '@/components/EventsCalendar';
 import { NewsLetterSignup } from '@/components/NewsLetterSignup';
+import type { CommunityEvent } from '@/lib/member-hub/event-list';
 
 export default async function EventsPage() {
-  const events = await getPublicContent<any>('event');
+  const events = await getPublicContent<CommunityEvent>('event');
 
   return (
     <div className="space-y-6">
@@ -28,17 +29,9 @@ export default async function EventsPage() {
         </div>
       </header>
 
-      {/* Main layout: left = calendar+upcoming, right = newsletter */}
-      <section className="grid gap-6 md:grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)] items-start">
-        {/* LEFT: Events calendar (includes upcoming events) */}
-        <div>
-          <EventsCalendar events={events} />
-        </div>
-
-        {/* RIGHT: Newsletter sign up */}
-        <div className="space-y-4">
-          <NewsLetterSignup />
-        </div>
+      <EventsCalendar events={events} now={new Date().toISOString()} />
+      <section className="border-t border-emerald-900/20 pt-8">
+        <div className="max-w-xl"><NewsLetterSignup /></div>
       </section>
     </div>
   );
